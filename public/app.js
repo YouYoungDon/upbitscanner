@@ -128,6 +128,28 @@ const routes = {
     $('#goBtn').onclick = load
     if (market) load()
   },
+
+  async verify() {
+    setActiveTab('verify')
+    view.innerHTML = '<h2>신호 검증</h2><p class="muted">불러오는 중…</p>'
+    const v = await api('/api/verify')
+    const bar = (rate) => `<div class="bar" style="width:120px;display:inline-block"><div style="width:${Math.round((rate || 0) * 100)}%"></div></div>`
+    const statsRows = Object.entries(v.signalStats || {})
+      .sort((a, b) => (b[1].hitRate) - (a[1].hitRate))
+      .map(([k, s]) => `<tr><td>${k}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td>${(v.weights[k] ?? 1).toFixed(2)}</td></tr>`).join('')
+    const timed = v.timedHitRates || {}
+    view.innerHTML = `<h2>신호 검증</h2>
+      <div class="kpis">
+        <div class="kpi"><div class="label">전체 적중률</div><div class="val">${v.overallHitRate != null ? Math.round(v.overallHitRate * 100) + '%' : '-'}</div></div>
+        <div class="kpi"><div class="label">+1일</div><div class="val">${timed['+1일'] ? Math.round(timed['+1일'].hitRate * 100) + '%' : '-'}</div></div>
+        <div class="kpi"><div class="label">+3일</div><div class="val">${timed['+3일'] ? Math.round(timed['+3일'].hitRate * 100) + '%' : '-'}</div></div>
+        <div class="kpi"><div class="label">+7일</div><div class="val">${timed['+7일'] ? Math.round(timed['+7일'].hitRate * 100) + '%' : '-'}</div></div>
+      </div>
+      <div class="panel"><h3>신호별 적중률 / 가중치</h3>
+        <table><thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>가중치</th></tr></thead>
+        <tbody>${statsRows || '<tr><td colspan="4" class="muted">데이터 없음 (주간 분석 필요)</td></tr>'}</tbody></table>
+      </div>`
+  },
 }
 
 function topTable(list = []) {
