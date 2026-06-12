@@ -2,7 +2,7 @@ import { getDayCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import {
   calcRSI, calcBB, calcMACD, calcStochastic, calcWilliamsR, calcVolRatio, calcEMA,
 } from '../lib/indicators.mjs'
-import { detectSignals, detectPatterns, applyCombos } from '../lib/signals.mjs'
+import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
 
 const market = process.argv[2] || 'KRW-BTC'
 
@@ -38,7 +38,10 @@ console.log('최근 7일 종가:', closes.slice(-7).map((v) => v.toFixed(4)).joi
 
 const sig = detectSignals(ohlcv, {})
 const pat = detectPatterns(ohlcv)
-const combo = applyCombos([...sig.buy, ...pat.buy], [...sig.sell, ...pat.sell], sig.buyScore)
+// monitor.mjs와 동일하게 패턴 점수를 buyScore에 더한 뒤 콤보 보정 (점수 일관성 유지)
+let buyScoreWithPatterns = sig.buyScore
+for (const p of pat.buy) buyScoreWithPatterns += PATTERN_SCORE[p] || 0
+const combo = applyCombos([...sig.buy, ...pat.buy], [...sig.sell, ...pat.sell], buyScoreWithPatterns)
 console.log('\n매수 신호:', combo.buy.join(', ') || '없음')
 console.log('매도 신호:', [...sig.sell, ...pat.sell].join(', ') || '없음')
 console.log('매수 점수:', combo.buyScore.toFixed(1), '/ 매도 점수:', sig.sellScore.toFixed(1))

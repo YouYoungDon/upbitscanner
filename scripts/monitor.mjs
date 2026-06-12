@@ -1,5 +1,5 @@
 import { getMarkets, getDayCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
-import { detectSignals, detectPatterns, applyCombos } from '../lib/signals.mjs'
+import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
 
 const BATCH = 5
@@ -39,7 +39,6 @@ async function main() {
       const ohlcv = candlesToOhlcv(candles)
       const sig = detectSignals(ohlcv, weights)
       const pat = detectPatterns(ohlcv)
-      const PATTERN_SCORE = { '쌍봉 패턴': 5, '역삼중바닥 패턴': 3, '상승깃발 패턴': 4, '하락깃발 패턴': 4, '상승삼각형 패턴': 5 }
       for (const p of pat.buy) { sig.buy.push(p); sig.buyScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
       for (const p of pat.sell) { sig.sell.push(p); sig.sellScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
 
