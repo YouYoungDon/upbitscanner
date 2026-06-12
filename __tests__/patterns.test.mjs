@@ -21,4 +21,15 @@ describe('detectPatterns', () => {
     expect(r.buy).toEqual([])
     expect(r.sell).toEqual([])
   })
+
+  it('박스권 돌파: 좁은 박스 후 상단 1% 돌파 → buy 신호', () => {
+    const n = 31
+    const ohlcv = Array.from({ length: n }, (_, i) =>
+      i === n - 1
+        ? { close: 105, high: 105, low: 100, volume: 10 } // 마지막 봉 상단 돌파
+        : { close: 100, high: 101, low: 99, volume: 10 }, // 좁은 박스 (range ~2%)
+    )
+    const r = detectPatterns(ohlcv)
+    expect(r.buy).toContain('박스권 돌파 패턴')
+  })
 })

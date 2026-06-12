@@ -46,4 +46,24 @@ describe('detectSignals', () => {
     expect(typeof r.buyScore).toBe('number')
     expect(typeof r.sellScore).toBe('number')
   })
+
+  it('데드크로스 발생 시 익절 타이밍 태그를 sell에 추가', () => {
+    // 상승 50봉 후 마지막 1봉 -4% → MACD 데드크로스 유발
+    const closes = []
+    for (let i = 0; i < 50; i++) closes.push(100 + i)
+    closes.push(149 * 0.96)
+    const ohlcv = closes.map((c) => ({ close: c, high: c * 1.01, low: c * 0.99, volume: 10 }))
+    const r = detectSignals(ohlcv, {})
+    expect(r.sell.some((s) => s.includes('데드크로스'))).toBe(true)
+    expect(r.sell).toContain('[익절] Stoch DC — 매도 타이밍')
+  })
+
+  it('데드크로스 없으면 익절 태그도 없음', () => {
+    const ohlcv = Array.from({ length: 60 }, (_, i) => {
+      const close = 100 + i
+      return { close, high: close + 1, low: close - 1, volume: 10 }
+    })
+    const r = detectSignals(ohlcv, {})
+    expect(r.sell).not.toContain('[익절] Stoch DC — 매도 타이밍')
+  })
 })

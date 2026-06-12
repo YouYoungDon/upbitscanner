@@ -1,6 +1,6 @@
 {
   "started": "2026-06-11T14:00:59.570Z",
-  "totalScans": 1,
+  "totalScans": 2,
   "scans": [
     {
       "timestamp": "2026-06-11T14:00:59.571Z",
@@ -1274,6 +1274,1145 @@
           "signals": [
             "EMA 하락배열",
             "거래량 급증 (3.5x)"
+          ]
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-06-12T14:06:56.859Z",
+      "buy": [
+        {
+          "market": "KRW-BIRB",
+          "korean_name": "문버드",
+          "price": 119,
+          "score": 11,
+          "signals": [
+            "RSI 과매도 (30)",
+            "MACD 골든크로스",
+            "MACD 반등",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-GLM",
+          "korean_name": "골렘",
+          "price": 169,
+          "score": 9.8,
+          "signals": [
+            "Stoch 과매도 골든크로스 (18)",
+            "거래량 급증 (2.8x)",
+            "[콤보] 반등확인 보너스",
+            "[콤보] 거래량확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-0G",
+          "korean_name": "제로지",
+          "price": 438,
+          "score": 9.1,
+          "signals": [
+            "RSI 과매도 (20)",
+            "Stoch 과매도 골든크로스 (10)",
+            "Williams %R 과매도 (-87)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-LSK",
+          "korean_name": "리스크",
+          "price": 139,
+          "score": 9.1,
+          "signals": [
+            "RSI 과매도 (30)",
+            "Stoch 과매도 골든크로스 (11)",
+            "Williams %R 과매도 (-87)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-YGG",
+          "korean_name": "일드길드게임즈",
+          "price": 37.6,
+          "score": 9.1,
+          "signals": [
+            "RSI 과매도 (28)",
+            "Stoch 과매도 골든크로스 (9)",
+            "Williams %R 과매도 (-90)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-SNT",
+          "korean_name": "스테이터스네트워크토큰",
+          "price": 11.2,
+          "score": 9.1,
+          "signals": [
+            "RSI 과매도 (30)",
+            "Stoch 과매도 골든크로스 (9)",
+            "Williams %R 과매도 (-87)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-MLK",
+          "korean_name": "밀크",
+          "price": 55.6,
+          "score": 9.1,
+          "signals": [
+            "RSI 과매도 (21)",
+            "Stoch 과매도 골든크로스 (10)",
+            "Williams %R 과매도 (-86)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-MINA",
+          "korean_name": "미나",
+          "price": 63.4,
+          "score": 9.1,
+          "signals": [
+            "RSI 과매도 (25)",
+            "Stoch 과매도 골든크로스 (11)",
+            "Williams %R 과매도 (-86)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-MIRA",
+          "korean_name": "미라네트워크",
+          "price": 80,
+          "score": 9.1,
+          "signals": [
+            "RSI 과매도 (25)",
+            "Stoch 과매도 골든크로스 (6)",
+            "Williams %R 과매도 (-91)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-BTT",
+          "korean_name": "비트토렌트",
+          "price": 0.000401,
+          "score": 9.1,
+          "signals": [
+            "RSI 과매도 (25)",
+            "Stoch 과매도 골든크로스 (8)",
+            "Williams %R 과매도 (-92)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-SHIB",
+          "korean_name": "시바이누",
+          "price": 0.00728,
+          "score": 8.7,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 반등",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-ALT",
+          "korean_name": "알트레이어",
+          "price": 9.35,
+          "score": 8.7,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 반등",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-FF",
+          "korean_name": "팔콘파이낸스",
+          "price": 119,
+          "score": 8.7,
+          "signals": [
+            "Stoch 과매도 골든크로스 (13)",
+            "EMA 상승배열",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-CHZ",
+          "korean_name": "칠리즈",
+          "price": 40.6,
+          "score": 8.7,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 반등",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-WAXP",
+          "korean_name": "왁스",
+          "price": 7,
+          "score": 8.3,
+          "signals": [
+            "RSI 과매도 (25)",
+            "Stoch 과매도 골든크로스 (12)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-NEO",
+          "korean_name": "네오",
+          "price": 3270,
+          "score": 8.3,
+          "signals": [
+            "RSI 과매도 (26)",
+            "Stoch 과매도 골든크로스 (15)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-SAND",
+          "korean_name": "샌드박스",
+          "price": 78.7,
+          "score": 8.3,
+          "signals": [
+            "RSI 과매도 (29)",
+            "Stoch 과매도 골든크로스 (11)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-GAS",
+          "korean_name": "가스",
+          "price": 1670,
+          "score": 8.3,
+          "signals": [
+            "RSI 과매도 (23)",
+            "Stoch 과매도 골든크로스 (13)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-XLM",
+          "korean_name": "스텔라루멘",
+          "price": 288,
+          "score": 8.2,
+          "signals": [
+            "Stoch 과매도 (12)",
+            "Williams %R 과매도 (-91)",
+            "EMA 상승배열",
+            "상승깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-ARDR",
+          "korean_name": "아더",
+          "price": 44.6,
+          "score": 6.8,
+          "signals": [
+            "Stoch 과매도 골든크로스 (10)",
+            "Williams %R 과매도 (-87)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-VTHO",
+          "korean_name": "비토르토큰",
+          "price": 0.597,
+          "score": 6.8,
+          "signals": [
+            "Stoch 과매도 골든크로스 (5)",
+            "Williams %R 과매도 (-93)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-UNI",
+          "korean_name": "유니스왑",
+          "price": 3800,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (18)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-PLUME",
+          "korean_name": "플룸",
+          "price": 15.6,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (17)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-IOTA",
+          "korean_name": "아이오타",
+          "price": 70.4,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (12)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-AXL",
+          "korean_name": "엑셀라",
+          "price": 64.1,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (13)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-AXS",
+          "korean_name": "엑시인피니티",
+          "price": 1431,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (13)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-LINEA",
+          "korean_name": "리네아",
+          "price": 3.62,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (12)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-KERNEL",
+          "korean_name": "커널다오",
+          "price": 77,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (13)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-OP",
+          "korean_name": "옵티미즘",
+          "price": 149,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (14)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-ENA",
+          "korean_name": "에테나",
+          "price": 121,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (15)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-ENS",
+          "korean_name": "이더리움네임서비스",
+          "price": 7235,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (15)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-BSV",
+          "korean_name": "비트코인에스브이",
+          "price": 17710,
+          "score": 6,
+          "signals": [
+            "Stoch 과매도 골든크로스 (12)",
+            "[콤보] 반등확인 보너스"
+          ]
+        },
+        {
+          "market": "KRW-ELF",
+          "korean_name": "엘프",
+          "price": 95.3,
+          "score": 5.4,
+          "signals": [
+            "RSI 과매도 (29)",
+            "Stoch 과매도 (12)",
+            "거래량 급증 (2.3x)",
+            "[콤보] 거래량확인 보너스"
+          ]
+        }
+      ],
+      "sell": [
+        {
+          "market": "KRW-LSK",
+          "korean_name": "리스크",
+          "price": 139,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-ETHFI",
+          "korean_name": "이더파이",
+          "price": 458,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-UNI",
+          "korean_name": "유니스왑",
+          "price": 3800,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-CRO",
+          "korean_name": "크로노스",
+          "price": 90,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-NEO",
+          "korean_name": "네오",
+          "price": 3270,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-HP",
+          "korean_name": "히포프로토콜",
+          "price": 15.5,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-AXL",
+          "korean_name": "엑셀라",
+          "price": 64.1,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-AQT",
+          "korean_name": "알파쿼크",
+          "price": 571,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-ME",
+          "korean_name": "매직에덴",
+          "price": 90.5,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-IMX",
+          "korean_name": "이뮤터블엑스",
+          "price": 214,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-KERNEL",
+          "korean_name": "커널다오",
+          "price": 77,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-OP",
+          "korean_name": "옵티미즘",
+          "price": 149,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-ENA",
+          "korean_name": "에테나",
+          "price": 121,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-GRT",
+          "korean_name": "더그래프",
+          "price": 29.4,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-ADA",
+          "korean_name": "에이다",
+          "price": 254,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-RED",
+          "korean_name": "레드스톤",
+          "price": 144,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-STEEM",
+          "korean_name": "스팀",
+          "price": 66.6,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-QKC",
+          "korean_name": "쿼크체인",
+          "price": 3.72,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-MLK",
+          "korean_name": "밀크",
+          "price": 55.6,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-VTHO",
+          "korean_name": "비토르토큰",
+          "price": 0.597,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-MINA",
+          "korean_name": "미나",
+          "price": 63.4,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-GAS",
+          "korean_name": "가스",
+          "price": 1670,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-SUI",
+          "korean_name": "수이",
+          "price": 1134,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-BSV",
+          "korean_name": "비트코인에스브이",
+          "price": 17710,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-MIRA",
+          "korean_name": "미라네트워크",
+          "price": 80,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-BTT",
+          "korean_name": "비트토렌트",
+          "price": 0.000401,
+          "score": 8.2,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-BIO",
+          "korean_name": "바이오프로토콜",
+          "price": 46.7,
+          "score": 7,
+          "signals": [
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-SYRUP",
+          "korean_name": "메이플파이낸스",
+          "price": 198,
+          "score": 7,
+          "signals": [
+            "EMA 하락배열",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-OPEN",
+          "korean_name": "오픈렛저",
+          "price": 343,
+          "score": 6.7,
+          "signals": [
+            "BB 상단 돌파",
+            "Stoch 과매수 (82)",
+            "Williams %R 과매수 (-11)"
+          ]
+        },
+        {
+          "market": "KRW-ARKM",
+          "korean_name": "아캄",
+          "price": 184,
+          "score": 5.8,
+          "signals": [
+            "MACD 하락",
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-IOST",
+          "korean_name": "아이오에스티",
+          "price": 1.22,
+          "score": 4.8,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "거래량 급증 (2.8x)"
+          ]
+        },
+        {
+          "market": "KRW-ASTR",
+          "korean_name": "아스타",
+          "price": 8.96,
+          "score": 4.8,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열",
+            "거래량 급증 (4.6x)"
+          ]
+        },
+        {
+          "market": "KRW-KITE",
+          "korean_name": "카이트",
+          "price": 282,
+          "score": 4.6,
+          "signals": [
+            "하락깃발 패턴"
+          ]
+        },
+        {
+          "market": "KRW-CARV",
+          "korean_name": "카브",
+          "price": 60.5,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-WAXP",
+          "korean_name": "왁스",
+          "price": 7,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-0G",
+          "korean_name": "제로지",
+          "price": 438,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-BAT",
+          "korean_name": "베이직어텐션토큰",
+          "price": 136,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-DKA",
+          "korean_name": "디카르고",
+          "price": 6.15,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ANKR",
+          "korean_name": "앵커",
+          "price": 5.82,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ALGO",
+          "korean_name": "알고랜드",
+          "price": 133,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-TOKAMAK",
+          "korean_name": "토카막네트워크",
+          "price": 581,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-LAYER",
+          "korean_name": "솔레이어",
+          "price": 98.9,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-TRX",
+          "korean_name": "트론",
+          "price": 473,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-PLUME",
+          "korean_name": "플룸",
+          "price": 15.6,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ETC",
+          "korean_name": "이더리움클래식",
+          "price": 10900,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-VIRTUAL",
+          "korean_name": "버추얼프로토콜",
+          "price": 929,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-IOTA",
+          "korean_name": "아이오타",
+          "price": 70.4,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-WCT",
+          "korean_name": "월렛커넥트",
+          "price": 69.8,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-SAND",
+          "korean_name": "샌드박스",
+          "price": 78.7,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-YGG",
+          "korean_name": "일드길드게임즈",
+          "price": 37.6,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-TRUST",
+          "korean_name": "인튜이션",
+          "price": 74.1,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-AXS",
+          "korean_name": "엑시인피니티",
+          "price": 1431,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ARDR",
+          "korean_name": "아더",
+          "price": 44.6,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-CBK",
+          "korean_name": "코박토큰",
+          "price": 298,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-HIVE",
+          "korean_name": "하이브",
+          "price": 75.9,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-SAFE",
+          "korean_name": "세이프",
+          "price": 138,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-LINEA",
+          "korean_name": "리네아",
+          "price": 3.62,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-GLM",
+          "korean_name": "골렘",
+          "price": 169,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ZK",
+          "korean_name": "지케이싱크",
+          "price": 16.6,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-MANA",
+          "korean_name": "디센트럴랜드",
+          "price": 101,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ENS",
+          "korean_name": "이더리움네임서비스",
+          "price": 7235,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ZETA",
+          "korean_name": "제타체인",
+          "price": 57.4,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ELSA",
+          "korean_name": "헤이엘사",
+          "price": 70,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ELF",
+          "korean_name": "엘프",
+          "price": 95.3,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-MED",
+          "korean_name": "메디블록",
+          "price": 2.34,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-SOL",
+          "korean_name": "솔라나",
+          "price": 100900,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-META",
+          "korean_name": "메타디움",
+          "price": 11.9,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-SNT",
+          "korean_name": "스테이터스네트워크토큰",
+          "price": 11.2,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-SAHARA",
+          "korean_name": "사하라에이아이",
+          "price": 24.3,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-PROVE",
+          "korean_name": "서싱트",
+          "price": 284,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-BTC",
+          "korean_name": "비트코인",
+          "price": 95639000,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-SUN",
+          "korean_name": "썬",
+          "price": 24.9,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-ZBT",
+          "korean_name": "제로베이스",
+          "price": 181,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
+          ]
+        },
+        {
+          "market": "KRW-HOLO",
+          "korean_name": "홀로월드에이아이",
+          "price": 93.2,
+          "score": 3.7,
+          "signals": [
+            "MACD 하락",
+            "EMA 하락배열"
           ]
         }
       ]
