@@ -66,4 +66,14 @@ describe('detectSignals', () => {
     const r = detectSignals(ohlcv, {})
     expect(r.sell).not.toContain('[익절] Stoch DC — 매도 타이밍')
   })
+
+  it('강세 캔들패턴(망치형)이 있으면 매수 신호/점수에 반영', () => {
+    const base = Array.from({ length: 59 }, (_, i) => {
+      const close = 200 - i
+      return { open: close + 1, close, high: close + 1, low: close - 1, volume: 10 }
+    })
+    const hammer = { open: 141, high: 141.5, low: 135, close: 141, volume: 10 }
+    const r = detectSignals([...base, hammer], {})
+    expect(r.buy.some((s) => s.startsWith('캔들'))).toBe(true)
+  })
 })

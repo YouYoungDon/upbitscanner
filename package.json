@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dashboard": "node server/server.mjs",
     "scan": "node scripts/monitor.mjs",
     "weekly": "node scripts/weekly-analysis.mjs",
     "backtest": "node scripts/backtest.mjs",
