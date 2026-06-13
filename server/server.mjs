@@ -1,7 +1,7 @@
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { dirname, join, extname } from 'node:path'
+import { dirname, join, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readJson } from '../lib/store.mjs'
 import { getDayCandles, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
@@ -24,7 +24,7 @@ function sendJson(res, code, data) {
 async function serveStatic(res, urlPath) {
   const rel = urlPath === '/' ? '/index.html' : urlPath
   const file = join(PUBLIC, rel)
-  if (!file.startsWith(PUBLIC) || !existsSync(file)) { res.writeHead(404); res.end('Not found'); return }
+  if ((file !== PUBLIC && !file.startsWith(PUBLIC + sep)) || !existsSync(file)) { res.writeHead(404); res.end('Not found'); return }
   const data = await readFile(file)
   res.writeHead(200, { 'Content-Type': MIME[extname(file)] || 'application/octet-stream' })
   res.end(data)

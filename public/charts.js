@@ -10,14 +10,16 @@ window.Charts = {
     })
     const s = chart.addCandlestickSeries()
     const base = Date.now() - ohlcv.length * 86400000
+    // 서버가 준 실제 캔들 시각(c.time) 우선, 없으면 일봉 간격으로 합성 (4h/1h 정렬 정확)
+    const tof = (c, i) => c.time ?? Math.floor((base + i * 86400000) / 1000)
     s.setData(ohlcv.map((c, i) => ({
-      time: Math.floor((base + i * 86400000) / 1000),
+      time: tof(c, i),
       open: c.open, high: c.high, low: c.low, close: c.close,
     })))
     if (volume) {
       const v = chart.addHistogramSeries({ priceScaleId: '', priceFormat: { type: 'volume' } })
       v.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } })
-      v.setData(ohlcv.map((c, i) => ({ time: Math.floor((base + i * 86400000) / 1000), value: c.volume, color: '#30363d' })))
+      v.setData(ohlcv.map((c, i) => ({ time: tof(c, i), value: c.volume, color: '#30363d' })))
     }
     chart.timeScale().fitContent()
   },
