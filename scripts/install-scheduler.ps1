@@ -25,7 +25,8 @@ if ($Uninstall) {
 foreach ($t in $tasks) {
   $action = New-ScheduledTaskAction -Execute $nodePath -Argument "`"$monitor`"" -WorkingDirectory $projectRoot
   $trigger = New-ScheduledTaskTrigger -Daily -At $t.Time
-  $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd
+  # WakeToRun: 절전 중이면 PC를 깨워 실행 / 배터리에서도 시작·유지 / 놓친 작업은 깨어난 뒤 실행
+  $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd
   Register-ScheduledTask -TaskName $t.Name -Action $action -Trigger $trigger -Settings $settings -Force | Out-Null
   Write-Host "등록됨: $($t.Name) @ $($t.Time) (로컬 시간 = KST)"
 }
