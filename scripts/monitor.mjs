@@ -2,6 +2,7 @@ import { getMarkets, getDayCandles, getTicker, getMinuteCandles, candlesToOhlcv 
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
+import { appendScan } from '../lib/archive.mjs'
 
 const BATCH = 5
 const DELAY = 200
@@ -79,6 +80,7 @@ async function main() {
   log.totalScans = (log.totalScans || 0) + 1
   log.scans = rollingAppend(log.scans || [], { timestamp: new Date().toISOString(), buy, sell }, MAX_SCANS)
   await writeJson('monitor-log.json', log)
+  appendScan({ timestamp: log.scans.at(-1).timestamp, buy, sell })
 
   console.log(`스캔 #${log.totalScans} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
