@@ -41,6 +41,15 @@ describe('buildVerify', () => {
     expect(r.timedHitRates['+1일'].hitRate).toBe(0.5)
     expect(r.weights.X).toBe(1.2)
   })
+  it('최신 주차 report를 통과시킨다', () => {
+    const weekly = { weeks: [{ timestamp: 't1' }, { timestamp: 't2', report: { topSignals: [{ key: 'A' }] } }] }
+    const r = buildVerify(weekly, { A: 1.2 })
+    expect(r.report).toEqual({ topSignals: [{ key: 'A' }] })
+  })
+  it('report 없으면 null', () => {
+    const r = buildVerify({ weeks: [{ timestamp: 't1' }] }, {})
+    expect(r.report).toBeNull()
+  })
 })
 
 describe('comboDistribution', () => {
