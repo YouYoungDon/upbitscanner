@@ -26,12 +26,12 @@ npm run dashboard          # 로컬 대시보드 http://127.0.0.1:8787
 ## 자동화 (Windows 작업 스케줄러)
 
 ```powershell
-# 등록 (매일 09:00 / 21:00, 로컬 시간 = KST)
+# 등록 (매일 09:00 / 21:00 스캔 + 일요일 22:00 주간 분석, 로컬 시간 = KST)
 powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1
 # 제거
 powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1 -Uninstall
 # 확인
-Get-ScheduledTask -TaskName 'UpbitMonitor_*'
+Get-ScheduledTask -TaskName 'Upbit*'
 ```
 
 > macOS LaunchAgent와 달리 Windows 작업 스케줄러는 **로컬 시간** 기준이다.
@@ -47,7 +47,7 @@ Get-ScheduledTask -TaskName 'UpbitMonitor_*'
 | `lib/store.mjs` | JSON 읽기/쓰기 + 롤링 + EWM 헬퍼 |
 | `lib/weekly.mjs` | 적중률 집계 + 가중치 갱신 로직 |
 | `scripts/monitor.mjs` | 메인 스캔 |
-| `scripts/weekly-analysis.mjs` | 주간 적중률 + 가중치 EWM 갱신 |
+| `scripts/weekly-analysis.mjs` | 주간 적중률 + 가중치 EWM 갱신 + "왜 맞았는지" 리포트 |
 | `scripts/analyze.mjs` | 개별 종목 즉석 분석 |
 | `scripts/backtest.mjs` | 과거 신호 백테스트 |
 | `scripts/install-scheduler.ps1` | 작업 스케줄러 등록/제거 |
@@ -85,7 +85,8 @@ Get-ScheduledTask -TaskName 'UpbitMonitor_*'
 
 ## 가중치 자동 갱신 (EWM)
 
-`scripts/weekly-analysis.mjs`가 매주 수요일 최근 7개 스캔의 적중률을 집계해 갱신한다.
+`scripts/weekly-analysis.mjs`가 **매주 일요일 22:00**에 지난 7일 스캔 아카이브의
+적중률을 집계해 가중치를 갱신하고, "왜 맞았는지" 주간 리포트를 생성한다(신호검증 탭 "📅 이번 주 요약"에 표시).
 
 ```
 target    = hitRate >= 0.7 ? 1.5 : hitRate >= 0.5 ? 1.0 : 0.7

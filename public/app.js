@@ -217,6 +217,28 @@ const routes = {
       .sort((a, b) => (b[1].hitRate) - (a[1].hitRate))
       .map(([k, s]) => `<tr><td>${esc(k)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td><span class="badge badge-ghost badge-sm">${(v.weights[k] ?? 1).toFixed(2)}</span></td></tr>`).join('')
     const timed = v.timedHitRates || {}
+    const r = v.report
+    const sigBadge = (s) => `<tr><td>${esc(s.key)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}%</td><td><span class="badge badge-success badge-sm">${s.hits}</span></td></tr>`
+    const wChange = (w) => `<tr><td>${esc(w.key)}</td><td>${w.old.toFixed(2)} → ${w.new.toFixed(2)}</td><td>${w.direction === 'up' ? '<span class="text-success">▲</span>' : '<span class="text-error">▼</span>'}</td><td class="opacity-70">${esc(w.reason)}</td></tr>`
+    const coinBadge = (c) => `<span class="badge badge-success badge-outline gap-1">${esc(c.korean_name || c.market.replace('KRW-', ''))} <span class="opacity-60">${c.hits}/${c.total}</span></span>`
+    const reportCard = !r ? '' : `
+      <div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
+        <h3 class="card-title text-sm">📅 이번 주 요약</h3>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs opacity-60 mb-1">적중 신호 TOP</div>
+            <table class="table table-sm"><thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>적중</th></tr></thead>
+              <tbody>${r.topSignals.map(sigBadge).join('') || '<tr><td colspan="4" class="opacity-60">없음</td></tr>'}</tbody></table>
+          </div>
+          <div>
+            <div class="text-xs opacity-60 mb-1">가중치 변화</div>
+            <table class="table table-sm"><thead><tr><th>신호</th><th>변화</th><th></th><th>이유</th></tr></thead>
+              <tbody>${r.weightChanges.map(wChange).join('') || '<tr><td colspan="4" class="opacity-60">변화 없음</td></tr>'}</tbody></table>
+          </div>
+        </div>
+        <div class="text-xs opacity-60 mt-2 mb-1">적중 코인</div>
+        <div class="flex flex-wrap gap-1">${r.hitCoins.map(coinBadge).join('') || '<span class="opacity-60">없음</span>'}</div>
+      </div></div>`
     view.innerHTML = `<h2 class="text-2xl font-bold mb-4">신호 검증</h2>
       <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200 w-full mb-4">
         <div class="stat"><div class="stat-title">전체 적중률</div><div class="stat-value">${v.overallHitRate != null ? Math.round(v.overallHitRate * 100) + '%' : '-'}</div></div>
@@ -224,6 +246,7 @@ const routes = {
         <div class="stat"><div class="stat-title">+3일</div><div class="stat-value text-2xl">${timed['+3일'] ? Math.round(timed['+3일'].hitRate * 100) + '%' : '-'}</div></div>
         <div class="stat"><div class="stat-title">+7일</div><div class="stat-value text-2xl">${timed['+7일'] ? Math.round(timed['+7일'].hitRate * 100) + '%' : '-'}</div></div>
       </div>
+      ${reportCard}
       <div class="card bg-base-200 shadow"><div class="card-body p-4">
         <h3 class="card-title text-sm">신호별 적중률 / 가중치</h3>
         <div class="overflow-x-auto"><table class="table table-zebra table-sm">
