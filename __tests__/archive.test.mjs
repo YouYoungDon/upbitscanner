@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { rmSync, existsSync, writeFileSync } from 'node:fs'
-import { appendScan, readArchive, summarizeScans, coinHistory } from '../lib/archive.mjs'
+import { appendScan, readArchive, summarizeScans, coinHistory, scansInLastDays } from '../lib/archive.mjs'
 
 let file
 beforeEach(() => { file = join(tmpdir(), `arch-${Date.now()}-${Math.random().toString(36).slice(2)}.jsonl`) })
@@ -56,5 +56,24 @@ describe('coinHistory', () => {
       { timestamp: 't1', side: 'buy', score: 6, signals: ['x'] },
       { timestamp: 't2', side: 'sell', score: 4, signals: ['y'] },
     ])
+  })
+})
+
+describe('scansInLastDays', () => {
+  const now = Date.parse('2026-06-14T12:00:00Z')
+  const scans = [
+    { timestamp: '2026-06-06T12:00:00Z' }, // 8일 전 → 제외
+    { timestamp: '2026-06-07T12:00:01Z' }, // 경계 1초 안쪽 → 포함
+    { timestamp: '2026-06-14T00:00:00Z' }, // 당일 → 포함
+  ]
+  it('지난 N일 내 스캔만, 입력 순서 유지', () => {
+    const out = scansInLastDays(scans, 7, now)
+    expect(out.map((s) => s.timestamp)).toEqual([
+      '2026-06-07T12:00:01Z',
+      '2026-06-14T00:00:00Z',
+    ])
+  })
+  it('빈 배열은 빈 배열', () => {
+    expect(scansInLastDays([], 7, now)).toEqual([])
   })
 })
