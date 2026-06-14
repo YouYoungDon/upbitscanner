@@ -1,4 +1,5 @@
 import { topSignalsOfScan, bestHitRateSignal } from '../lib/insights.mjs'
+import { summarizeScans } from '../lib/archive.mjs'
 
 // 매수 종목 신호 태그에서 콤보/MTF 종목 수 집계
 export function comboDistribution(buyList = []) {
@@ -62,6 +63,16 @@ export function buildInsights(log, weekly) {
   const topSignal = scan ? (topSignalsOfScan(scan)[0] || null) : null
   const stats = weekly?.weeks?.at(-1)?.signalStats || {}
   return { topSignal, bestHitRate: bestHitRateSignal(stats) }
+}
+
+// 아카이브 스캔(시간 오름차순)을 최신순 요약으로, limit/offset 적용
+export function buildScans(scans, { limit = 20, offset = 0 } = {}) {
+  const summaries = summarizeScans(scans).slice().reverse() // 최신순
+  return { total: summaries.length, items: summaries.slice(offset, offset + limit) }
+}
+
+export function findScanByTimestamp(scans, ts) {
+  return scans.find((s) => s.timestamp === ts) || null
 }
 
 export function buildVerify(weekly, weights) {

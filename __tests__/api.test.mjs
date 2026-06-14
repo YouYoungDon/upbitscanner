@@ -88,3 +88,30 @@ describe('buildHistory', () => {
     ])
   })
 })
+
+import { buildScans, findScanByTimestamp } from '../server/api.mjs'
+
+describe('buildScans', () => {
+  const scans = [
+    { timestamp: 't1', buy: [{ korean_name: '에이', score: 5 }], sell: [] },
+    { timestamp: 't2', buy: [], sell: [{ korean_name: '비' }] },
+    { timestamp: 't3', buy: [{ korean_name: '씨', score: 7 }], sell: [] },
+  ]
+  it('최신순 요약 + total + limit/offset', () => {
+    const r = buildScans(scans, { limit: 2, offset: 0 })
+    expect(r.total).toBe(3)
+    expect(r.items.map((i) => i.timestamp)).toEqual(['t3', 't2'])
+  })
+  it('offset 적용', () => {
+    const r = buildScans(scans, { limit: 2, offset: 2 })
+    expect(r.items.map((i) => i.timestamp)).toEqual(['t1'])
+  })
+})
+
+describe('findScanByTimestamp', () => {
+  it('timestamp로 스캔 찾기', () => {
+    const scans = [{ timestamp: 't1', buy: [], sell: [] }, { timestamp: 't2', buy: [{ market: 'KRW-A' }], sell: [] }]
+    expect(findScanByTimestamp(scans, 't2').buy[0].market).toBe('KRW-A')
+    expect(findScanByTimestamp(scans, 'nope')).toBeNull()
+  })
+})
