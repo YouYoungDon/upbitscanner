@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { readJson } from '../lib/store.mjs'
 import { getMarkets, getDayCandles, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
-import { buildResults, buildInsights, buildVerify } from './api.mjs'
+import { buildResults, buildInsights, buildVerify, buildHistory } from './api.mjs'
 import { createScanRunner } from './scan-job.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -63,6 +63,9 @@ const server = createServer(async (req, res) => {
     }
     if (p === '/api/weights') {
       return sendJson(res, 200, await readJson('signal-weights.json', {}))
+    }
+    if (p === '/api/history') {
+      return sendJson(res, 200, buildHistory(await readJson('monitor-log.json', { scans: [] })))
     }
     if (p === '/api/markets') {
       const list = await cachedMarkets()

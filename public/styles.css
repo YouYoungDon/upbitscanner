@@ -1,37 +1,8 @@
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { display: flex; font-family: system-ui, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; }
-.sidebar { width: 160px; background: #161b22; padding: 16px 10px; position: sticky; top: 0; height: 100vh; }
-.sidebar h1 { font-size: 18px; margin-bottom: 20px; }
-.sidebar nav { display: flex; flex-direction: column; gap: 4px; }
-.sidebar a { color: #adbac7; text-decoration: none; padding: 10px; border-radius: 6px; font-size: 14px; }
-.sidebar a:hover, .sidebar a.active { background: #21262d; color: #fff; }
-main { flex: 1; padding: 24px; overflow-x: hidden; }
-h2 { margin-bottom: 16px; }
-.kpis { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-.kpi { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 18px; flex: 1; min-width: 110px; }
-.kpi .label { font-size: 12px; color: #8b949e; }
-.kpi .val { font-size: 24px; font-weight: 700; margin-top: 4px; }
-.panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-.panel h3 { font-size: 14px; margin-bottom: 10px; color: #8b949e; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #21262d; }
-th { color: #8b949e; font-weight: 600; }
-tr.clickable:hover { background: #1c2128; cursor: pointer; }
-.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; border-radius: 4px; padding: 1px 6px; font-size: 11px; margin-right: 3px; }
-.tag.warn { background: #f8514933; color: #ff7b72; }
-.tag.good { background: #2ea04333; color: #3fb950; }
-button { background: #238636; color: #fff; border: none; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 13px; }
-button:hover { background: #2ea043; }
-button:disabled { opacity: .5; cursor: default; }
-input { background: #0d1117; border: 1px solid #30363d; color: #e6edf3; border-radius: 6px; padding: 8px; }
-.bar { background: #21262d; border-radius: 4px; height: 8px; overflow: hidden; }
-.bar > div { background: #3fb950; height: 100%; }
-.controls { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-.controls .seg { cursor: pointer; padding: 4px 10px; border: 1px solid #30363d; border-radius: 6px; font-size: 12px; }
-.controls .seg.active { background: #21262d; color: #fff; }
-.muted { color: #8b949e; font-size: 12px; }
+/* DaisyUI/Tailwind 위 최소 오버라이드 */
+.menu a.active { background-color: hsl(var(--p) / 0.15); color: hsl(var(--p)); }
 #chart { height: 300px; }
 .coinlist { max-height: 460px; overflow-y: auto; }
-.coin-row { padding: 7px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #e6edf3; }
-.coin-row:hover { background: #1c2128; }
-.coin-row.active { background: #1f6feb33; color: #fff; }
+.coin-row { padding: 7px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.coin-row:hover { background: hsl(var(--b3)); }
+.coin-row.active { background: hsl(var(--p) / 0.18); color: hsl(var(--p)); }
+.spark { width: 100%; height: 40px; display: block; }

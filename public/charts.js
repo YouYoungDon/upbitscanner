@@ -36,4 +36,17 @@ window.Charts = {
     s.setData(closes.map((v, i) => ({ time: Math.floor((base + i * 86400000) / 1000), value: v })))
     chart.timeScale().fitContent()
   },
+  // 작은 추이 스파크라인 (SVG 문자열 반환). values: number[]
+  sparkline(values, color) {
+    const w = 240, h = 40, pad = 2
+    if (!values || values.length < 2) return `<svg class="spark" viewBox="0 0 ${w} ${h}"></svg>`
+    const max = Math.max(...values), min = Math.min(...values)
+    const span = max - min || 1
+    const pts = values.map((v, i) => {
+      const x = pad + (i / (values.length - 1)) * (w - pad * 2)
+      const y = h - pad - ((v - min) / span) * (h - pad * 2)
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    }).join(' ')
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color}" stroke-width="1.5" points="${pts}"/></svg>`
+  },
 }
