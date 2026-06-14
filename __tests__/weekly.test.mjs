@@ -41,33 +41,41 @@ describe('updateWeights', () => {
 
 describe('buildWeeklyReport', () => {
   const stats = {
-    'RSI 과매도': { count: 4, hitRate: 0.75 },
-    'Stoch 골든크로스': { count: 2, hitRate: 1 },
-    'EMA 하락배열': { count: 5, hitRate: 0.2 },
+    'RSI 과매도': { count: 4, hitRate: 0.5 },
+    'EMA 하락배열': { count: 3, hitRate: 1 },
   }
   const records = [
-    { market: 'KRW-ZKC', korean_name: '바운드리스', side: 'buy', signals: ['RSI 과매도'], hit: true },
-    { market: 'KRW-ZKC', korean_name: '바운드리스', side: 'buy', signals: ['Stoch 골든크로스'], hit: true },
-    { market: 'KRW-XYZ', korean_name: '엑스', side: 'buy', signals: ['EMA 하락배열'], hit: false },
+    { market: 'KRW-A', korean_name: '에이', side: 'buy', signals: ['RSI 과매도 (10)'], hit: true },
+    { market: 'KRW-A', korean_name: '에이', side: 'buy', signals: ['RSI 과매도 (12)'], hit: true },
+    { market: 'KRW-A', korean_name: '에이', side: 'buy', signals: ['RSI 과매도 (11)'], hit: false },
+    { market: 'KRW-A', korean_name: '에이', side: 'buy', signals: ['RSI 과매도 (9)'], hit: false },
+    { market: 'KRW-B', korean_name: '비', side: 'buy', signals: ['Stoch 골든크로스 (5)'], hit: true }, // 표본 1 → 제외
+    { market: 'KRW-C', korean_name: '씨', side: 'sell', signals: ['EMA 하락배열'], hit: true },
+    { market: 'KRW-C', korean_name: '씨', side: 'sell', signals: ['EMA 하락배열'], hit: true },
+    { market: 'KRW-C', korean_name: '씨', side: 'sell', signals: ['EMA 하락배열'], hit: true },
   ]
-  const oldW = { 'RSI 과매도': 1.0, 'EMA 하락배열': 1.0, '안변함': 1.0 }
-  const newW = { 'RSI 과매도': 1.1, 'EMA 하락배열': 0.92, '안변함': 1.0 }
+  const oldW = { 'RSI 과매도': 0.55, 'EMA 하락배열': 1.0, '안변함': 1.0 }
+  const newW = { 'RSI 과매도': 0.74, 'EMA 하락배열': 0.9, '안변함': 1.0 }
 
-  it('topSignals: hits 내림차순, hits=round(count*hitRate)', () => {
-    const { topSignals } = buildWeeklyReport(records, stats, oldW, newW)
-    expect(topSignals[0]).toEqual({ key: 'RSI 과매도', count: 4, hitRate: 0.75, hits: 3 })
-    expect(topSignals.map((s) => s.key)).toEqual(['RSI 과매도', 'Stoch 골든크로스', 'EMA 하락배열'])
+  it('topBuySignals: 매수만, 표본 3+ , 적중률 내림차순', () => {
+    const { topBuySignals } = buildWeeklyReport(records, stats, oldW, newW)
+    expect(topBuySignals).toEqual([{ key: 'RSI 과매도', count: 4, hitRate: 0.5, hits: 2 }])
   })
-  it('weightChanges: 변화한 key만, 방향·이유 포함', () => {
+  it('topSellSignals: 매도만 집계', () => {
+    const { topSellSignals } = buildWeeklyReport(records, stats, oldW, newW)
+    expect(topSellSignals).toEqual([{ key: 'EMA 하락배열', count: 3, hitRate: 1, hits: 3 }])
+  })
+  it('weightChanges: 변화한 key만, 변화량 큰 순, 방향·이유 포함', () => {
     const { weightChanges } = buildWeeklyReport(records, stats, oldW, newW)
     expect(weightChanges.map((w) => w.key)).toEqual(['RSI 과매도', 'EMA 하락배열'])
     expect(weightChanges.find((w) => w.key === 'RSI 과매도')).toEqual({
-      key: 'RSI 과매도', old: 1, new: 1.1, direction: 'up', reason: '적중률 75% (표본 4) → 상향',
+      key: 'RSI 과매도', old: 0.55, new: 0.74, direction: 'up', reason: '적중률 50% (표본 4) → 상향',
     })
   })
-  it('hitCoins / missCoins 집계', () => {
+  it('hitCoins / missCoins 집계 (매수·매도 합산)', () => {
     const { hitCoins, missCoins } = buildWeeklyReport(records, stats, oldW, newW)
-    expect(hitCoins).toEqual([{ market: 'KRW-ZKC', korean_name: '바운드리스', hits: 2, total: 2 }])
-    expect(missCoins).toEqual([{ market: 'KRW-XYZ', korean_name: '엑스', total: 1 }])
+    expect(hitCoins.map((c) => c.market)).toEqual(['KRW-C', 'KRW-A', 'KRW-B'])
+    expect(hitCoins[0]).toEqual({ market: 'KRW-C', korean_name: '씨', hits: 3, total: 3 })
+    expect(missCoins).toEqual([])
   })
 })

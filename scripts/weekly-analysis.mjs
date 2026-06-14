@@ -100,4 +100,4 @@ await writeJson('weekly-analysis.json', hist)
 
 console.log(`주간 분석 완료 — 예측 ${records.length}건, 적중 ${hitCount}건 (${result.overallHitRate})`)
 console.log('가중치 갱신:', Object.keys(stats).filter((k) => stats[k].count >= 3).join(', ') || '없음')
-console.log('적중 신호 TOP:', report.topSignals.slice(0, 3).map((s) => `${s.key}(${s.hits}/${s.count})`).join(', ') || '없음')
+console.log('적중 매수신호 TOP:', report.topBuySignals.slice(0, 3).map((s) => `${s.key} ${Math.round(s.hitRate * 100)}%(${s.hits}/${s.count})`).join(', ') || '없음')
