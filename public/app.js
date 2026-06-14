@@ -17,43 +17,77 @@ function setActiveTab(tab) {
 }
 
 function signalTags(signals) {
-  return signals.map((s) => {
-    if (s.includes('골든크로스')) return '<span class="tag good">GC</span>'
-    if (s.includes('[MTF]')) return '<span class="tag">MTF</span>'
-    if (s.includes('함정')) return '<span class="tag warn">함정</span>'
-    if (s.includes('데드크로스')) return '<span class="tag warn">DC</span>'
+  return (signals || []).map((s) => {
+    if (s.includes('골든크로스')) return '<span class="badge badge-success badge-sm">GC</span>'
+    if (s.includes('[MTF]')) return '<span class="badge badge-info badge-sm">MTF</span>'
+    if (s.includes('함정')) return '<span class="badge badge-error badge-sm">함정</span>'
+    if (s.includes('데드크로스')) return '<span class="badge badge-error badge-sm">DC</span>'
+    if (s.includes('거래량')) return '<span class="badge badge-warning badge-sm">VOL</span>'
+    if (s.includes('캔들 강세')) return '<span class="badge badge-success badge-sm">🕯강세</span>'
+    if (s.includes('캔들 약세')) return '<span class="badge badge-error badge-sm">🕯약세</span>'
     return ''
-  }).join('') || ''
+  }).join(' ')
 }
 
 const routes = {
   async dashboard() {
     setActiveTab('dashboard')
-    view.innerHTML = '<h2>대시보드</h2><p class="muted">불러오는 중…</p>'
-    let res, ins
+    view.innerHTML = '<span class="loading loading-spinner"></span>'
+    let res, ins, hist
     try {
-      [res, ins] = await Promise.all([api('/api/results'), api('/api/insights')])
+      [res, ins, hist] = await Promise.all([api('/api/results'), api('/api/insights'), api('/api/history')])
     } catch {
-      view.innerHTML = '<h2>대시보드</h2><p class="muted">데이터 조회 실패 — 서버 연결을 확인하세요.</p>'
+      view.innerHTML = '<div class="alert alert-error">데이터 조회 실패 — 서버 연결을 확인하세요.</div>'
       return
     }
     const kpi = res.kpi || {}
+    const cd = res.comboDist || { rebound: 0, trap: 0, volume: 0, mtf: 0 }
+    const cs = res.candleSummary || { bullishCount: 0, bearishCount: 0, topBullish: [], topBearish: [] }
+    const buySpark = Charts.sparkline((hist || []).map((h) => h.buyCount), '#36d399')
+    const sellSpark = Charts.sparkline((hist || []).map((h) => h.sellCount), '#f87272')
+    const best = ins.bestHitRate
     view.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h2>대시보드</h2>
-        <button id="scanBtn">🔄 수동 스캔</button>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">대시보드</h2>
+        <button id="scanBtn" class="btn btn-primary btn-sm">🔄 수동 스캔</button>
       </div>
-      <p class="muted">마지막 스캔: ${res.timestamp ? new Date(res.timestamp).toLocaleString('ko-KR') : '없음'}</p>
-      <div id="scanProgress"></div>
-      <div class="kpis">
-        <div class="kpi"><div class="label">매수</div><div class="val">${kpi.buyCount ?? 0}</div></div>
-        <div class="kpi"><div class="label">매도</div><div class="val">${kpi.sellCount ?? 0}</div></div>
-        <div class="kpi"><div class="label">누적 스캔</div><div class="val">${kpi.totalScans ?? 0}</div></div>
-        <div class="kpi"><div class="label">최다 신호</div><div class="val" style="font-size:15px">${esc(ins.topSignal?.key) || '-'}</div></div>
-        <div class="kpi"><div class="label">적중률 1위</div><div class="val" style="font-size:15px">${ins.bestHitRate ? esc(ins.bestHitRate.key) + ' ' + Math.round(ins.bestHitRate.hitRate * 100) + '%' : '-'}</div></div>
+      <p class="opacity-60 text-sm mb-3">마지막 스캔: ${res.timestamp ? new Date(res.timestamp).toLocaleString('ko-KR') : '없음'}</p>
+      <div id="scanProgress" class="mb-4"></div>
+      <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200 w-full mb-4">
+        <div class="stat"><div class="stat-title">매수</div><div class="stat-value text-success">${kpi.buyCount ?? 0}</div></div>
+        <div class="stat"><div class="stat-title">매도</div><div class="stat-value text-error">${kpi.sellCount ?? 0}</div></div>
+        <div class="stat"><div class="stat-title">누적 스캔</div><div class="stat-value">${kpi.totalScans ?? 0}</div></div>
+        <div class="stat"><div class="stat-title">최다 신호</div><div class="stat-desc text-base mt-2">${esc(ins.topSignal?.key) || '-'}</div></div>
+        <div class="stat"><div class="stat-title">적중률 1위</div><div class="stat-desc text-base mt-2">${best ? esc(best.key) + ' ' + Math.round(best.hitRate * 100) + '%' : '-'}</div></div>
       </div>
-      <div class="panel"><h3>🟢 매수 TOP 5</h3>${topTable(res.buy)}</div>
-      <div class="panel"><h3>🔴 매도 TOP 5</h3>${topTable(res.sell)}</div>`
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="card bg-base-200 shadow"><div class="card-body p-4">
+          <h3 class="card-title text-sm opacity-70">콤보 분포</h3>
+          <div class="flex flex-wrap gap-2 mt-1">
+            <span class="badge badge-success gap-1">반등확인 ${cd.rebound}</span>
+            <span class="badge badge-error gap-1">과매도함정 ${cd.trap}</span>
+            <span class="badge badge-warning gap-1">거래량 ${cd.volume}</span>
+            <span class="badge badge-info gap-1">MTF ${cd.mtf}</span>
+          </div>
+        </div></div>
+        <div class="card bg-base-200 shadow"><div class="card-body p-4">
+          <h3 class="card-title text-sm opacity-70">🕯️ 캔들 모양</h3>
+          <div class="flex gap-4 mt-1">
+            <div><span class="text-success font-bold text-lg">${cs.bullishCount}</span> <span class="opacity-60 text-xs">강세</span></div>
+            <div><span class="text-error font-bold text-lg">${cs.bearishCount}</span> <span class="opacity-60 text-xs">약세</span></div>
+          </div>
+          <div class="text-xs opacity-60 mt-1">${cs.topBullish.map((p) => esc(p.name) + '×' + p.count).join(', ') || '-'}</div>
+        </div></div>
+        <div class="card bg-base-200 shadow"><div class="card-body p-4">
+          <h3 class="card-title text-sm opacity-70">스캔 추이 (매수/매도)</h3>
+          <div class="text-success">${buySpark}</div>
+          <div class="text-error">${sellSpark}</div>
+        </div></div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🟢 매수 TOP 10</h3>${topTable(res.buy, 10)}</div></div>
+        <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🔴 매도 TOP 10</h3>${topTable(res.sell, 10)}</div></div>
+      </div>`
     $('#scanBtn').onclick = runScan
   },
 
@@ -188,13 +222,17 @@ const routes = {
   },
 }
 
-function topTable(list = []) {
-  if (!list.length) return '<p class="muted">없음</p>'
-  return `<table><tbody>${list.slice(0, 5).map((x) => `
-    <tr class="clickable" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-      <td>${esc(x.korean_name)}</td><td>${esc(x.market.replace('KRW-', ''))}</td>
-      <td>${x.score}</td><td>${signalTags(x.signals)}</td>
-    </tr>`).join('')}</tbody></table>`
+function topTable(list = [], n = 10) {
+  if (!list.length) return '<p class="opacity-60 text-sm">없음</p>'
+  return `<div class="overflow-x-auto"><table class="table table-zebra table-sm">
+    <thead><tr><th>종목</th><th>점수</th><th>현재가</th><th>신호</th></tr></thead>
+    <tbody>${list.slice(0, n).map((x) => `
+      <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
+        <td><span class="font-medium">${esc(x.korean_name)}</span> <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
+        <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
+        <td>${fmt(x.price)}</td>
+        <td>${signalTags(x.signals)}</td>
+      </tr>`).join('')}</tbody></table></div>`
 }
 
 async function runScan() {
@@ -202,14 +240,14 @@ async function runScan() {
   btn.disabled = true
   const { jobId, error } = await api('/api/scan', { method: 'POST' })
   if (!jobId) { btn.disabled = false; prog.innerHTML = `<p class="muted">스캔 시작 실패${error ? ': ' + esc(error) : ''}</p>`; return }
-  prog.innerHTML = '<div class="bar"><div style="width:5%"></div></div><p class="muted">스캔 중…</p>'
+  prog.innerHTML = '<progress class="progress progress-primary w-full" value="5" max="100"></progress><p class="opacity-60 text-sm">스캔 중…</p>'
   const deadline = Date.now() + 5 * 60 * 1000 // 5분 한도
   const stop = (msg) => { clearInterval(timer); btn.disabled = false; if (msg) prog.innerHTML = `<p class="muted">${esc(msg)}</p>` }
   const timer = setInterval(async () => {
     try {
       const job = await api('/api/scan/' + jobId)
-      const fill = $('.bar > div', prog)
-      if (fill) fill.style.width = (job.progress || 0) + '%'
+      const pb = $('progress', prog)
+      if (pb) pb.value = job.progress || 0
       if (job.status === 'done') { clearInterval(timer); btn.disabled = false; routes.dashboard() }
       else if (job.status === 'error') stop('스캔 실패')
       else if (Date.now() > deadline) stop('스캔 시간 초과')
