@@ -15,9 +15,9 @@ $tasks = @(
 )
 
 if ($Uninstall) {
-  foreach ($t in $tasks) {
-    try { Unregister-ScheduledTask -TaskName $t.Name -Confirm:$false; Write-Host "제거됨: $($t.Name)" }
-    catch { Write-Host "없음: $($t.Name)" }
+  foreach ($name in @($tasks.Name + 'UpbitWeekly_Sun')) {
+    try { Unregister-ScheduledTask -TaskName $name -Confirm:$false; Write-Host "제거됨: $name" }
+    catch { Write-Host "없음: $name" }
   }
   return
 }
@@ -30,4 +30,13 @@ foreach ($t in $tasks) {
   Register-ScheduledTask -TaskName $t.Name -Action $action -Trigger $trigger -Settings $settings -Force | Out-Null
   Write-Host "등록됨: $($t.Name) @ $($t.Time) (로컬 시간 = KST)"
 }
-Write-Host "`n확인: Get-ScheduledTask -TaskName 'UpbitMonitor_*'"
+
+# 주간 분석: 매주 일요일 22:00 (일일 스캔 21:00 종료 후)
+$weekly = Join-Path $projectRoot 'scripts\weekly-analysis.mjs'
+$wAction = New-ScheduledTaskAction -Execute $nodePath -Argument "`"$weekly`"" -WorkingDirectory $projectRoot
+$wTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '22:00'
+$wSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd
+Register-ScheduledTask -TaskName 'UpbitWeekly_Sun' -Action $wAction -Trigger $wTrigger -Settings $wSettings -Force | Out-Null
+Write-Host "등록됨: UpbitWeekly_Sun @ Sun 22:00 (로컬 시간 = KST)"
+
+Write-Host "`n확인: Get-ScheduledTask -TaskName 'Upbit*'"
