@@ -1,13 +1,14 @@
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { dirname, join, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readJson } from '../lib/store.mjs'
 import { getMarkets, getDayCandles, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
-import { buildResults, buildInsights, buildVerify, buildHistory } from './api.mjs'
+import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp } from './api.mjs'
 import { createScanRunner } from './scan-job.mjs'
+import { readArchive, coinHistory, ARCHIVE } from '../lib/archive.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const PUBLIC = join(ROOT, 'public')
@@ -23,6 +24,15 @@ async function cachedMarkets() {
   const list = await getMarkets()
   if (list.length) marketsCache = { at: Date.now(), data: list }
   return marketsCache.data || []
+}
+
+// 아카이브 mtime 캐시 — 파일 안 바뀌면 재파싱 안 함
+let archiveCache = { mtimeMs: 0, data: [] }
+function cachedArchive() {
+  let mtimeMs = 0
+  try { mtimeMs = statSync(ARCHIVE).mtimeMs } catch { return [] }
+  if (mtimeMs !== archiveCache.mtimeMs) archiveCache = { mtimeMs, data: readArchive() }
+  return archiveCache.data
 }
 
 function sendJson(res, code, data) {
@@ -66,6 +76,21 @@ const server = createServer(async (req, res) => {
     }
     if (p === '/api/history') {
       return sendJson(res, 200, buildHistory(await readJson('monitor-log.json', { scans: [] })))
+    }
+    if (p === '/api/scans') {
+      const limit = Math.min(Number(url.searchParams.get('limit')) || 20, 100)
+      const offset = Number(url.searchParams.get('offset')) || 0
+      return sendJson(res, 200, buildScans(cachedArchive(), { limit, offset }))
+    }
+    if (p === '/api/scan-detail') {
+      const ts = url.searchParams.get('timestamp')
+      const scan = findScanByTimestamp(cachedArchive(), ts)
+      return scan ? sendJson(res, 200, scan) : sendJson(res, 404, { error: 'not found' })
+    }
+    if (p === '/api/coin-history') {
+      const market = url.searchParams.get('market')
+      if (!market || !/^KRW-[A-Z0-9]+$/.test(market)) return sendJson(res, 400, { error: 'invalid market' })
+      return sendJson(res, 200, coinHistory(cachedArchive(), market))
     }
     if (p === '/api/markets') {
       const list = await cachedMarkets()

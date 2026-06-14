@@ -231,6 +231,99 @@ const routes = {
           <tbody>${statsRows || '<tr><td colspan="4" class="opacity-60">데이터 없음 (주간 분석 필요)</td></tr>'}</tbody></table></div>
       </div></div>`
   },
+
+  async history() {
+    setActiveTab('history')
+    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">📜 스캔기록</h2>
+      <div class="join mb-4">
+        <button class="btn btn-sm join-item btn-active" id="hSegDate">날짜별</button>
+        <button class="btn btn-sm join-item" id="hSegCoin">종목별</button>
+      </div>
+      <div id="hBody"></div>`
+    const showDate = () => renderDateView()
+    const showCoin = () => renderCoinView()
+    $('#hSegDate').onclick = () => { $('#hSegDate').classList.add('btn-active'); $('#hSegCoin').classList.remove('btn-active'); showDate() }
+    $('#hSegCoin').onclick = () => { $('#hSegCoin').classList.add('btn-active'); $('#hSegDate').classList.remove('btn-active'); showCoin() }
+    showDate()
+  },
+}
+
+let histOffset = 0
+async function renderDateView() {
+  histOffset = 0
+  $('#hBody').innerHTML = '<span class="loading loading-spinner"></span>'
+  const data = await api(`/api/scans?limit=20&offset=0`)
+  if (!data.items || !data.items.length) { $('#hBody').innerHTML = '<p class="opacity-60">기록 없음</p>'; return }
+  const rows = (items) => items.map((s) => `
+    <tr class="hover cursor-pointer" onclick="window.__scanDetail('${esc(s.timestamp)}', this)">
+      <td>${new Date(s.timestamp).toLocaleString('ko-KR')}</td>
+      <td><span class="badge badge-success badge-sm">${s.buyCount}</span></td>
+      <td><span class="badge badge-error badge-sm">${s.sellCount}</span></td>
+      <td class="opacity-70 text-xs">${s.topBuy.map(esc).join(', ')}</td>
+    </tr>
+    <tr class="detail-row hidden"><td colspan="4" class="bg-base-300/40"></td></tr>`).join('')
+  $('#hBody').innerHTML = `<div class="card bg-base-200 shadow"><div class="card-body p-3">
+    <div class="overflow-x-auto"><table class="table table-zebra table-sm">
+      <thead><tr><th>스캔 시각</th><th>매수</th><th>매도</th><th>상위 매수</th></tr></thead>
+      <tbody id="hRows">${rows(data.items)}</tbody></table></div>
+    <button id="hMore" class="btn btn-sm btn-ghost mt-2 ${data.total <= 20 ? 'hidden' : ''}">더 보기 (${data.total}건 중 ${data.items.length})</button>
+  </div></div>`
+  $('#hMore').onclick = async () => {
+    histOffset += 20
+    const more = await api(`/api/scans?limit=20&offset=${histOffset}`)
+    $('#hRows').insertAdjacentHTML('beforeend', rows(more.items))
+    const shown = Math.min(histOffset + 20, more.total)
+    const btn = $('#hMore'); btn.textContent = `더 보기 (${more.total}건 중 ${shown})`
+    if (shown >= more.total) btn.classList.add('hidden')
+  }
+}
+
+// 행 클릭 시 그 스캔의 매수/매도 전체 펼치기 (전역 핸들러)
+window.__scanDetail = async (ts, rowEl) => {
+  const detailRow = rowEl.nextElementSibling
+  const cell = detailRow.firstElementChild
+  if (!detailRow.classList.contains('hidden')) { detailRow.classList.add('hidden'); return }
+  detailRow.classList.remove('hidden')
+  cell.innerHTML = '<span class="loading loading-spinner loading-sm"></span>'
+  const scan = await api(`/api/scan-detail?timestamp=${encodeURIComponent(ts)}`)
+  if (scan.error) { cell.innerHTML = '<span class="opacity-60">상세 조회 실패</span>'; return }
+  cell.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-3 p-2">
+    <div><div class="text-sm font-semibold mb-1">🟢 매수 ${scan.buy.length}</div>${topTable(scan.buy, 999)}</div>
+    <div><div class="text-sm font-semibold mb-1">🔴 매도 ${scan.sell.length}</div>${topTable(scan.sell, 999)}</div>
+  </div>`
+}
+
+async function renderCoinView() {
+  $('#hBody').innerHTML = `<div class="flex gap-2 mb-3">
+      <input id="hCoin" class="input input-bordered input-sm flex-1 min-w-52" placeholder="🔎 비트코인 또는 KRW-BTC">
+    </div><div id="hCoinResult"></div>`
+  if (!marketsList) { try { marketsList = await api('/api/markets') } catch { marketsList = [] } }
+  const nameOf = Object.fromEntries((marketsList || []).map((m) => [m.market, m.korean_name]))
+  const resolve = (q) => {
+    const up = q.trim().toUpperCase()
+    if (/^KRW-[A-Z0-9]+$/.test(up)) return up
+    const hit = (marketsList || []).find((m) => m.korean_name === q.trim() || m.korean_name.includes(q.trim()))
+    return hit ? hit.market : null
+  }
+  const run = async () => {
+    const market = resolve($('#hCoin').value)
+    if (!market) { $('#hCoinResult').innerHTML = '<p class="opacity-60">종목을 찾을 수 없습니다</p>'; return }
+    $('#hCoinResult').innerHTML = '<span class="loading loading-spinner"></span>'
+    const hist = await api(`/api/coin-history?market=${encodeURIComponent(market)}`)
+    if (hist.error || !hist.length) { $('#hCoinResult').innerHTML = `<p class="opacity-60">${esc(nameOf[market] || market)} 등장 기록 없음</p>`; return }
+    $('#hCoinResult').innerHTML = `<div class="card bg-base-200 shadow"><div class="card-body p-3">
+      <h3 class="card-title text-sm">${esc(nameOf[market] || '')} <span class="opacity-50 text-xs">${esc(market)}</span> · ${hist.length}회</h3>
+      <div class="overflow-x-auto"><table class="table table-zebra table-sm">
+        <thead><tr><th>시각</th><th>구분</th><th>점수</th><th>신호</th></tr></thead>
+        <tbody>${hist.slice().reverse().map((h) => `<tr>
+          <td>${new Date(h.timestamp).toLocaleString('ko-KR')}</td>
+          <td>${h.side === 'buy' ? '<span class="badge badge-success badge-sm">매수</span>' : '<span class="badge badge-error badge-sm">매도</span>'}</td>
+          <td>${h.score ?? '-'}</td><td>${signalTags(h.signals)}</td>
+        </tr>`).join('')}</tbody></table></div>
+    </div></div>`
+  }
+  $('#hCoin').oninput = run
+  $('#hCoin').onkeydown = (e) => { if (e.key === 'Enter') run() }
 }
 
 function topTable(list = [], n = 10) {
