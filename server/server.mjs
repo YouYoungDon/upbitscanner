@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs'
 import { dirname, join, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readJson } from '../lib/store.mjs'
-import { getDayCandles, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
+import { getMarkets, getDayCandles, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
 import { buildResults, buildInsights, buildVerify } from './api.mjs'
 import { createScanRunner } from './scan-job.mjs'
@@ -15,6 +15,15 @@ const PORT = process.env.DASHBOARD_PORT || 8787
 const runner = createScanRunner()
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' }
+
+// 마켓 목록 캐시 (1시간) — 거의 안 바뀌므로 매 요청마다 업비트 호출 방지
+let marketsCache = { at: 0, data: null }
+async function cachedMarkets() {
+  if (marketsCache.data && Date.now() - marketsCache.at < 3600_000) return marketsCache.data
+  const list = await getMarkets()
+  if (list.length) marketsCache = { at: Date.now(), data: list }
+  return marketsCache.data || []
+}
 
 function sendJson(res, code, data) {
   res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' })
@@ -54,6 +63,10 @@ const server = createServer(async (req, res) => {
     }
     if (p === '/api/weights') {
       return sendJson(res, 200, await readJson('signal-weights.json', {}))
+    }
+    if (p === '/api/markets') {
+      const list = await cachedMarkets()
+      return sendJson(res, 200, list.map((m) => ({ market: m.market, korean_name: m.korean_name })))
     }
     if (p === '/api/analyze') {
       const market = url.searchParams.get('market')

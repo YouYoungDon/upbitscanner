@@ -10,6 +10,8 @@ async function api(path, opts) {
   return r.json()
 }
 
+let marketsList = null // 전체 KRW 마켓 목록 캐시 (개별분석 탭 코인 리스트용)
+
 function setActiveTab(tab) {
   document.querySelectorAll('.sidebar a').forEach((a) => a.classList.toggle('active', a.dataset.tab === tab))
 }
@@ -85,35 +87,53 @@ const routes = {
 
   async analyze() {
     setActiveTab('analyze')
-    const market = new URLSearchParams((location.hash.split('?')[1] || '')).get('market') || ''
+    let selected = new URLSearchParams((location.hash.split('?')[1] || '')).get('market') || ''
     view.innerHTML = `<h2>개별 분석</h2>
       <div class="controls">
-        <input id="mkt" placeholder="KRW-BTC" value="${market}" style="width:160px">
-        <button id="goBtn">분석</button>
+        <input id="search" placeholder="🔎 비트코인 또는 KRW-BTC" style="flex:1;min-width:200px">
         <span class="seg active" data-tf="day">일봉</span>
         <span class="seg" data-tf="4h">4시간</span>
         <span class="seg" data-tf="1h">1시간</span>
         <span class="seg active" data-ct="candle">캔들</span>
         <span class="seg" data-ct="line">라인</span>
       </div>
-      <div class="panel"><div id="chart"></div></div>
-      <div style="display:flex;gap:16px;flex-wrap:wrap">
-        <div class="panel" style="flex:1;min-width:260px"><h3>지표</h3><div id="ind" class="muted">종목을 입력하세요</div></div>
-        <div class="panel" style="flex:1;min-width:260px"><h3>🕯️ 캔들 모양분석</h3><div id="cp" class="muted">-</div></div>
-      </div>
-      <div class="panel"><h3>종합 신호</h3><div id="sig" class="muted">-</div></div>`
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+        <div class="panel" style="width:240px">
+          <h3>코인 <span id="coinCount" class="muted"></span></h3>
+          <div id="coinlist" class="coinlist muted">불러오는 중…</div>
+        </div>
+        <div style="flex:1;min-width:300px">
+          <div class="panel"><div id="title" class="muted" style="margin-bottom:8px">왼쪽에서 코인을 선택하세요</div><div id="chart"></div></div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <div class="panel" style="flex:1;min-width:240px"><h3>지표</h3><div id="ind" class="muted">-</div></div>
+            <div class="panel" style="flex:1;min-width:240px"><h3>🕯️ 캔들 모양분석</h3><div id="cp" class="muted">-</div></div>
+          </div>
+          <div class="panel"><h3>종합 신호</h3><div id="sig" class="muted">-</div></div>
+        </div>
+      </div>`
     let tf = 'day', ct = 'candle', cache = null
+    if (!marketsList) { try { marketsList = await api('/api/markets') } catch { marketsList = [] } }
+    const nameOf = Object.fromEntries((marketsList || []).map((m) => [m.market, m.korean_name]))
+    const renderList = (q = '') => {
+      const qq = q.trim(), up = qq.toUpperCase()
+      const list = (marketsList || []).filter((m) => !qq || m.korean_name.includes(qq) || m.market.includes(up) || m.market.replace('KRW-', '').includes(up))
+      $('#coinCount').textContent = `(${list.length})`
+      $('#coinlist').innerHTML = list.map((m) =>
+        `<div class="coin-row${m.market === selected ? ' active' : ''}" data-market="${m.market}">${esc(m.korean_name)} <span class="muted">${esc(m.market.replace('KRW-', ''))}</span></div>`,
+      ).join('') || '<span class="muted">결과 없음</span>'
+      $('#coinlist').querySelectorAll('.coin-row').forEach((row) => { row.onclick = () => { selected = row.dataset.market; renderList($('#search').value); load() } })
+    }
     const draw = () => {
       if (!cache) return
       if (ct === 'candle') Charts.candle($('#chart'), cache.ohlcv)
       else Charts.line($('#chart'), cache.ohlcv.map((c) => c.close))
     }
     const load = async () => {
-      const mkt = $('#mkt').value.trim().toUpperCase()
-      if (!/^KRW-[A-Z0-9]+$/.test(mkt)) { $('#ind').textContent = '잘못된 마켓 코드'; return }
+      if (!selected) return
+      $('#title').innerHTML = `<b>${esc(nameOf[selected] || '')}</b> <span class="muted">${esc(selected)}</span>`
       $('#ind').textContent = '불러오는 중…'
-      const r = await api(`/api/analyze?market=${mkt}&tf=${tf}`)
-      if (r.error) { $('#ind').textContent = '조회 실패: ' + r.error; return }
+      const r = await api(`/api/analyze?market=${encodeURIComponent(selected)}&tf=${tf}`)
+      if (r.error) { $('#ind').textContent = '조회 실패: ' + esc(r.error); return }
       cache = r; draw()
       const ind = r.indicators
       $('#ind').innerHTML = `현재가 <b>${fmt(ind.price)}</b><br>
@@ -134,8 +154,15 @@ const routes = {
     view.querySelectorAll('[data-ct]').forEach((el) => el.onclick = () => {
       ct = el.dataset.ct; view.querySelectorAll('[data-ct]').forEach((x) => x.classList.toggle('active', x === el)); draw()
     })
-    $('#goBtn').onclick = load
-    if (market) load()
+    const search = $('#search')
+    search.oninput = (e) => renderList(e.target.value)
+    search.onkeydown = (e) => { // Enter → 첫 검색 결과 선택
+      if (e.key !== 'Enter') return
+      const first = $('#coinlist .coin-row')
+      if (first) { selected = first.dataset.market; renderList(search.value); load() }
+    }
+    renderList()
+    if (selected) load()
   },
 
   async verify() {
