@@ -162,8 +162,8 @@ const routes = {
       const list = (marketsList || []).filter((m) => !qq || m.korean_name.includes(qq) || m.market.includes(up) || m.market.replace('KRW-', '').includes(up))
       $('#coinCount').textContent = `(${list.length})`
       $('#coinlist').innerHTML = list.map((m) =>
-        `<div class="coin-row${m.market === selected ? ' active' : ''}" data-market="${m.market}">${esc(m.korean_name)} <span class="muted">${esc(m.market.replace('KRW-', ''))}</span></div>`,
-      ).join('') || '<span class="muted">결과 없음</span>'
+        `<div class="coin-row${m.market === selected ? ' active' : ''}" data-market="${m.market}">${esc(m.korean_name)} <span class="opacity-60 text-xs">${esc(m.market.replace('KRW-', ''))}</span></div>`,
+      ).join('') || '<span class="opacity-60 text-xs">결과 없음</span>'
       $('#coinlist').querySelectorAll('.coin-row').forEach((row) => { row.onclick = () => { selected = row.dataset.market; renderList($('#search').value); load() } })
     }
     const draw = () => {
@@ -173,7 +173,7 @@ const routes = {
     }
     const load = async () => {
       if (!selected) return
-      $('#title').innerHTML = `<b>${esc(nameOf[selected] || '')}</b> <span class="muted">${esc(selected)}</span>`
+      $('#title').innerHTML = `<b>${esc(nameOf[selected] || '')}</b> <span class="opacity-60 text-xs">${esc(selected)}</span>`
       $('#ind').textContent = '불러오는 중…'
       const r = await api(`/api/analyze?market=${encodeURIComponent(selected)}&tf=${tf}`)
       if (r.error) { $('#ind').textContent = '조회 실패: ' + esc(r.error); return }
@@ -250,10 +250,10 @@ async function runScan() {
   const btn = $('#scanBtn'); const prog = $('#scanProgress')
   btn.disabled = true
   const { jobId, error } = await api('/api/scan', { method: 'POST' })
-  if (!jobId) { btn.disabled = false; prog.innerHTML = `<p class="muted">스캔 시작 실패${error ? ': ' + esc(error) : ''}</p>`; return }
+  if (!jobId) { btn.disabled = false; prog.innerHTML = `<p class="opacity-60 text-xs">스캔 시작 실패${error ? ': ' + esc(error) : ''}</p>`; return }
   prog.innerHTML = '<progress class="progress progress-primary w-full" value="5" max="100"></progress><p class="opacity-60 text-sm">스캔 중…</p>'
   const deadline = Date.now() + 5 * 60 * 1000 // 5분 한도
-  const stop = (msg) => { clearInterval(timer); btn.disabled = false; if (msg) prog.innerHTML = `<p class="muted">${esc(msg)}</p>` }
+  const stop = (msg) => { clearInterval(timer); btn.disabled = false; if (msg) prog.innerHTML = `<p class="opacity-60 text-xs">${esc(msg)}</p>` }
   const timer = setInterval(async () => {
     try {
       const job = await api('/api/scan/' + jobId)
