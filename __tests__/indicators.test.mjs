@@ -2,8 +2,21 @@ import { describe, it, expect } from 'vitest'
 import {
   calcEMA, calcSMA, calcRSI, calcBB, calcMACD,
   calcStochastic, calcWilliamsR, calcVolRatio,
-  calcRSISeries, calcOBV,
+  calcRSISeries, calcOBV, calcBBWidthSeries,
 } from '../lib/indicators.mjs'
+
+describe('calcBBWidthSeries', () => {
+  it('밴드폭(%)을 봉별로 계산, 길이 = n-period+1', () => {
+    const closes = [10, 10, 10, 10, 10, 11, 13]
+    const s = calcBBWidthSeries(closes, 3)
+    expect(s).toHaveLength(closes.length - 3 + 1)
+    expect(s[0]).toBe(0)            // 첫 3봉 [10,10,10] → std 0 → BW 0
+    expect(s.at(-1)).toBeGreaterThan(0) // 변동 발생 구간 → BW > 0
+  })
+  it('변동 없으면 모두 0', () => {
+    expect(calcBBWidthSeries(new Array(25).fill(100), 20).every((x) => x === 0)).toBe(true)
+  })
+})
 
 describe('calcRSISeries', () => {
   it('마지막 값이 calcRSI와 일치하고, 길이는 closes와 동일', () => {
