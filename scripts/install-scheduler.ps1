@@ -8,14 +8,17 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $monitor = Join-Path $projectRoot 'scripts\monitor.mjs'
 $momentum = Join-Path $projectRoot 'scripts\momentum-scan.mjs'
+$trend = Join-Path $projectRoot 'scripts\trend-journal.mjs'
 $nodePath = (Get-Command node).Source
 
-# 반등 스캐너(monitor) 09:00/21:00, 모멘텀 스캐너 2분 뒤 09:02/21:02 순차
+# 반등(monitor) 09:00/21:00 → 모멘텀 09:02/21:02 → 추이저널 09:17/21:17 순차
 $tasks = @(
   @{ Name = 'UpbitMonitor_0900';  Time = '09:00'; Script = $monitor },
   @{ Name = 'UpbitMonitor_2100';  Time = '21:00'; Script = $monitor },
   @{ Name = 'UpbitMomentum_0902'; Time = '09:02'; Script = $momentum },
-  @{ Name = 'UpbitMomentum_2102'; Time = '21:02'; Script = $momentum }
+  @{ Name = 'UpbitMomentum_2102'; Time = '21:02'; Script = $momentum },
+  @{ Name = 'UpbitTrend_0917';    Time = '09:17'; Script = $trend },
+  @{ Name = 'UpbitTrend_2117';    Time = '21:17'; Script = $trend }
 )
 
 if ($Uninstall) {
