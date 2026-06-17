@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildResults, buildInsights, buildVerify, comboDistribution, candleSummary, buildHistory } from '../server/api.mjs'
+import { buildResults, buildInsights, buildVerify, comboDistribution, candleSummary, buildHistory, buildMomentum } from '../server/api.mjs'
 
 const log = {
   totalScans: 5,
@@ -49,6 +49,20 @@ describe('buildVerify', () => {
   it('report 없으면 null', () => {
     const r = buildVerify({ weeks: [{ timestamp: 't1' }] }, {})
     expect(r.report).toBeNull()
+  })
+})
+
+describe('buildMomentum', () => {
+  it('최신 모멘텀 스캔의 추세지속 종목 + KPI', () => {
+    const log = { totalScans: 3, scans: [{ timestamp: 't2', picks: [{ market: 'KRW-WLD', korean_name: '월드코인', price: 5, score: 16, signals: ['EMA 완전정배열', '신고가'] }] }] }
+    const r = buildMomentum(log)
+    expect(r.empty).toBe(false)
+    expect(r.kpi.count).toBe(1)
+    expect(r.kpi.totalScans).toBe(3)
+    expect(r.picks[0].market).toBe('KRW-WLD')
+  })
+  it('스캔 없으면 empty', () => {
+    expect(buildMomentum({ scans: [] }).empty).toBe(true)
   })
 })
 

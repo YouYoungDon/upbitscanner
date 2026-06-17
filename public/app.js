@@ -91,6 +91,24 @@ const routes = {
     $('#scanBtn').onclick = runScan
   },
 
+  async momentum() {
+    setActiveTab('momentum')
+    view.innerHTML = '<h2 class="text-2xl font-bold mb-4">🚀 모멘텀 (추세지속)</h2><span class="loading loading-spinner"></span>'
+    const m = await api('/api/momentum')
+    const rows = (m.picks || []).map((x) => `
+      <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
+        <td><span class="font-medium">${esc(x.korean_name)}</span> <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
+        <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
+        <td>${fmt(x.price)}</td>
+        <td><div class="flex flex-wrap gap-1">${(x.signals || []).map((s) => `<span class="badge badge-ghost badge-sm">${esc(s)}</span>`).join('')}</div></td>
+      </tr>`).join('')
+    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">🚀 모멘텀 (추세지속)</h2>
+      <p class="opacity-60 text-sm mb-3">마지막 스캔: ${m.timestamp ? new Date(m.timestamp).toLocaleString('ko-KR') : '없음'} · 추세지속 ${m.kpi?.count ?? 0}종목 (MIN 10점)</p>
+      <div class="card bg-base-200 shadow"><div class="card-body p-3"><div class="overflow-x-auto"><table class="table table-zebra table-sm">
+        <thead><tr><th>종목</th><th>점수</th><th>현재가</th><th>신호 (그룹)</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="4" class="opacity-60">스캔 기록 없음 (momentum-scan 실행 필요)</td></tr>'}</tbody></table></div></div></div>`
+  },
+
   async recommend() {
     setActiveTab('recommend')
     view.innerHTML = '<h2 class="text-2xl font-bold mb-4">추천</h2><span class="loading loading-spinner"></span>'

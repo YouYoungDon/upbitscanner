@@ -58,6 +58,18 @@ export function buildResults(log) {
   }
 }
 
+// 모멘텀 스캔 최신 결과 (추세지속 추천)
+export function buildMomentum(log) {
+  const scan = log?.scans?.at(-1)
+  if (!scan) return { empty: true, kpi: { count: 0, totalScans: log?.totalScans || 0 }, picks: [] }
+  return {
+    empty: false,
+    timestamp: scan.timestamp,
+    kpi: { count: (scan.picks || []).length, totalScans: log.totalScans || 0 },
+    picks: scan.picks || [],
+  }
+}
+
 export function buildInsights(log, weekly) {
   const scan = log?.scans?.at(-1)
   const topSignal = scan ? (topSignalsOfScan(scan)[0] || null) : null

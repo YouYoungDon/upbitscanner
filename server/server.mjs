@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { readJson } from '../lib/store.mjs'
 import { getMarkets, getDayCandles, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
-import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp } from './api.mjs'
+import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum } from './api.mjs'
 import { createScanRunner } from './scan-job.mjs'
 import { readArchive, coinHistory, ARCHIVE } from '../lib/archive.mjs'
 
@@ -56,6 +56,9 @@ const server = createServer(async (req, res) => {
 
     if (p === '/api/results') {
       return sendJson(res, 200, buildResults(await readJson('monitor-log.json', { scans: [] })))
+    }
+    if (p === '/api/momentum') {
+      return sendJson(res, 200, buildMomentum(await readJson('momentum-log.json', { scans: [] })))
     }
     if (p === '/api/insights') {
       const [log, weekly] = await Promise.all([

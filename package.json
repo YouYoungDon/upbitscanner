@@ -6,6 +6,7 @@
   "scripts": {
     "dashboard": "node server/server.mjs",
     "scan": "node scripts/monitor.mjs",
+    "momentum": "node scripts/momentum-scan.mjs",
     "weekly": "node scripts/weekly-analysis.mjs",
     "backtest": "node scripts/backtest.mjs",
     "analyze": "node scripts/analyze.mjs",
