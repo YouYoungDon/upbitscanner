@@ -3,6 +3,15 @@
 업비트 KRW 마켓을 하루 2회(KST 09:00 / 21:00) 자동 스캔해 콤보 보정된 매수/매도
 신호를 집계한다. 공개 API만 사용하므로 API 키가 필요 없다.
 
+**두 스캐너 운영:**
+
+| 스캐너 | 목적 | 출력 | 스케줄 |
+|--------|------|------|--------|
+| `monitor.mjs` | 반등 초입 포착 (과매도→반전) + 고강도 SMC 신호 | `monitor-log.json` + `scan-archive.jsonl` | 09:00 / 21:00 |
+| `momentum-scan.mjs` | 추세 지속 포착 (이미 오르는 종목, 예: WLD) | `momentum-log.json` | 09:02 / 21:02 |
+
+반등 스캐너는 과매수 종목을 매도로만 보므로, 이미 상승 중인 추세 종목은 모멘텀 스캐너가 별도로 잡는다.
+
 ## 설치
 
 ```bash
@@ -12,7 +21,8 @@ npm install
 ## 사용
 
 ```bash
-npm run scan                # 수동 스캔 1회
+npm run scan                # 반등 스캔 1회 (monitor)
+npm run momentum            # 모멘텀(추세지속) 스캔 1회
 npm run analyze -- KRW-BTC  # 개별 종목 분석
 npm run weekly -- --force   # 주간 분석 강제 실행 (수요일 외)
 npm run backtest 30         # 상위 30종목 백테스트
@@ -41,8 +51,11 @@ Get-ScheduledTask -TaskName 'Upbit*'
 
 | 경로 | 역할 |
 |------|------|
-| `lib/indicators.mjs` | EMA/SMA/RSI/BB/MACD/Stoch/WR/VolRatio 순수 함수 |
+| `lib/indicators.mjs` | EMA/SMA/RSI/BB/MACD/Stoch/WR/VolRatio + RSI시리즈/OBV 순수 함수 |
 | `lib/signals.mjs` | 신호 감지 + 점수화 + 콤보 보정 + 패턴 감지 |
+| `lib/momentum.mjs` | 추세지속 점수(A~E 그룹) + 다이버전스 + BB스퀴즈 |
+| `lib/smc-signals.mjs` | 고강도 신호: 유동성스윕 / V-Bottom / Pump Start |
+| `scripts/momentum-scan.mjs` | 모멘텀(추세지속) 스캐너 |
 | `lib/upbit.mjs` | 업비트 공개 REST API 래퍼 |
 | `lib/store.mjs` | JSON 읽기/쓰기 + 롤링 + EWM 헬퍼 |
 | `lib/weekly.mjs` | 적중률 집계 + 가중치 갱신 로직 |
@@ -83,6 +96,29 @@ Get-ScheduledTask -TaskName 'Upbit*'
 | `[익절] Stoch DC — 매도 타이밍` | 매도 신호에 데드크로스가 있으면 익절 타이밍 정보 태그 부착 (점수 영향 없음) |
 | `박스권 돌파 패턴` | 최근 20봉 범위가 ±5% 이내로 좁고 마지막 종가가 상단 1% 돌파 시 매수 +4점 |
 
+## 모멘텀 스캐너 점수 (momentum-scan, MIN_SCORE=10)
+
+추세 지속 종목을 5개 그룹으로 점수화(이론최대 18). A~D는 그룹당 1개(최댓값), E는 누적.
+
+| 그룹 | 내용 | 최대 |
+|------|------|------|
+| A 추세 | EMA 정배열(20>50[>200]) | +4 |
+| B 모멘텀 | 연속양봉≥5/≥3, 없으면 EMA20 기울기≥1% | +4 |
+| C 위치 | 200봉 신고가 갱신(≥99%)/근접(≥92%) | +4 |
+| D 오실레이터 | MACD 히스토 3연속↑ + RSI 50~75 | +4 |
+| E 품질 | OBV 매집/추세확인, BB 스퀴즈 발산 (각 +2) | 누적 |
+| 차감 | RSI 하락 다이버전스 −4, OBV 약화 −2 | − |
+
+## monitor 고강도 SMC 신호 (드물지만 강력)
+
+| 신호 | 점수 | 조건 |
+|------|------|------|
+| 유동성 스윕 | +2~4 | 직전 20봉 스윙 고/저점을 잠깐 뚫고 종가 회귀 (SMC 스탑헌팅) |
+| V-Bottom | +5~7 | 투매(RSI9≤25,거래량3x) → 긴 밑꼬리 핀바 → CHoCH 순서 충족. SL=핀바 저가 |
+| Pump Start | +7 | BB스퀴즈 → OBV매집 → BB상단 종가돌파(거래량2x) 순서. SL=돌파봉 저가 |
+
+V-Bottom/Pump는 매수 항목에 `vbottomSL`/`pumpSL`(손절가) 필드와 함께 저장되고 Telegram에 🎯/🚀 표시.
+
 ## 가중치 자동 갱신 (EWM)
 
 `scripts/weekly-analysis.mjs`가 **매주 일요일 22:00**에 지난 7일 스캔 아카이브의
@@ -104,6 +140,7 @@ Windows에서는 `start-dashboard.bat` 더블클릭으로도 실행된다.
 - **UI**: Tailwind CSS + DaisyUI(business 테마, CDN) 기반 — 빌드 없이 동작.
 - **대시보드 탭**: KPI stats + 콤보 분포 + 캔들 모양 요약 + 스캔 추이 스파크라인 + 매수/매도 TOP 10 + 수동 스캔(진행률)
 - **추천 탭**: 매수/매도 전체 리스트, 검색·콤보 badge
+- **모멘텀 탭**: 추세지속 추천(`momentum-scan`) — 종목·점수·그룹별 신호(EMA정배열/신고가/OBV/BB스퀴즈 등)
 - **개별분석 탭**: 코인 리스트(한글 검색) → 캔들/라인 차트(일/4h/1h) + 지표 + 🕯️ 캔들 모양분석 + 종합 점수
 - **신호검증 탭**: 전체·시간별(+1/+3/+7일) 적중률 + 신호별 적중률/가중치
 - **스캔기록 탭**: 매 스캔을 영구 아카이브(`data/scan-archive.jsonl`)에 누적. 날짜별 드릴다운(그 스캔의 매수/매도 전체) + 종목별 등장 이력(특정 코인이 언제 매수/매도로 떴는지). 최초 1회 `node scripts/seed-archive.mjs`로 기존 기록 이관.
