@@ -1,5 +1,21 @@
 import { describe, it, expect } from 'vitest'
-import { detectDivergence, calcBBSqueeze, scoreMomentum, MIN_MOMENTUM_SCORE } from '../lib/momentum.mjs'
+import { detectDivergence, calcBBSqueeze, scoreMomentum, MIN_MOMENTUM_SCORE, backtestSamples } from '../lib/momentum.mjs'
+
+describe('backtestSamples', () => {
+  it('상승추세에서 신호 표본 + forward return 기록', () => {
+    const ohlcv = Array.from({ length: 220 }, (_, i) => {
+      const close = 100 + i * 0.5
+      return { open: close - 0.2, high: close + 0.1, low: close - 0.3, close, volume: 100 }
+    })
+    const samples = backtestSamples(ohlcv)
+    expect(samples.length).toBeGreaterThan(0)
+    expect(samples[0].fwd[3]).toBeGreaterThan(0) // 상승추세라 +3일 수익 양수
+    expect(samples[0]).toHaveProperty('score')
+  })
+  it('배열 아니면 빈 배열', () => {
+    expect(backtestSamples(null)).toEqual([])
+  })
+})
 
 describe('detectDivergence', () => {
   it('하락 다이버전스: 가격 고점↑ + RSI 고점↓', () => {

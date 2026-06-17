@@ -9,6 +9,7 @@
     "momentum": "node scripts/momentum-scan.mjs",
     "weekly": "node scripts/weekly-analysis.mjs",
     "backtest": "node scripts/backtest.mjs",
+    "backtest:momentum": "node scripts/backtest-momentum.mjs",
     "analyze": "node scripts/analyze.mjs",
     "test": "vitest run"
   },
