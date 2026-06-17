@@ -1,18 +1,14 @@
-import { getMarkets, getDayCandles, getTicker, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
+import { getDayCandles, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
+import { getScanUniverse, BATCH, DELAY, sleep } from '../lib/scan-universe.mjs'
 
-const BATCH = 5
-const DELAY = 200
-const MIN_TRADE_PRICE_24H = 100_000_000 // 1억원
 const MAX_SCANS = 30
 const BUY_THRESHOLD = 5
 const SELL_THRESHOLD = 3
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 // 멀티 타임프레임: 4시간봉 Stoch 골든크로스 확인 (반등 신뢰도 보강)
 async function check4hStochGC(market) {
@@ -25,22 +21,9 @@ async function check4hStochGC(market) {
 
 async function main() {
   const weights = await readJson('signal-weights.json', {})
-  const markets = await getMarkets()
-  if (!markets.length) { console.error('마켓 조회 실패'); process.exit(1) }
-
-  const codes = markets.map((m) => m.market)
-  const tickers = []
-  for (let i = 0; i < codes.length; i += 100) {
-    const t = await getTicker(codes.slice(i, i + 100))
-    if (t) tickers.push(...t)
-    await sleep(DELAY)
-  }
-  const liquid = new Set(
-    tickers.filter((t) => t.acc_trade_price_24h >= MIN_TRADE_PRICE_24H).map((t) => t.market),
-  )
-  const nameOf = Object.fromEntries(markets.map((m) => [m.market, m.korean_name]))
-  const targets = codes.filter((c) => liquid.has(c))
-  console.log(`스캔 대상 ${targets.length}종목 (전체 ${codes.length})`)
+  const { targets, nameOf, total } = await getScanUniverse()
+  if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
+  console.log(`스캔 대상 ${targets.length}종목 (전체 ${total})`)
 
   const buy = [], sell = []
   for (let i = 0; i < targets.length; i += BATCH) {
