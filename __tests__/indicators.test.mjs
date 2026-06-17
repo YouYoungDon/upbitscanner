@@ -2,7 +2,30 @@ import { describe, it, expect } from 'vitest'
 import {
   calcEMA, calcSMA, calcRSI, calcBB, calcMACD,
   calcStochastic, calcWilliamsR, calcVolRatio,
+  calcRSISeries, calcOBV,
 } from '../lib/indicators.mjs'
+
+describe('calcRSISeries', () => {
+  it('마지막 값이 calcRSI와 일치하고, 길이는 closes와 동일', () => {
+    const closes = [44, 44.3, 44.1, 44.6, 45.2, 45.4, 45.1, 45.6, 46.3, 46.6, 46.2, 46.8, 47.1, 46.9, 47.3, 47.7]
+    const series = calcRSISeries(closes, 14)
+    expect(series).toHaveLength(closes.length)
+    expect(series[13]).toBe(null) // 워밍업 (period 미만 인덱스는 null, period 인덱스부터 값)
+    expect(series.at(-1)).toBeCloseTo(calcRSI(closes, 14), 6)
+  })
+  it('데이터 부족 시 빈 배열', () => {
+    expect(calcRSISeries([1, 2, 3], 14)).toEqual([])
+  })
+})
+
+describe('calcOBV', () => {
+  it('상승봉 +vol, 하락봉 -vol, 보합 유지 누적', () => {
+    const closes = [10, 11, 10, 10, 12]
+    const vols = [100, 50, 30, 20, 40]
+    // 0, +50, -30, +0, +40 → [0,50,20,20,60]
+    expect(calcOBV(closes, vols)).toEqual([0, 50, 20, 20, 60])
+  })
+})
 
 describe('calcSMA', () => {
   it('단순이동평균을 윈도우별로 계산', () => {
