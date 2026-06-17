@@ -4,11 +4,12 @@ import { existsSync, statSync } from 'node:fs'
 import { dirname, join, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readJson } from '../lib/store.mjs'
-import { getMarkets, getDayCandles, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
+import { getMarkets, getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
 import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum } from './api.mjs'
 import { createScanRunner } from './scan-job.mjs'
 import { readArchive, coinHistory, ARCHIVE } from '../lib/archive.mjs'
+import { readPositions, evalPositions } from '../lib/positions.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const PUBLIC = join(ROOT, 'public')
@@ -59,6 +60,13 @@ const server = createServer(async (req, res) => {
     }
     if (p === '/api/momentum') {
       return sendJson(res, 200, buildMomentum(await readJson('momentum-log.json', { scans: [] })))
+    }
+    if (p === '/api/positions') {
+      const positions = readPositions()
+      if (!positions.length) return sendJson(res, 200, { positions: [] })
+      const tickers = await getTicker(positions.map((x) => x.market)) || []
+      const priceOf = Object.fromEntries(tickers.map((t) => [t.market, t.trade_price]))
+      return sendJson(res, 200, { positions: evalPositions(positions, priceOf) })
     }
     if (p === '/api/insights') {
       const [log, weekly] = await Promise.all([

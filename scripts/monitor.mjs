@@ -1,4 +1,5 @@
-import { getDayCandles, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
+import { getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
+import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
@@ -95,6 +96,28 @@ async function main() {
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
 
   await notifyTelegram(buy)
+  await notifyPositionAlerts()
+}
+
+// 보유 포지션(data/positions.json) 중 손절선 도달 종목 경고 (콘솔 + Telegram)
+async function notifyPositionAlerts() {
+  const positions = readPositions()
+  if (!positions.length) return
+  const tickers = await getTicker(positions.map((p) => p.market)) || []
+  const priceOf = Object.fromEntries(tickers.map((t) => [t.market, t.trade_price]))
+  const hit = evalPositions(positions, priceOf).filter((p) => p.hitSL)
+  if (!hit.length) return
+  console.log('⚠️ 손절선 도달:', hit.map((p) => `${p.korean_name}(${p.price}≤${p.stopLoss})`).join(', '))
+  const TG_TOKEN = process.env.TELEGRAM_TOKEN
+  const TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID
+  if (!TG_TOKEN || !TG_CHAT_ID) return
+  const lines = hit.map((p) => `• ${p.korean_name}(${p.market.replace('KRW-', '')}) ${p.price} ≤ SL ${p.stopLoss} (${p.plPct}%)`)
+  try {
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `⚠️ 손절선 도달\n\n${lines.join('\n')}` }),
+    })
+  } catch { /* 무시 */ }
 }
 
 // Telegram 알림 (환경변수 TELEGRAM_TOKEN, TELEGRAM_CHAT_ID 설정 시 매수 상위 5개 전송)

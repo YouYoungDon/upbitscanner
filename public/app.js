@@ -110,6 +110,26 @@ const routes = {
         <tbody>${rows || '<tr><td colspan="4" class="opacity-60">스캔 기록 없음 (momentum-scan 실행 필요)</td></tr>'}</tbody></table></div></div></div>`
   },
 
+  async positions() {
+    setActiveTab('positions')
+    view.innerHTML = '<h2 class="text-2xl font-bold mb-4">💼 내 포지션</h2><span class="loading loading-spinner"></span>'
+    const { positions } = await api('/api/positions')
+    const rows = (positions || []).map((p) => {
+      const pl = p.plPct == null ? '-' : `<span class="${p.plPct >= 0 ? 'text-success' : 'text-error'}">${p.plPct >= 0 ? '+' : ''}${p.plPct}%</span>`
+      const status = p.hitSL ? '<span class="badge badge-error badge-sm">SL 도달</span>' : p.hitTP ? '<span class="badge badge-success badge-sm">TP 도달</span>' : `<span class="opacity-60 text-xs">SL까지 ${p.toSLPct == null ? '-' : p.toSLPct + '%'}</span>`
+      return `<tr class="hover">
+        <td><span class="font-medium">${esc(p.korean_name || p.market)}</span> <span class="opacity-50 text-xs">${esc(p.market.replace('KRW-', ''))}</span></td>
+        <td>${fmt(p.entry)}</td><td>${fmt(p.price)}</td><td>${pl}</td>
+        <td>${fmt(p.stopLoss)} / ${fmt(p.takeProfit)}</td><td>${status}</td>
+      </tr>`
+    }).join('')
+    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">💼 내 포지션</h2>
+      <p class="opacity-60 text-sm mb-3">data/positions.json 편집으로 관리. 보유 종목 SL 도달 시 스캔 후 Telegram 알림.</p>
+      <div class="card bg-base-200 shadow"><div class="card-body p-3"><div class="overflow-x-auto"><table class="table table-zebra table-sm">
+        <thead><tr><th>종목</th><th>진입가</th><th>현재가</th><th>손익</th><th>SL/TP</th><th>상태</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="opacity-60">보유 포지션 없음 (data/positions.json)</td></tr>'}</tbody></table></div></div></div>`
+  },
+
   async recommend() {
     setActiveTab('recommend')
     view.innerHTML = '<h2 class="text-2xl font-bold mb-4">추천</h2><span class="loading loading-spinner"></span>'
