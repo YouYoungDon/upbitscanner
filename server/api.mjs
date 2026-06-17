@@ -55,6 +55,7 @@ export function buildResults(log) {
     sell: scan.sell,
     comboDist: comboDistribution(scan.buy),
     candleSummary: candleSummary(scan),
+    regime: scan.regime || null,
   }
 }
 

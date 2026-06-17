@@ -51,7 +51,8 @@ const routes = {
         <h2 class="text-2xl font-bold">대시보드</h2>
         <button id="scanBtn" class="btn btn-primary btn-sm">🔄 수동 스캔</button>
       </div>
-      <p class="opacity-60 text-sm mb-3">마지막 스캔: ${res.timestamp ? new Date(res.timestamp).toLocaleString('ko-KR') : '없음'}</p>
+      <p class="opacity-60 text-sm mb-3">마지막 스캔: ${res.timestamp ? new Date(res.timestamp).toLocaleString('ko-KR') : '없음'}
+        ${res.regime ? `· 시장 레짐 <span class="badge badge-sm ${res.regime.label === '확장' ? 'badge-success' : res.regime.label === '수축' ? 'badge-error' : 'badge-warning'}">${res.regime.emoji} ${esc(res.regime.label)} (BTC ${esc(res.regime.trend)}, 비율 ${res.regime.ratio})</span>` : ''}</p>
       <div id="scanProgress" class="mb-4"></div>
       <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200 w-full mb-4">
         <div class="stat"><div class="stat-title">매수</div><div class="stat-value text-success">${kpi.buyCount ?? 0}</div></div>

@@ -5,6 +5,7 @@ import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep } from '../lib/scan-universe.mjs'
+import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 
 const MAX_SCANS = 30
 const BUY_THRESHOLD = 5
@@ -24,6 +25,11 @@ async function main() {
   const { targets, nameOf, total } = await getScanUniverse()
   if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
   console.log(`스캔 대상 ${targets.length}종목 (전체 ${total})`)
+
+  // 시장 레짐: BTC 일봉 추세 (약세면 반등 매수 감점)
+  const btcCandles = await getDayCandles('KRW-BTC', 200)
+  const regime = btcRegime(btcCandles ? candlesToOhlcv(btcCandles) : [])
+  console.log(`시장 레짐(BTC): ${regime.trend}`)
 
   const buy = [], sell = []
   for (let i = 0; i < targets.length; i += BATCH) {
@@ -57,6 +63,8 @@ async function main() {
       if (sweep.side === 'sell') { sellScore += sweep.score; sellSignals = [...sellSignals, `유동성 스윕 고점 (깊이 ${sweep.depthPct}%)`] }
       if (vbottom) { finalBuyScore += vbottom.score; buySignals = [...buySignals, `🎯V-Bottom (RSI${vbottom.rsi9}·꼬리${vbottom.wickRatio}%)`]; vbottomSL = vbottom.stopLoss }
       if (pump) { finalBuyScore += pump.score; buySignals = [...buySignals, `🚀Pump Start (vol ${pump.volRatio}x)`]; pumpSL = pump.stopLoss1 }
+      // 레짐 게이트: BTC 약세장에선 반등 매수 신뢰도 하향 (약세 역행 매수 억제)
+      if (regime.trend === 'bear') { finalBuyScore *= 0.85; buySignals = [...buySignals, '[레짐] BTC 약세 감점'] }
 
       if (finalBuyScore >= BUY_THRESHOLD) {
         const item = { market, korean_name: nameOf[market], price: sig.price, score: +finalBuyScore.toFixed(1), signals: buySignals }
@@ -74,11 +82,14 @@ async function main() {
   buy.sort((a, b) => b.score - a.score)
   sell.sort((a, b) => b.score - a.score)
 
+  const ratio = +(buy.length / Math.max(sell.length, 1)).toFixed(2)
+  const regimeInfo = { trend: regime.trend, ratio, ...regimeLabel(ratio, regime.trend) }
+  const entry = { timestamp: new Date().toISOString(), buy, sell, regime: regimeInfo }
   const log = await readJson('monitor-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
   log.totalScans = (log.totalScans || 0) + 1
-  log.scans = rollingAppend(log.scans || [], { timestamp: new Date().toISOString(), buy, sell }, MAX_SCANS)
+  log.scans = rollingAppend(log.scans || [], entry, MAX_SCANS)
   await writeJson('monitor-log.json', log)
-  appendScan({ timestamp: log.scans.at(-1).timestamp, buy, sell })
+  appendScan(entry)
 
   console.log(`스캔 #${log.totalScans} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
