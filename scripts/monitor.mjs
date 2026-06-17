@@ -7,6 +7,7 @@ import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, LOW_LIQUIDITY_24H } from '../lib/scan-universe.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
+import { sendTelegram } from '../lib/notify.mjs'
 
 const MAX_SCANS = 30
 const BUY_THRESHOLD = 5
@@ -146,4 +147,4 @@ async function notifyTelegram(buyList) {
   } catch { /* 네트워크 오류 시 무시 */ }
 }
 
-main().catch((e) => { console.error(e); process.exit(1) })
+main().catch(async (e) => { console.error(e); await sendTelegram(`❌ 반등 스캔 실패: ${e.message}`); process.exit(1) })
