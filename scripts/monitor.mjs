@@ -1,5 +1,6 @@
 import { getMarkets, getDayCandles, getTicker, getMinuteCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
+import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
@@ -63,11 +64,25 @@ async function main() {
           buySignals = [...buySignals, '[MTF] 4시간봉 Stoch GC 확인']
         }
       }
+      // 고강도 SMC 신호 (드물지만 강력 — combo/MTF와 별개의 가산 점수)
+      let sellScore = sig.sellScore, sellSignals = sig.sell
+      let vbottomSL, pumpSL
+      const sweep = detectLiquiditySweep(ohlcv)
+      const vbottom = detectVBottom(ohlcv)
+      const pump = detectPumpStart(ohlcv)
+      if (sweep.side === 'buy') { finalBuyScore += sweep.score; buySignals = [...buySignals, `유동성 스윕 (깊이 ${sweep.depthPct}%)`] }
+      if (sweep.side === 'sell') { sellScore += sweep.score; sellSignals = [...sellSignals, `유동성 스윕 고점 (깊이 ${sweep.depthPct}%)`] }
+      if (vbottom) { finalBuyScore += vbottom.score; buySignals = [...buySignals, `🎯V-Bottom (RSI${vbottom.rsi9}·꼬리${vbottom.wickRatio}%)`]; vbottomSL = vbottom.stopLoss }
+      if (pump) { finalBuyScore += pump.score; buySignals = [...buySignals, `🚀Pump Start (vol ${pump.volRatio}x)`]; pumpSL = pump.stopLoss1 }
+
       if (finalBuyScore >= BUY_THRESHOLD) {
-        buy.push({ market, korean_name: nameOf[market], price: sig.price, score: +finalBuyScore.toFixed(1), signals: buySignals })
+        const item = { market, korean_name: nameOf[market], price: sig.price, score: +finalBuyScore.toFixed(1), signals: buySignals }
+        if (vbottomSL != null) item.vbottomSL = vbottomSL
+        if (pumpSL != null) item.pumpSL = pumpSL
+        buy.push(item)
       }
-      if (sig.sellScore >= SELL_THRESHOLD) {
-        sell.push({ market, korean_name: nameOf[market], price: sig.price, score: +sig.sellScore.toFixed(1), signals: sig.sell })
+      if (sellScore >= SELL_THRESHOLD) {
+        sell.push({ market, korean_name: nameOf[market], price: sig.price, score: +sellScore.toFixed(1), signals: sellSignals })
       }
     }))
     await sleep(DELAY)
@@ -96,7 +111,8 @@ async function notifyTelegram(buyList) {
   const lines = buyList.slice(0, 5).map((b) => {
     const mtf = b.signals.includes('[MTF] 4시간봉 Stoch GC 확인') ? ' 📡MTF' : ''
     const stgc = b.signals.some((s) => s.includes('골든크로스')) ? ' 🟢GC' : ''
-    return `• ${b.korean_name}(${b.market.replace('KRW-', '')}) score ${b.score.toFixed(1)}${stgc}${mtf}`
+    const sl = b.vbottomSL != null ? ` 🎯SL:${b.vbottomSL}` : b.pumpSL != null ? ` 🚀SL:${b.pumpSL}` : ''
+    return `• ${b.korean_name}(${b.market.replace('KRW-', '')}) score ${b.score.toFixed(1)}${stgc}${mtf}${sl}`
   })
   const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
   const msg = `🚨 업비트 스캔 ${when}\n매수 ${buyList.length}개 감지\n\n${lines.join('\n')}`
