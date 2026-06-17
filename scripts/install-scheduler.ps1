@@ -1,4 +1,4 @@
-# 업비트 스캐너 작업 스케줄러 등록 (매일 KST 09:00 / 21:00)
+# 업비트 스캐너 작업 스케줄러 등록 (반등 09:00/21:00 · 모멘텀 09:02/21:02 · 주간 일 22:00, KST)
 # 사용법:
 #   등록:   powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1
 #   제거:   powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1 -Uninstall
@@ -7,11 +7,15 @@ param([switch]$Uninstall)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $monitor = Join-Path $projectRoot 'scripts\monitor.mjs'
+$momentum = Join-Path $projectRoot 'scripts\momentum-scan.mjs'
 $nodePath = (Get-Command node).Source
 
+# 반등 스캐너(monitor) 09:00/21:00, 모멘텀 스캐너 2분 뒤 09:02/21:02 순차
 $tasks = @(
-  @{ Name = 'UpbitMonitor_0900'; Time = '09:00' },
-  @{ Name = 'UpbitMonitor_2100'; Time = '21:00' }
+  @{ Name = 'UpbitMonitor_0900';  Time = '09:00'; Script = $monitor },
+  @{ Name = 'UpbitMonitor_2100';  Time = '21:00'; Script = $monitor },
+  @{ Name = 'UpbitMomentum_0902'; Time = '09:02'; Script = $momentum },
+  @{ Name = 'UpbitMomentum_2102'; Time = '21:02'; Script = $momentum }
 )
 
 if ($Uninstall) {
@@ -23,7 +27,7 @@ if ($Uninstall) {
 }
 
 foreach ($t in $tasks) {
-  $action = New-ScheduledTaskAction -Execute $nodePath -Argument "`"$monitor`"" -WorkingDirectory $projectRoot
+  $action = New-ScheduledTaskAction -Execute $nodePath -Argument "`"$($t.Script)`"" -WorkingDirectory $projectRoot
   $trigger = New-ScheduledTaskTrigger -Daily -At $t.Time
   # WakeToRun: 절전 중이면 PC를 깨워 실행 / 배터리에서도 시작·유지 / 놓친 작업은 깨어난 뒤 실행
   $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd
