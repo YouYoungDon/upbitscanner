@@ -1,0 +1,93 @@
+{
+  "started": "2026-06-17T11:38:30.091Z",
+  "totalScans": 1,
+  "scans": [
+    {
+      "timestamp": "2026-06-17T11:38:30.093Z",
+      "picks": [
+        {
+          "market": "KRW-AKT",
+          "korean_name": "아카시네트워크",
+          "price": 1280,
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ]
+        },
+        {
+          "market": "KRW-NEAR",
+          "korean_name": "니어프로토콜",
+          "price": 3427,
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ]
+        },
+        {
+          "market": "KRW-ZAMA",
+          "korean_name": "자마",
+          "price": 54.2,
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ]
+        },
+        {
+          "market": "KRW-UNI",
+          "korean_name": "유니스왑",
+          "price": 5035,
+          "score": 10,
+          "signals": [
+            "연속양봉 7봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ]
+        },
+        {
+          "market": "KRW-WLD",
+          "korean_name": "월드코인",
+          "price": 985,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ]
+        },
+        {
+          "market": "KRW-ARKM",
+          "korean_name": "아캄",
+          "price": 201,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ]
+        },
+        {
+          "market": "KRW-ONDO",
+          "korean_name": "온도파이낸스",
+          "price": 555,
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ]
+        }
+      ]
+    }
+  ]
+}
