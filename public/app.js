@@ -232,10 +232,22 @@ const routes = {
     view.innerHTML = '<h2 class="text-2xl font-bold mb-4">신호 검증</h2><span class="loading loading-spinner"></span>'
     const v = await api('/api/verify')
     const bar = (rate) => `<progress class="progress progress-success w-24 align-middle" value="${Math.round((rate || 0) * 100)}" max="100"></progress>`
+    const retCell = (ar) => ar == null ? '-' : `<span class="${ar >= 0 ? 'text-success' : 'text-error'}">${ar >= 0 ? '+' : ''}${ar}%</span>`
     const statsRows = Object.entries(v.signalStats || {})
       .sort((a, b) => (b[1].hitRate) - (a[1].hitRate))
-      .map(([k, s]) => `<tr><td>${esc(k)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td><span class="badge badge-ghost badge-sm">${(v.weights[k] ?? 1).toFixed(2)}</span></td></tr>`).join('')
+      .map(([k, s]) => `<tr><td>${esc(k)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td>${retCell(s.avgReturn)}</td><td><span class="badge badge-ghost badge-sm">${(v.weights[k] ?? 1).toFixed(2)}</span></td></tr>`).join('')
     const timed = v.timedHitRates || {}
+    const mom = v.momentum
+    const momCard = !mom ? '' : `
+      <div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
+        <h3 class="card-title text-sm">🚀 모멘텀 스캐너 적중률</h3>
+        <div class="stats stats-horizontal shadow-none w-full">
+          <div class="stat p-2"><div class="stat-title text-xs">전체</div><div class="stat-value text-xl">${mom.overallHitRate != null ? Math.round(mom.overallHitRate * 100) + '%' : '-'}</div><div class="stat-desc">${mom.picks}건</div></div>
+          <div class="stat p-2"><div class="stat-title text-xs">+1일</div><div class="stat-value text-xl">${mom.timedHitRates?.['+1일'] ? Math.round(mom.timedHitRates['+1일'].hitRate * 100) + '%' : '-'}</div></div>
+          <div class="stat p-2"><div class="stat-title text-xs">+3일</div><div class="stat-value text-xl">${mom.timedHitRates?.['+3일'] ? Math.round(mom.timedHitRates['+3일'].hitRate * 100) + '%' : '-'}</div></div>
+          <div class="stat p-2"><div class="stat-title text-xs">+7일</div><div class="stat-value text-xl">${mom.timedHitRates?.['+7일'] ? Math.round(mom.timedHitRates['+7일'].hitRate * 100) + '%' : '-'}</div></div>
+        </div>
+      </div></div>`
     const r = v.report
     const sigBadge = (s) => `<tr><td>${esc(s.key)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}%</td><td><span class="badge badge-success badge-sm">${s.hits}</span></td></tr>`
     const wChange = (w) => `<tr><td>${esc(w.key)}</td><td>${w.old.toFixed(2)} → ${w.new.toFixed(2)}</td><td>${w.direction === 'up' ? '<span class="text-success">▲</span>' : '<span class="text-error">▼</span>'}</td><td class="opacity-70">${esc(w.reason)}</td></tr>`
@@ -266,12 +278,13 @@ const routes = {
         <div class="stat"><div class="stat-title">+3일</div><div class="stat-value text-2xl">${timed['+3일'] ? Math.round(timed['+3일'].hitRate * 100) + '%' : '-'}</div></div>
         <div class="stat"><div class="stat-title">+7일</div><div class="stat-value text-2xl">${timed['+7일'] ? Math.round(timed['+7일'].hitRate * 100) + '%' : '-'}</div></div>
       </div>
+      ${momCard}
       ${reportCard}
       <div class="card bg-base-200 shadow"><div class="card-body p-4">
-        <h3 class="card-title text-sm">신호별 적중률 / 가중치</h3>
+        <h3 class="card-title text-sm">신호별 적중률 / 평균수익 / 가중치</h3>
         <div class="overflow-x-auto"><table class="table table-zebra table-sm">
-          <thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>가중치</th></tr></thead>
-          <tbody>${statsRows || '<tr><td colspan="4" class="opacity-60">데이터 없음 (주간 분석 필요)</td></tr>'}</tbody></table></div>
+          <thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>평균수익</th><th>가중치</th></tr></thead>
+          <tbody>${statsRows || '<tr><td colspan="5" class="opacity-60">데이터 없음 (주간 분석 필요)</td></tr>'}</tbody></table></div>
       </div></div>`
   },
 

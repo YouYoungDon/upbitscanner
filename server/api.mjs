@@ -96,6 +96,7 @@ export function buildVerify(weekly, weights) {
     signalStats: latest.signalStats ?? {},
     weights: weights || {},
     report: latest.report ?? null,
+    momentum: latest.momentum ?? null,
     history: (weekly?.weeks || []).map((w) => ({ timestamp: w.timestamp, overallHitRate: w.overallHitRate })),
   }
 }

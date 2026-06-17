@@ -1,5 +1,21 @@
 import { describe, it, expect } from 'vitest'
-import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport } from '../lib/weekly.mjs'
+import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns } from '../lib/weekly.mjs'
+
+describe('aggregateReturns', () => {
+  it('신호별 평균 수익률(%) 집계', () => {
+    const records = [
+      { signals: ['RSI 과매도 (10)'], ret: 10 },
+      { signals: ['RSI 과매도 (12)'], ret: 4 },
+      { signals: ['EMA 하락배열'], ret: -2 },
+    ]
+    const r = aggregateReturns(records)
+    expect(r['RSI 과매도']).toBe(7)      // (10+4)/2
+    expect(r['EMA 하락배열']).toBe(-2)
+  })
+  it('ret 없으면 제외', () => {
+    expect(aggregateReturns([{ signals: ['X'] }])).toEqual({})
+  })
+})
 
 describe('judgeHit', () => {
   it('매수: 현재가>신호가면 적중', () => {

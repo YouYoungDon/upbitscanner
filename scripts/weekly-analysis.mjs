@@ -1,6 +1,6 @@
 import { getTicker, getDayCandlesBefore } from '../lib/upbit.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
-import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport } from '../lib/weekly.mjs'
+import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns } from '../lib/weekly.mjs'
 import { readArchive, scansInLastDays } from '../lib/archive.mjs'
 
 const force = process.argv.includes('--force')
@@ -14,7 +14,7 @@ async function fetchCandleClose(market, targetDate) {
 }
 
 // 매수 신호의 +1/+3/+7일 시간별 적중률 (현재가 단일 판정의 보유기간 혼재 문제 보완)
-async function calcTimedHitRates(scans) {
+async function calcTimedHitRates(scans, getItems = (s) => s.buy ?? []) {
   const now = Date.now()
   const windows = [1, 3, 7]
   const stats = Object.fromEntries(windows.map((d) => [d, { hit: 0, total: 0 }]))
@@ -23,7 +23,7 @@ async function calcTimedHitRates(scans) {
     const scanTime = new Date(scan.timestamp).getTime()
     const daysPassed = (now - scanTime) / 86400000
     if (daysPassed < 1) continue
-    for (const item of scan.buy ?? []) {
+    for (const item of getItems(scan)) {
       for (const days of windows) {
         if (daysPassed < days) continue
         const price = await fetchCandleClose(item.market, new Date(scanTime + days * 86400000))
@@ -71,9 +71,15 @@ const priceOf = Object.fromEntries(tickers.map((t) => [t.market, t.trade_price])
 
 const records = preds
   .filter((p) => priceOf[p.market] != null)
-  .map((p) => ({ market: p.market, korean_name: p.korean_name, side: p.side, signals: p.signals, hit: judgeHit(p.side, p.signalPrice, priceOf[p.market]) }))
+  .map((p) => {
+    const cur = priceOf[p.market]
+    const ret = p.side === 'buy' ? (cur / p.signalPrice - 1) * 100 : (p.signalPrice / cur - 1) * 100
+    return { market: p.market, korean_name: p.korean_name, side: p.side, signals: p.signals, hit: judgeHit(p.side, p.signalPrice, cur), ret: +ret.toFixed(2) }
+  })
 
 const stats = aggregateHitRates(records)
+const returns = aggregateReturns(records)
+for (const k of Object.keys(stats)) stats[k].avgReturn = returns[k] ?? 0
 const oldWeights = await readJson('signal-weights.json', {})
 const newWeights = updateWeights(oldWeights, stats)
 await writeJson('signal-weights.json', newWeights)
@@ -84,6 +90,30 @@ console.log(`[${new Date().toISOString()}] 시간별 적중률 계산 중 (API �
 const timedHitRates = await calcTimedHitRates(recentScans)
 console.log(`[${new Date().toISOString()}] 시간별 적중률:`, JSON.stringify(timedHitRates))
 
+// 모멘텀 스캐너 검증 (지난 7일 momentum-log 픽의 +1/+3/+7일 적중률)
+const momLog = await readJson('momentum-log.json', { scans: [] })
+const momScans = scansInLastDays(momLog.scans || [], 7)
+let momentum = null
+if (momScans.length) {
+  const momPicks = momScans.flatMap((s) => (s.picks ?? []).map((p) => p.market))
+  const momCodes = [...new Set(momPicks)]
+  const momTickers = []
+  for (let i = 0; i < momCodes.length; i += 100) {
+    const t = await getTicker(momCodes.slice(i, i + 100))
+    if (t) momTickers.push(...t)
+  }
+  const momPriceOf = Object.fromEntries(momTickers.map((t) => [t.market, t.trade_price]))
+  const momRecs = momScans.flatMap((s) => (s.picks ?? []).filter((p) => momPriceOf[p.market] != null).map((p) => p.price < momPriceOf[p.market]))
+  const momHits = momRecs.filter(Boolean).length
+  const momTimed = await calcTimedHitRates(momScans, (s) => s.picks ?? [])
+  momentum = {
+    picks: momRecs.length,
+    overallHitRate: momRecs.length ? +(momHits / momRecs.length).toFixed(3) : 0,
+    timedHitRates: momTimed,
+  }
+  console.log(`모멘텀 검증 — 픽 ${momRecs.length}건, 적중 ${momHits}건 (${momentum.overallHitRate})`)
+}
+
 const hitCount = records.filter((r) => r.hit).length
 const result = {
   timestamp: new Date().toISOString(),
@@ -93,6 +123,7 @@ const result = {
   timedHitRates,
   signalStats: stats,
   report,
+  momentum,
 }
 const hist = await readJson('weekly-analysis.json', { weeks: [] })
 hist.weeks = rollingAppend(hist.weeks || [], result, MAX_WEEKS)
