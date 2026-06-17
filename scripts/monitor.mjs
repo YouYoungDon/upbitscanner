@@ -5,7 +5,7 @@ import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
-import { getScanUniverse, BATCH, DELAY, sleep } from '../lib/scan-universe.mjs'
+import { getScanUniverse, BATCH, DELAY, sleep, LOW_LIQUIDITY_24H } from '../lib/scan-universe.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 
 const MAX_SCANS = 30
@@ -23,7 +23,7 @@ async function check4hStochGC(market) {
 
 async function main() {
   const weights = await readJson('signal-weights.json', {})
-  const { targets, nameOf, total } = await getScanUniverse()
+  const { targets, nameOf, total, tradePrice } = await getScanUniverse()
   if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
   console.log(`스캔 대상 ${targets.length}종목 (전체 ${total})`)
 
@@ -66,11 +66,15 @@ async function main() {
       if (pump) { finalBuyScore += pump.score; buySignals = [...buySignals, `🚀Pump Start (vol ${pump.volRatio}x)`]; pumpSL = pump.stopLoss1 }
       // 레짐 게이트: BTC 약세장에선 반등 매수 신뢰도 하향 (약세 역행 매수 억제)
       if (regime.trend === 'bear') { finalBuyScore *= 0.85; buySignals = [...buySignals, '[레짐] BTC 약세 감점'] }
+      // 저유동성 감점: 24h 거래대금 3억 미만은 슬리피지·조작 위험
+      const lowLiq = (tradePrice[market] ?? Infinity) < LOW_LIQUIDITY_24H
+      if (lowLiq) { finalBuyScore *= 0.9; buySignals = [...buySignals, '⚠️저유동성'] }
 
       if (finalBuyScore >= BUY_THRESHOLD) {
         const item = { market, korean_name: nameOf[market], price: sig.price, score: +finalBuyScore.toFixed(1), signals: buySignals }
         if (vbottomSL != null) item.vbottomSL = vbottomSL
         if (pumpSL != null) item.pumpSL = pumpSL
+        if (lowLiq) item.lowLiquidity = true
         buy.push(item)
       }
       if (sellScore >= SELL_THRESHOLD) {

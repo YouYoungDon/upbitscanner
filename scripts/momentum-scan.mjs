@@ -1,12 +1,12 @@
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { scoreMomentum, MIN_MOMENTUM_SCORE } from '../lib/momentum.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
-import { getScanUniverse, BATCH, DELAY, sleep } from '../lib/scan-universe.mjs'
+import { getScanUniverse, BATCH, DELAY, sleep, LOW_LIQUIDITY_24H } from '../lib/scan-universe.mjs'
 
 const MAX_SCANS = 30
 
 async function main() {
-  const { targets, nameOf, total } = await getScanUniverse()
+  const { targets, nameOf, total, tradePrice } = await getScanUniverse()
   if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
   console.log(`모멘텀 스캔 대상 ${targets.length}종목 (전체 ${total})`)
 
@@ -17,9 +17,13 @@ async function main() {
       const candles = await getDayCandles(market, 200)
       if (!candles || candles.length < 60) return
       const ohlcv = candlesToOhlcv(candles)
-      const { score, signals } = scoreMomentum(ohlcv)
+      let { score, signals } = scoreMomentum(ohlcv)
+      const lowLiq = (tradePrice[market] ?? Infinity) < LOW_LIQUIDITY_24H
+      if (lowLiq) { score = +(score * 0.9).toFixed(1); signals = [...signals, '⚠️저유동성'] }
       if (score >= MIN_MOMENTUM_SCORE) {
-        picks.push({ market, korean_name: nameOf[market], price: ohlcv.at(-1).close, score, signals })
+        const pick = { market, korean_name: nameOf[market], price: ohlcv.at(-1).close, score, signals }
+        if (lowLiq) pick.lowLiquidity = true
+        picks.push(pick)
       }
     }))
     await sleep(DELAY)

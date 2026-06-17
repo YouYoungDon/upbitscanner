@@ -21,6 +21,7 @@ describe('getScanUniverse', () => {
     expect(r.targets).toEqual(['KRW-A', 'KRW-C'])
     expect(r.nameOf['KRW-C']).toBe('씨')
     expect(r.total).toBe(3)
+    expect(r.tradePrice['KRW-C']).toBe(MIN_TRADE_PRICE_24H * 2)
   })
   it('마켓 없으면 빈 결과', async () => {
     const r = await getScanUniverse({ getMarkets: async () => [], getTicker: async () => [], delay: 0 })
