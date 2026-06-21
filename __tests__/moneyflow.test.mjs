@@ -62,3 +62,54 @@ describe('isEarlyZone', () => {
     expect(isEarlyZone(1.0, 12)).toBe(false) // 30m 초과
   })
 })
+
+import { breakout20, near24hHigh, isConsolidationBreakout, emaAligned, rsiOk } from '../lib/moneyflow.mjs'
+
+const bar = (high, low, close) => ({ high, low, close })
+
+describe('breakout20', () => {
+  it('현재가가 직전 20봉 최고가 초과', () => {
+    const o = [...Array(20).fill(bar(10, 9, 10)), bar(12, 10, 11)]
+    expect(breakout20(o, 20)).toBe(true)
+  })
+  it('초과 못하면 false', () => {
+    const o = [...Array(20).fill(bar(10, 9, 10)), bar(10, 9, 9.5)]
+    expect(breakout20(o, 20)).toBe(false)
+  })
+})
+
+describe('near24hHigh', () => {
+  it('24h 고가의 2% 이내', () => {
+    expect(near24hHigh(99, 100, 2)).toBe(true)
+    expect(near24hHigh(97, 100, 2)).toBe(false)
+  })
+})
+
+describe('isConsolidationBreakout', () => {
+  it('타이트 레인지(<3%) 후 돌파', () => {
+    const o = [...Array(20).fill(bar(100, 99, 99.5)), bar(105, 100, 104)]
+    expect(isConsolidationBreakout(o, 20, 3)).toBe(true)
+  })
+  it('레인지 넓으면 false', () => {
+    const o = [...Array(20).fill(0).map((_, i) => bar(100 + i, 90, 95)), bar(130, 120, 125)]
+    expect(isConsolidationBreakout(o, 20, 3)).toBe(false)
+  })
+})
+
+describe('emaAligned', () => {
+  it('상승추세 EMA5>EMA20>EMA60', () => {
+    const closes = Array.from({ length: 80 }, (_, i) => 100 + i)
+    expect(emaAligned(closes)).toBe(true)
+  })
+  it('데이터<60 → false', () => {
+    expect(emaAligned([1, 2, 3])).toBe(false)
+  })
+})
+
+describe('rsiOk', () => {
+  it('RSI 50~75 범위', () => {
+    // sin 진동 + 완만한 상승 → RSI ~65 (완전 단방향이면 RSI=100으로 범위 초과)
+    const up = Array.from({ length: 40 }, (_, i) => 100 + Math.sin(i * 0.5) * 2 + i * 0.1)
+    expect(rsiOk(up)).toBe(true)
+  })
+})
