@@ -103,112 +103,6 @@ const routes = {
     $('#scanBtn').onclick = runScan
   },
 
-  async momentum() {
-    setActiveTab('momentum')
-    view.innerHTML = '<h2 class="text-2xl font-bold mb-4">🚀 모멘텀 (추세지속)</h2><span class="loading loading-spinner"></span>'
-    const m = await api('/api/momentum')
-    const rows = (m.picks || []).map((x) => `
-      <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span> <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
-        <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
-        <td>${fmt(x.price)}</td>
-        <td><div class="flex flex-wrap gap-1">${(x.signals || []).map((s) => `<span class="badge badge-ghost badge-sm">${esc(s)}</span>`).join('')}</div></td>
-      </tr>`).join('')
-    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">🚀 모멘텀 (추세지속)</h2>
-      <p class="opacity-60 text-sm mb-3">마지막 스캔: ${m.timestamp ? new Date(m.timestamp).toLocaleString('ko-KR') : '없음'} · 추세지속 ${m.kpi?.count ?? 0}종목 (MIN 10점)</p>
-      <div class="card bg-base-200 shadow"><div class="card-body p-3"><div class="overflow-x-auto"><table class="table table-zebra table-sm">
-        <thead><tr><th>종목</th><th>점수</th><th>현재가</th><th>신호 (그룹)</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="4" class="opacity-60">스캔 기록 없음 (momentum-scan 실행 필요)</td></tr>'}</tbody></table></div></div></div>`
-  },
-
-  async flow() {
-    setActiveTab('flow')
-    view.innerHTML = '<h2 class="text-2xl font-bold mb-4">💸 자금유입</h2><span class="loading loading-spinner"></span>'
-    const f = await api('/api/flow')
-    const emoji = { strong: '🔴', attention: '🟠', watch: '🟡' }
-    const won = (v) => v == null ? '-' : (v >= 1e8 ? (v / 1e8).toFixed(1) + '억' : Math.round(v / 1e4) + '만')
-    const pct = (v) => v == null ? '-' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${v.toFixed(1)}%</span>`
-    const rows = (f.picks || []).map((x) => `
-      <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td>${emoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
-        <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
-        <td>${won(x.value5m)}</td>
-        <td>${x.ratio == null ? '-' : x.ratio + 'x'}</td>
-        <td>${x.accel == null ? '-' : x.accel + 'x'}</td>
-        <td>${pct(x.ch1m)}</td><td>${pct(x.ch5m)}</td><td>${pct(x.ch30m)}</td><td>${pct(x.ch24h)}</td>
-        <td>${x.breakout ? '🚀돌파' : x.consol ? '📦수렴' : '-'}</td>
-        <td>${x.emaOK ? '✅' : '-'}</td>
-        <td>${x.rsi ? '✅' : '-'}</td>
-      </tr>`).join('')
-    const btc = f.btc ? `BTC 5m ${f.btc.ret == null ? 'n/a' : (f.btc.ret >= 0 ? '+' : '') + f.btc.ret.toFixed(2) + '%'} ${f.btc.bad ? '🔻약세감점' : f.btc.favorable ? '🟢우호' : '⚪중립'}` : ''
-    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">💸 자금유입</h2>
-      <p class="opacity-60 text-sm mb-2">마지막 스캔: ${f.timestamp ? new Date(f.timestamp).toLocaleString('ko-KR') : '없음'} · 🔴${f.kpi?.strong ?? 0} 🟠${f.kpi?.attention ?? 0} 🟡${f.kpi?.watch ?? 0} · ${btc}</p>
-      <div class="card bg-base-200 shadow"><div class="card-body p-3"><div class="overflow-x-auto"><table class="table table-zebra table-xs">
-        <thead><tr><th>종목</th><th>점수</th><th>5m대금</th><th>머니비율</th><th>가속</th><th>1m</th><th>5m</th><th>30m</th><th>24h</th><th>돌파</th><th>EMA</th><th>RSI</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="12" class="opacity-60">스캔 기록 없음 (flow-scan 실행 필요)</td></tr>'}</tbody></table></div></div></div>`
-  },
-
-  async positions() {
-    setActiveTab('positions')
-    view.innerHTML = '<h2 class="text-2xl font-bold mb-4">💼 내 포지션</h2><span class="loading loading-spinner"></span>'
-    const { positions } = await api('/api/positions')
-    const rows = (positions || []).map((p) => {
-      const pl = p.plPct == null ? '-' : `<span class="${p.plPct >= 0 ? 'text-success' : 'text-error'}">${p.plPct >= 0 ? '+' : ''}${p.plPct}%</span>`
-      const status = p.hitSL ? '<span class="badge badge-error badge-sm">SL 도달</span>' : p.hitTP ? '<span class="badge badge-success badge-sm">TP 도달</span>' : `<span class="opacity-60 text-xs">SL까지 ${p.toSLPct == null ? '-' : p.toSLPct + '%'}</span>`
-      return `<tr class="hover">
-        <td><span class="font-medium">${esc(p.korean_name || p.market)}</span> <span class="opacity-50 text-xs">${esc(p.market.replace('KRW-', ''))}</span></td>
-        <td>${fmt(p.entry)}</td><td>${fmt(p.price)}</td><td>${pl}</td>
-        <td>${fmt(p.stopLoss)} / ${fmt(p.takeProfit)}</td><td>${status}</td>
-      </tr>`
-    }).join('')
-    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">💼 내 포지션</h2>
-      <p class="opacity-60 text-sm mb-3">data/positions.json 편집으로 관리. 보유 종목 SL 도달 시 스캔 후 Telegram 알림.</p>
-      <div class="card bg-base-200 shadow"><div class="card-body p-3"><div class="overflow-x-auto"><table class="table table-zebra table-sm">
-        <thead><tr><th>종목</th><th>진입가</th><th>현재가</th><th>손익</th><th>SL/TP</th><th>상태</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6" class="opacity-60">보유 포지션 없음 (data/positions.json)</td></tr>'}</tbody></table></div></div></div>`
-  },
-
-  async recommend() {
-    setActiveTab('recommend')
-    view.innerHTML = '<h2 class="text-2xl font-bold mb-4">추천</h2><span class="loading loading-spinner"></span>'
-    const res = await api('/api/results')
-    let side = 'buy'
-    const rowHtml = (x) => `<tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-      <td><span class="font-medium">${esc(x.korean_name)}</span> <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
-      <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
-      <td>${fmt(x.price)}</td><td>${signalTags(x.signals)}</td>
-    </tr>`
-    const matches = (x, q) => !q || x.korean_name.includes(q) || x.market.includes(q.toUpperCase())
-    const render = (q = '') => {
-      const list = (res[side] || []).filter((x) => matches(x, q))
-      let rows = list.map(rowHtml).join('') || '<tr><td colspan="4" class="opacity-60">없음</td></tr>'
-      if (side === 'buy') {
-        const low = (res.buyLowLiq || []).filter((x) => matches(x, q))
-        if (low.length) {
-          rows += `<tr><td colspan="4" class="text-xs opacity-60 pt-3">⚠️ 저유동성 후보 (5억 미만 · 슬리피지 주의) ${low.length}개</td></tr>`
-          rows += low.map(rowHtml).join('')
-        }
-      }
-      $('#recBody').innerHTML = `<div class="overflow-x-auto"><table class="table table-zebra table-sm">
-        <thead><tr><th>종목</th><th>점수</th><th>현재가</th><th>신호</th></tr></thead>
-        <tbody>${rows}</tbody></table></div>`
-    }
-    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">추천</h2>
-      <div class="flex flex-wrap gap-2 items-center mb-3">
-        <div class="join">
-          <button class="btn btn-sm join-item btn-active" id="segBuy">매수</button>
-          <button class="btn btn-sm join-item" id="segSell">매도</button>
-        </div>
-        <input id="recSearch" class="input input-bordered input-sm flex-1 min-w-48" placeholder="🔎 종목 검색">
-      </div>
-      <div class="card bg-base-200 shadow"><div class="card-body p-3" id="recBody"></div></div>`
-    const sw = (s) => { side = s; $('#segBuy').classList.toggle('btn-active', s === 'buy'); $('#segSell').classList.toggle('btn-active', s === 'sell'); render($('#recSearch').value) }
-    $('#segBuy').onclick = () => sw('buy')
-    $('#segSell').onclick = () => sw('sell')
-    $('#recSearch').oninput = (e) => render(e.target.value)
-    render()
-  },
-
   async analyze() {
     setActiveTab('analyze')
     let selected = new URLSearchParams((location.hash.split('?')[1] || '')).get('market') || ''
@@ -515,7 +409,7 @@ async function runScan() {
       const job = await api('/api/scan/' + jobId)
       const pb = $('progress', prog)
       if (pb) pb.value = job.progress || 0
-      if (job.status === 'done') { clearInterval(timer); btn.disabled = false; routes.dashboard() }
+      if (job.status === 'done') { clearInterval(timer); btn.disabled = false; routes.home() }
       else if (job.status === 'error') stop('스캔 실패')
       else if (Date.now() > deadline) stop('스캔 시간 초과')
     } catch {
@@ -525,9 +419,9 @@ async function runScan() {
 }
 
 function router() {
-  const hash = location.hash || '#/dashboard'
-  const name = hash.slice(2).split('?')[0]
-  ;(routes[name] || routes.dashboard)()
+  const hash = location.hash || '#/home'
+  const name = resolveRoute(hash.slice(2).split('?')[0])
+  routes[name]()
 }
 window.addEventListener('hashchange', router)
 window.addEventListener('DOMContentLoaded', router)
