@@ -208,7 +208,11 @@ Uninstall 목록에도 포함.
 
 ## 회귀
 
-기존 135 테스트 유지 + `candlesToOhlcv` tradeValue 추가가 기존 소비자에 무영향(추가 필드)임을 확인.
+기존 테스트(master 기준 112) 유지 + `candlesToOhlcv` tradeValue 추가가 기존 소비자에
+무영향(추가 필드)임을 확인.
+
+> 참고: 이 브랜치는 master에서 분기. 점수재설계(`scanner-scoring-redesign`)와 독립이며,
+> 공용 모듈(getScanUniverse·candlesToOhlcv·indicators·regime·notify)만 재활용한다.
 
 ## 범위 밖(v1 제외)
 
