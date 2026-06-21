@@ -1,7 +1,7 @@
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { scoreMomentum, MIN_MOMENTUM_SCORE } from '../lib/momentum.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
-import { getScanUniverse, BATCH, DELAY, sleep, LOW_LIQUIDITY_24H } from '../lib/scan-universe.mjs'
+import { getScanUniverse, BATCH, DELAY, sleep, LOW_LIQUIDITY_24H, liquidityMultiplier } from '../lib/scan-universe.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 
 const MAX_SCANS = 30
@@ -19,8 +19,10 @@ async function main() {
       if (!candles || candles.length < 60) return
       const ohlcv = candlesToOhlcv(candles)
       let { score, signals } = scoreMomentum(ohlcv)
-      const lowLiq = (tradePrice[market] ?? Infinity) < LOW_LIQUIDITY_24H
-      if (lowLiq) { score = +(score * 0.9).toFixed(1); signals = [...signals, '⚠️저유동성'] }
+      const tp = tradePrice[market] ?? 0
+      const liqMult = liquidityMultiplier(tp)
+      if (liqMult < 1) { score = +(score * liqMult).toFixed(1); signals = [...signals, `⚠️유동성 ×${liqMult}`] }
+      const lowLiq = tp < LOW_LIQUIDITY_24H
       if (score >= MIN_MOMENTUM_SCORE) {
         const pick = { market, korean_name: nameOf[market], price: ohlcv.at(-1).close, score, signals }
         if (lowLiq) pick.lowLiquidity = true

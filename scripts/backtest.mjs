@@ -20,7 +20,7 @@ for (const m of markets) {
   for (let i = 60; i < ohlcv.length - HOLD_DAYS; i++) {
     const window = ohlcv.slice(0, i + 1)
     const sig = detectSignals(window, weights)
-    const combo = applyCombos(sig.buy, sig.sell, sig.buyScore)
+    const combo = applyCombos(sig.buy, sig.sell, sig.buyScore, sig.volRatio)
     if (combo.buyScore >= BUY_THRESHOLD) {
       const entry = ohlcv[i].close
       const exit = ohlcv[i + HOLD_DAYS].close

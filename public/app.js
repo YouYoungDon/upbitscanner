@@ -87,7 +87,7 @@ const routes = {
         </div></div>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🟢 매수 TOP 10</h3>${topTable(res.buy, 10)}</div></div>
+        <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🟢 매수 TOP 10</h3>${topTable([...(res.buy||[]), ...(res.buyLowLiq||[])].sort((a,b)=>b.score-a.score), 10)}</div></div>
         <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🔴 매도 TOP 10</h3>${topTable(res.sell, 10)}</div></div>
       </div>`
     $('#scanBtn').onclick = runScan
