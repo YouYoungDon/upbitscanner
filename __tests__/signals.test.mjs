@@ -32,6 +32,18 @@ describe('applyCombos', () => {
     const { buyScore } = applyCombos(buy, [], 10)
     expect(buyScore).toBeCloseTo(10 * 1.4 * 1.3, 5)
   })
+
+  it('거래량 배수가 구간 따라 비례: 20x+ → ×1.6', () => {
+    const buy = ['Stoch 과매도 골든크로스 (5)', '거래량 급증 (25.0x)']
+    const { buyScore } = applyCombos(buy, [], 10, 25)
+    expect(buyScore).toBeCloseTo(10 * 1.4 * 1.6, 5)
+  })
+
+  it('거래량 배수 기본(2~10x) → ×1.3 유지', () => {
+    const buy = ['Stoch 과매도 골든크로스 (5)', '거래량 급증 (3.0x)']
+    const { buyScore } = applyCombos(buy, [], 10, 3)
+    expect(buyScore).toBeCloseTo(10 * 1.4 * 1.3, 5)
+  })
 })
 
 describe('detectSignals', () => {
