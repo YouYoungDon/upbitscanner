@@ -141,6 +141,7 @@ async function notifyTelegram(buyList) {
   const TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID
   if (!TG_TOKEN || !TG_CHAT_ID || buyList.length === 0) return
   const main = buyList.filter((b) => !b.lowLiquidity)
+  if (main.length === 0) return // 메인 매수 없으면 빈 알림 발송 안 함(저유동성 후보만 있을 때)
   const lowN = buyList.length - main.length
   const lines = main.slice(0, 5).map((b) => {
     const mtf = b.signals.includes('[MTF] 4시간봉 Stoch GC 확인') ? ' 📡MTF' : ''

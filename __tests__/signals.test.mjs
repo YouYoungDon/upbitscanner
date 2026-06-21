@@ -1,5 +1,24 @@
 import { describe, it, expect } from 'vitest'
-import { applyCombos, detectSignals } from '../lib/signals.mjs'
+import { applyCombos, detectSignals, volComboMult, volumeGrade } from '../lib/signals.mjs'
+
+describe('volComboMult', () => {
+  it('구간별 배수: null→1.3, 3x→1.3, 15x→1.45, 25x→1.6', () => {
+    expect(volComboMult(null)).toBe(1.3)
+    expect(volComboMult(3)).toBe(1.3)
+    expect(volComboMult(15)).toBe(1.45)
+    expect(volComboMult(25)).toBe(1.6)
+  })
+})
+
+describe('volumeGrade', () => {
+  it('계단 등급: <2→0, 2x→1, 7x→2, 15x→3, 30x→4', () => {
+    expect(volumeGrade(1.5)).toBe(0)
+    expect(volumeGrade(2)).toBe(1)
+    expect(volumeGrade(7)).toBe(2)
+    expect(volumeGrade(15)).toBe(3)
+    expect(volumeGrade(30)).toBe(4)
+  })
+})
 
 describe('applyCombos', () => {
   it('StochGC 없이 과매도 4종 동시 → ×0.55 페널티', () => {
