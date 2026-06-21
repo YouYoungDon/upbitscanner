@@ -9,6 +9,7 @@
 |--------|------|------|--------|
 | `monitor.mjs` | 반등 초입 포착 (과매도→반전) + 고강도 SMC 신호 | `monitor-log.json` + `scan-archive.jsonl` | 09:00 / 21:00 |
 | `momentum-scan.mjs` | 추세 지속 포착 (이미 오르는 종목, 예: WLD) | `momentum-log.json` | 09:02 / 21:02 |
+| `flow-scan.mjs` | 자금유입 조기포착 (머니플로우·가속도·돌파, 3시간 주기) | `flow-log.json` | 00:05~21:05 (3h) |
 
 반등 스캐너는 과매수 종목을 매도로만 보므로, 이미 상승 중인 추세 종목은 모멘텀 스캐너가 별도로 잡는다.
 
@@ -31,6 +32,7 @@ npm install
 ```bash
 npm run scan                # 반등 스캔 1회 (monitor)
 npm run momentum            # 모멘텀(추세지속) 스캔 1회
+npm run flow                # 자금유입 스캔 1회
 npm run analyze -- KRW-BTC  # 개별 종목 분석
 npm run weekly -- --force   # 주간 분석 강제 실행 (수요일 외)
 npm run backtest 30         # 상위 30종목 백테스트
@@ -149,6 +151,7 @@ Windows에서는 `start-dashboard.bat` 더블클릭으로도 실행된다.
 - **대시보드 탭**: KPI stats + 콤보 분포 + 캔들 모양 요약 + 스캔 추이 스파크라인 + 매수/매도 TOP 10 + 수동 스캔(진행률)
 - **추천 탭**: 매수/매도 전체 리스트, 검색·콤보 badge
 - **모멘텀 탭**: 추세지속 추천(`momentum-scan`) — 종목·점수·그룹별 신호(EMA정배열/신고가/OBV/BB스퀴즈 등)
+- **💸 자금유입 탭**: 머니플로우 조기포착(`flow-scan`) — 3시간 주기 스캔 결과, 자금유입 강도·가속도·돌파 신호
 - **개별분석 탭**: 코인 리스트(한글 검색) → 캔들/라인 차트(일/4h/1h) + 지표 + 🕯️ 캔들 모양분석 + 종합 점수
 - **신호검증 탭**: 전체·시간별(+1/+3/+7일) 적중률 + 신호별 적중률/가중치
 - **스캔기록 탭**: 매 스캔을 영구 아카이브(`data/scan-archive.jsonl`)에 누적. 날짜별 드릴다운(그 스캔의 매수/매도 전체) + 종목별 등장 이력(특정 코인이 언제 매수/매도로 떴는지). 최초 1회 `node scripts/seed-archive.mjs`로 기존 기록 이관.

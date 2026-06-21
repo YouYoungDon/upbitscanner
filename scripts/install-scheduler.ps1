@@ -1,4 +1,4 @@
-# 업비트 스캐너 작업 스케줄러 등록 (반등 09:00/21:00 · 모멘텀 09:02/21:02 · 주간 일 22:00, KST)
+# 업비트 스캐너 작업 스케줄러 등록 (반등 09:00/21:00 · 모멘텀 09:02/21:02 · 주간 일 22:00 · 자금유입 3시간(xx:05), KST)
 # 사용법:
 #   등록:   powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1
 #   제거:   powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1 -Uninstall
@@ -9,6 +9,7 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $monitor = Join-Path $projectRoot 'scripts\monitor.mjs'
 $momentum = Join-Path $projectRoot 'scripts\momentum-scan.mjs'
 $trend = Join-Path $projectRoot 'scripts\trend-journal.mjs'
+$flow = Join-Path $projectRoot 'scripts\flow-scan.mjs'
 $nodePath = (Get-Command node).Source
 
 # 반등(monitor) 09:00/21:00 → 모멘텀 09:02/21:02 → 추이저널 09:17/21:17 순차
@@ -18,7 +19,15 @@ $tasks = @(
   @{ Name = 'UpbitMomentum_0902'; Time = '09:02'; Script = $momentum },
   @{ Name = 'UpbitMomentum_2102'; Time = '21:02'; Script = $momentum },
   @{ Name = 'UpbitTrend_0917';    Time = '09:17'; Script = $trend },
-  @{ Name = 'UpbitTrend_2117';    Time = '21:17'; Script = $trend }
+  @{ Name = 'UpbitTrend_2117';    Time = '21:17'; Script = $trend },
+  @{ Name = 'UpbitFlow_0005'; Time = '00:05'; Script = $flow },
+  @{ Name = 'UpbitFlow_0305'; Time = '03:05'; Script = $flow },
+  @{ Name = 'UpbitFlow_0605'; Time = '06:05'; Script = $flow },
+  @{ Name = 'UpbitFlow_0905'; Time = '09:05'; Script = $flow },
+  @{ Name = 'UpbitFlow_1205'; Time = '12:05'; Script = $flow },
+  @{ Name = 'UpbitFlow_1505'; Time = '15:05'; Script = $flow },
+  @{ Name = 'UpbitFlow_1805'; Time = '18:05'; Script = $flow },
+  @{ Name = 'UpbitFlow_2105'; Time = '21:05'; Script = $flow }
 )
 
 if ($Uninstall) {
