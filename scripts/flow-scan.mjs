@@ -18,9 +18,9 @@ async function main() {
   if (!targets.length) { console.error('자금유입 스캔 대상 없음'); process.exit(1) }
   console.log(`자금유입 스캔 대상 ${targets.length}종목 (24h≥${CONFIG.minTradePrice24h / 1e8}억)`)
 
-  // BTC 5m 컨텍스트
-  const btcC = await getMinuteCandles('KRW-BTC', 5, 3)
-  const btcCloses = btcC ? candlesToOhlcv(btcC).map((c) => c.close) : []
+  // BTC 5m 컨텍스트 (형성 중인 최신 봉 제외 — 완성봉만)
+  const btcC = await getMinuteCandles('KRW-BTC', 5, 4)
+  const btcCloses = btcC ? candlesToOhlcv(btcC).slice(0, -1).map((c) => c.close) : []
   const btc5mRet = pctChange(btcCloses, 1)
   const btcFavorable = btc5mRet != null && btc5mRet > 0
   const btcBad = btc5mRet != null && btc5mRet < CONFIG.btcDropPct
@@ -49,8 +49,8 @@ async function main() {
       const ch30m = pctChange(closes5, 6)
       if (isPumped(ch5m, ch15m)) return
 
-      const c1 = await getMinuteCandles(market, 1, 3)
-      const closes1 = c1 ? candlesToOhlcv(c1).map((c) => c.close) : []
+      const c1 = await getMinuteCandles(market, 1, 4)
+      const closes1 = c1 ? candlesToOhlcv(c1).slice(0, -1).map((c) => c.close) : [] // 형성 중인 최신 1분봉 제외
       const ch1m = pctChange(closes1, 1)
 
       const ratio = moneyRatio(values)
