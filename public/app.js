@@ -33,10 +33,10 @@ const routes = {
   async home() {
     setActiveTab('home')
     view.innerHTML = '<span class="loading loading-spinner"></span>'
-    let res, mom, flow, pos
+    let res, mom, flow, pos, ins
     try {
-      [res, mom, flow, pos] = await Promise.all([
-        api('/api/results'), api('/api/momentum'), api('/api/flow'), api('/api/positions'),
+      [res, mom, flow, pos, ins] = await Promise.all([
+        api('/api/results'), api('/api/momentum'), api('/api/flow'), api('/api/positions'), api('/api/insights'),
       ])
     } catch {
       view.innerHTML = '<div class="alert alert-error">데이터 조회 실패 — 서버 연결을 확인하세요.</div>'
@@ -48,6 +48,14 @@ const routes = {
       : ''
     const lastScans = `반등 ${res.timestamp ? new Date(res.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-'} · 자금 ${flow.timestamp ? new Date(flow.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-'}`
 
+    // KPI 한 줄 (매수/매도/누적스캔) + 인사이트(최다신호·적중률1위)
+    const kpi = res.kpi || {}
+    const kpiLine = `매수 <b class="text-success">${kpi.buyCount ?? 0}</b> · 매도 <b class="text-error">${kpi.sellCount ?? 0}</b> · 누적 <b>${fmt(kpi.totalScans ?? 0)}</b>스캔`
+    const insLine = [
+      ins?.topSignal ? `최다신호 <span class="badge badge-ghost badge-sm">${esc(ins.topSignal.key || ins.topSignal)}${ins.topSignal.count ? ' ×' + ins.topSignal.count : ''}</span>` : '',
+      ins?.bestHitRate ? `적중률1위 <span class="badge badge-success badge-sm">${esc(ins.bestHitRate.key)} ${Math.round((ins.bestHitRate.hitRate || 0) * 100)}%</span>` : '',
+    ].filter(Boolean).join(' · ')
+
     const positions = pos.positions || []
     const posBar = !positions.length ? '' : `
       <div class="card bg-base-200 shadow mb-3"><div class="card-body p-3">
@@ -55,7 +63,8 @@ const routes = {
         <div class="flex flex-wrap gap-3">${positions.map((p) => {
           const pl = p.plPct == null ? '-' : `<span class="${p.plPct >= 0 ? 'text-success' : 'text-error'}">${p.plPct >= 0 ? '+' : ''}${p.plPct}%</span>`
           const st = p.hitSL ? '<span class="badge badge-error badge-sm">SL도달</span>' : p.hitTP ? '<span class="badge badge-success badge-sm">TP도달</span>' : `<span class="opacity-60 text-xs">SL까지 ${p.toSLPct == null ? '-' : p.toSLPct + '%'}</span>`
-          return `<div class="cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(p.market)}'"><span class="font-medium">${esc(p.korean_name || p.market)}</span> ${fmt(p.price)} ${pl} ${st}</div>`
+          const levels = `<span class="opacity-50 text-xs">진입 ${fmt(p.entry)}${p.stopLoss != null ? ' · SL ' + fmt(p.stopLoss) : ''}${p.takeProfit != null ? ' · TP ' + fmt(p.takeProfit) : ''}</span>`
+          return `<div class="cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(p.market)}'"><span class="font-medium">${esc(p.korean_name || p.market)}</span> ${fmt(p.price)} ${pl} ${st}<br>${levels}</div>`
         }).join('')}</div>
       </div></div>`
 
@@ -63,31 +72,42 @@ const routes = {
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
         <td><span class="font-medium">${esc(x.korean_name)}</span></td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
-      </tr>`).join('') || '<tr><td colspan="2" class="opacity-60 text-xs">스캔 대기</td></tr>'
+        <td>${signalTags(x.signals)}</td>
+      </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'
 
     const flowEmoji = { strong: '🔴', attention: '🟠', watch: '🟡' }
+    const pct = (v) => v == null ? '' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${v}%</span>`
     const flowRows = (flow.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td>${flowEmoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span></td>
+        <td>${flowEmoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> ${x.breakout ? '<span class="badge badge-warning badge-xs">돌파</span>' : ''}</td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td class="text-xs opacity-70">${x.ratio == null ? '' : x.ratio + 'x'}</td>
-      </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'
+        <td class="text-xs">${pct(x.ch1m)}</td>
+      </tr>`).join('') || '<tr><td colspan="4" class="opacity-60 text-xs">스캔 대기</td></tr>'
+    const flowDetail = (flow.picks || []).length
+      ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">📊 상세 지표 ${flow.picks.length}개</summary>${flowDetailTable(flow.picks)}</details>`
+      : ''
 
     const lowLiq = res.buyLowLiq || []
     const sell = res.sell || []
+    const buyAll = res.buy || []
 
     view.innerHTML = `
       <div class="flex justify-between items-center mb-2">
         <h2 class="text-2xl font-bold">🏠 종합</h2>
         <button id="scanBtn" class="btn btn-primary btn-sm">🔄 수동 스캔</button>
       </div>
-      <p class="opacity-60 text-sm mb-3">${lastScans} ${regime} ${stale ? '<span class="badge badge-warning badge-sm">⏰ 스캔지연</span>' : ''}</p>
+      <p class="opacity-70 text-sm">${kpiLine} ${regime} ${stale ? '<span class="badge badge-warning badge-sm">⏰ 스캔지연</span>' : ''}</p>
+      <p class="opacity-60 text-xs mb-1">${lastScans}${insLine ? ' · ' + insLine : ''}</p>
       <div id="scanProgress" class="mb-3"></div>
       ${posBar}
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="card bg-base-200 shadow"><div class="card-body p-3">
-          <h3 class="card-title text-sm">🟢 반등 TOP</h3>
-          ${topTable((res.buy || []).slice(0, 8), 8)}
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="card-title text-sm">🟢 반등 TOP</h3>
+            <input id="reboundSearch" class="input input-bordered input-xs w-28" placeholder="🔎 종목">
+          </div>
+          <div id="reboundBody">${topTable(buyAll.slice(0, 8), 8)}</div>
           ${lowLiq.length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">⚠️ 저유동성 ${lowLiq.length}개</summary>${topTable(lowLiq, 99)}</details>` : ''}
           ${sell.length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">🔴 매도 ${sell.length}개</summary>${topTable(sell, 99)}</details>` : ''}
         </div></div>
@@ -98,9 +118,18 @@ const routes = {
         <div class="card bg-base-200 shadow"><div class="card-body p-3">
           <h3 class="card-title text-sm">💸 자금유입 TOP</h3>
           <table class="table table-zebra table-sm"><tbody>${flowRows}</tbody></table>
+          ${flowDetail}
         </div></div>
       </div>`
     $('#scanBtn').onclick = runScan
+    // 반등 카드 실시간 필터 (종목명·티커). 빈 검색이면 TOP8.
+    const rs = $('#reboundSearch')
+    rs.oninput = () => {
+      const q = rs.value.trim(), up = q.toUpperCase()
+      const list = !q ? buyAll.slice(0, 8)
+        : buyAll.filter((x) => (x.korean_name || '').includes(q) || (x.market || '').includes(up) || (x.market || '').replace('KRW-', '').includes(up))
+      $('#reboundBody').innerHTML = topTable(list, 99)
+    }
   },
 
   async analyze() {
@@ -393,6 +422,26 @@ function topTable(list = [], n = 10) {
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${fmt(x.price)}</td>
         <td>${signalTags(x.signals)}</td>
+      </tr>`).join('')}</tbody></table></div>`
+}
+
+// 자금유입 상세 지표 테이블 (구 자금유입 탭의 전체 컬럼)
+function flowDetailTable(picks = []) {
+  if (!picks.length) return '<p class="opacity-60 text-sm">없음</p>'
+  const emoji = { strong: '🔴', attention: '🟠', watch: '🟡' }
+  const pct = (v) => v == null ? '-' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${v}%</span>`
+  const yn = (b) => b ? '<span class="badge badge-success badge-xs">O</span>' : '<span class="opacity-30">·</span>'
+  return `<div class="overflow-x-auto"><table class="table table-zebra table-xs">
+    <thead><tr><th>종목</th><th>점수</th><th>머니</th><th>가속</th><th>5분대금</th><th>1분</th><th>5분</th><th>30분</th><th>24h</th><th>돌파</th><th>근접</th><th>EMA</th><th>RSI</th></tr></thead>
+    <tbody>${picks.map((x) => `
+      <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
+        <td>${emoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span></td>
+        <td><span class="badge badge-primary badge-xs">${x.score}</span></td>
+        <td>${x.ratio == null ? '-' : x.ratio + 'x'}</td>
+        <td>${x.accel == null ? '-' : x.accel + 'x'}</td>
+        <td>${x.value5m == null ? '-' : fmt(Math.round(x.value5m / 1e6)) + 'M'}</td>
+        <td>${pct(x.ch1m)}</td><td>${pct(x.ch5m)}</td><td>${pct(x.ch30m)}</td><td>${pct(x.ch24h)}</td>
+        <td>${yn(x.breakout)}</td><td>${yn(x.near24h)}</td><td>${yn(x.emaOK)}</td><td>${yn(x.rsi)}</td>
       </tr>`).join('')}</tbody></table></div>`
 }
 
