@@ -138,3 +138,22 @@ describe('findScanByTimestamp', () => {
     expect(findScanByTimestamp(scans, 'nope')).toBeNull()
   })
 })
+
+import { buildFlow } from '../server/api.mjs'
+
+describe('buildFlow', () => {
+  it('빈 로그 → empty', () => {
+    expect(buildFlow({ scans: [] }).empty).toBe(true)
+  })
+  it('최신 스캔의 picks·btc·레벨 KPI', () => {
+    const log = { totalScans: 2, scans: [{ timestamp: 't', btc: { ret: 0.5, favorable: true }, picks: [
+      { market: 'KRW-A', level: 'strong', score: 80 },
+      { market: 'KRW-B', level: 'watch', score: 30 },
+    ] }] }
+    const r = buildFlow(log)
+    expect(r.empty).toBe(false)
+    expect(r.kpi).toEqual({ strong: 1, attention: 0, watch: 1, totalScans: 2 })
+    expect(r.picks.length).toBe(2)
+    expect(r.btc.favorable).toBe(true)
+  })
+})

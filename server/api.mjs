@@ -88,6 +88,15 @@ export function findScanByTimestamp(scans, ts) {
   return scans.find((s) => s.timestamp === ts) || null
 }
 
+// 자금유입 스캔 최신 결과
+export function buildFlow(log) {
+  const scan = log?.scans?.at(-1)
+  if (!scan) return { empty: true, kpi: { strong: 0, attention: 0, watch: 0, totalScans: log?.totalScans || 0 }, picks: [], btc: null }
+  const kpi = { strong: 0, attention: 0, watch: 0, totalScans: log.totalScans || 0 }
+  for (const p of scan.picks || []) if (kpi[p.level] != null) kpi[p.level]++
+  return { empty: false, timestamp: scan.timestamp, btc: scan.btc || null, kpi, picks: scan.picks || [] }
+}
+
 export function buildVerify(weekly, weights) {
   const latest = weekly?.weeks?.at(-1) || {}
   return {
