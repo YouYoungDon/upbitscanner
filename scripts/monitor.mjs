@@ -5,7 +5,8 @@ import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
-import { getScanUniverse, BATCH, DELAY, sleep, LOW_LIQUIDITY_24H } from '../lib/scan-universe.mjs'
+import { getScanUniverse, BATCH, DELAY, sleep, LOW_LIQUIDITY_24H, liquidityMultiplier } from '../lib/scan-universe.mjs'
+import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 
@@ -33,6 +34,9 @@ async function main() {
   const regime = btcRegime(btcCandles ? candlesToOhlcv(btcCandles) : [])
   console.log(`시장 레짐(BTC): ${regime.trend}`)
 
+  const log = await readJson('monitor-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
+  const priorScans = log.scans || []
+
   const buy = [], sell = []
   for (let i = 0; i < targets.length; i += BATCH) {
     const chunk = targets.slice(i, i + BATCH)
@@ -45,7 +49,7 @@ async function main() {
       for (const p of pat.buy) { sig.buy.push(p); sig.buyScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
       for (const p of pat.sell) { sig.sell.push(p); sig.sellScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
 
-      const combo = applyCombos(sig.buy, sig.sell, sig.buyScore)
+      const combo = applyCombos(sig.buy, sig.sell, sig.buyScore, sig.volRatio)
       let finalBuyScore = combo.buyScore
       let buySignals = combo.buy
       // 멀티 타임프레임 보너스: 일봉 GC + 4시간봉도 Stoch GC면 ×1.2
@@ -65,11 +69,18 @@ async function main() {
       if (sweep.side === 'sell') { sellScore += sweep.score; sellSignals = [...sellSignals, `유동성 스윕 고점 (깊이 ${sweep.depthPct}%)`] }
       if (vbottom) { finalBuyScore += vbottom.score; buySignals = [...buySignals, `🎯V-Bottom (RSI${vbottom.rsi9}·꼬리${vbottom.wickRatio}%)`]; vbottomSL = vbottom.stopLoss }
       if (pump) { finalBuyScore += pump.score; buySignals = [...buySignals, `🚀Pump Start (vol ${pump.volRatio}x)`]; pumpSL = pump.stopLoss1 }
-      // 레짐 게이트: BTC 약세장에선 반등 매수 신뢰도 하향 (약세 역행 매수 억제)
+      // 레짐 게이트: BTC 약세장에선 반등 매수 신뢰도 하향
       if (regime.trend === 'bear') { finalBuyScore *= 0.85; buySignals = [...buySignals, '[레짐] BTC 약세 감점'] }
-      // 저유동성 감점: 24h 거래대금 3억 미만은 슬리피지·조작 위험
-      const lowLiq = (tradePrice[market] ?? Infinity) < LOW_LIQUIDITY_24H
-      if (lowLiq) { finalBuyScore *= 0.9; buySignals = [...buySignals, '⚠️저유동성'] }
+      // 유동성 차등 감점 (구간별 배수)
+      const tp = tradePrice[market] ?? 0
+      const liqMult = liquidityMultiplier(tp)
+      if (liqMult < 1) { finalBuyScore *= liqMult; buySignals = [...buySignals, `⚠️유동성 ×${liqMult}`] }
+      const lowLiq = tp < LOW_LIQUIDITY_24H
+      // 지속성 보너스 (이력 기반, 마지막 가산)
+      const hasVolumeSurge = buySignals.some((s) => s.startsWith('거래량 급증'))
+      const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)
+      finalBuyScore += pers.bonus
+      if (pers.signals.length) buySignals = [...buySignals, ...pers.signals]
 
       if (finalBuyScore >= BUY_THRESHOLD) {
         const item = { market, korean_name: nameOf[market], price: sig.price, score: +finalBuyScore.toFixed(1), signals: buySignals }
@@ -91,7 +102,6 @@ async function main() {
   const ratio = +(buy.length / Math.max(sell.length, 1)).toFixed(2)
   const regimeInfo = { trend: regime.trend, ratio, ...regimeLabel(ratio, regime.trend) }
   const entry = { timestamp: new Date().toISOString(), buy, sell, regime: regimeInfo }
-  const log = await readJson('monitor-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
   log.totalScans = (log.totalScans || 0) + 1
   log.scans = rollingAppend(log.scans || [], entry, MAX_SCANS)
   await writeJson('monitor-log.json', log)
