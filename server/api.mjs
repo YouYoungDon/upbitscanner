@@ -46,14 +46,18 @@ export function buildHistory(log, limit = 14) {
 
 export function buildResults(log) {
   const scan = log?.scans?.at(-1)
-  if (!scan) return { empty: true, kpi: { buyCount: 0, sellCount: 0, totalScans: log?.totalScans || 0 }, buy: [], sell: [], comboDist: { rebound: 0, trap: 0, volume: 0, mtf: 0 }, candleSummary: { bullishCount: 0, bearishCount: 0, topBullish: [], topBearish: [] } }
+  if (!scan) return { empty: true, kpi: { buyCount: 0, sellCount: 0, totalScans: log?.totalScans || 0 }, buy: [], buyLowLiq: [], sell: [], comboDist: { rebound: 0, trap: 0, volume: 0, mtf: 0 }, candleSummary: { bullishCount: 0, bearishCount: 0, topBullish: [], topBearish: [] } }
+  const buyAll = scan.buy || []
+  const buyMain = buyAll.filter((b) => !b.lowLiquidity)
+  const buyLowLiq = buyAll.filter((b) => b.lowLiquidity)
   return {
     empty: false,
     timestamp: scan.timestamp,
-    kpi: { buyCount: scan.buy.length, sellCount: scan.sell.length, totalScans: log.totalScans || 0 },
-    buy: scan.buy,
+    kpi: { buyCount: buyAll.length, sellCount: scan.sell.length, totalScans: log.totalScans || 0 },
+    buy: buyMain,
+    buyLowLiq,
     sell: scan.sell,
-    comboDist: comboDistribution(scan.buy),
+    comboDist: comboDistribution(buyAll),
     candleSummary: candleSummary(scan),
     regime: scan.regime || null,
   }

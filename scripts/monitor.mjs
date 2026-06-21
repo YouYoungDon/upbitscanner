@@ -135,23 +135,25 @@ async function notifyPositionAlerts() {
   } catch { /* 무시 */ }
 }
 
-// Telegram 알림 (환경변수 TELEGRAM_TOKEN, TELEGRAM_CHAT_ID 설정 시 매수 상위 5개 전송)
+// Telegram 알림 (환경변수 TELEGRAM_TOKEN, TELEGRAM_CHAT_ID 설정 시 메인 매수 상위 5개 전송)
 async function notifyTelegram(buyList) {
   const TG_TOKEN = process.env.TELEGRAM_TOKEN
   const TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID
   if (!TG_TOKEN || !TG_CHAT_ID || buyList.length === 0) return
-  const lines = buyList.slice(0, 5).map((b) => {
+  const main = buyList.filter((b) => !b.lowLiquidity)
+  const lowN = buyList.length - main.length
+  const lines = main.slice(0, 5).map((b) => {
     const mtf = b.signals.includes('[MTF] 4시간봉 Stoch GC 확인') ? ' 📡MTF' : ''
     const stgc = b.signals.some((s) => s.includes('골든크로스')) ? ' 🟢GC' : ''
     const sl = b.vbottomSL != null ? ` 🎯SL:${b.vbottomSL}` : b.pumpSL != null ? ` 🚀SL:${b.pumpSL}` : ''
     return `• ${b.korean_name}(${b.market.replace('KRW-', '')}) score ${b.score.toFixed(1)}${stgc}${mtf}${sl}`
   })
   const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
-  const msg = `🚨 업비트 스캔 ${when}\n매수 ${buyList.length}개 감지\n\n${lines.join('\n')}`
+  const lowLine = lowN > 0 ? `\n\n⚠️ 저유동성 후보 ${lowN}개(별도)` : ''
+  const msg = `🚨 업비트 스캔 ${when}\n메인 매수 ${main.length}개${lowLine}\n\n${lines.join('\n')}`
   try {
     await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg }),
     })
   } catch { /* 네트워크 오류 시 무시 */ }
