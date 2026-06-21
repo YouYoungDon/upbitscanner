@@ -30,65 +30,75 @@ function signalTags(signals) {
 }
 
 const routes = {
-  async dashboard() {
-    setActiveTab('dashboard')
+  async home() {
+    setActiveTab('home')
     view.innerHTML = '<span class="loading loading-spinner"></span>'
-    let res, ins, hist
+    let res, mom, flow, pos
     try {
-      [res, ins, hist] = await Promise.all([api('/api/results'), api('/api/insights'), api('/api/history')])
+      [res, mom, flow, pos] = await Promise.all([
+        api('/api/results'), api('/api/momentum'), api('/api/flow'), api('/api/positions'),
+      ])
     } catch {
       view.innerHTML = '<div class="alert alert-error">데이터 조회 실패 — 서버 연결을 확인하세요.</div>'
       return
     }
-    const kpi = res.kpi || {}
-    const cd = res.comboDist || { rebound: 0, trap: 0, volume: 0, mtf: 0 }
-    const cs = res.candleSummary || { bullishCount: 0, bearishCount: 0, topBullish: [], topBearish: [] }
-    const buySpark = Charts.sparkline((hist || []).map((h) => h.buyCount), '#36d399')
-    const sellSpark = Charts.sparkline((hist || []).map((h) => h.sellCount), '#f87272')
-    const best = ins.bestHitRate
+    const stale = res.timestamp && (Date.now() - new Date(res.timestamp)) > 14 * 3600 * 1000
+    const regime = res.regime
+      ? `· 레짐 <span class="badge badge-sm ${res.regime.label === '확장' ? 'badge-success' : res.regime.label === '수축' ? 'badge-error' : 'badge-warning'}">${res.regime.emoji} ${esc(res.regime.label)}</span>`
+      : ''
+    const lastScans = `반등 ${res.timestamp ? new Date(res.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-'} · 자금 ${flow.timestamp ? new Date(flow.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-'}`
+
+    const positions = pos.positions || []
+    const posBar = !positions.length ? '' : `
+      <div class="card bg-base-200 shadow mb-3"><div class="card-body p-3">
+        <h3 class="card-title text-sm">💼 포지션</h3>
+        <div class="flex flex-wrap gap-3">${positions.map((p) => {
+          const pl = p.plPct == null ? '-' : `<span class="${p.plPct >= 0 ? 'text-success' : 'text-error'}">${p.plPct >= 0 ? '+' : ''}${p.plPct}%</span>`
+          const st = p.hitSL ? '<span class="badge badge-error badge-sm">SL도달</span>' : p.hitTP ? '<span class="badge badge-success badge-sm">TP도달</span>' : `<span class="opacity-60 text-xs">SL까지 ${p.toSLPct == null ? '-' : p.toSLPct + '%'}</span>`
+          return `<div class="cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(p.market)}'"><span class="font-medium">${esc(p.korean_name || p.market)}</span> ${fmt(p.price)} ${pl} ${st}</div>`
+        }).join('')}</div>
+      </div></div>`
+
+    const momRows = (mom.picks || []).slice(0, 8).map((x) => `
+      <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
+        <td><span class="font-medium">${esc(x.korean_name)}</span></td>
+        <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
+      </tr>`).join('') || '<tr><td colspan="2" class="opacity-60 text-xs">스캔 대기</td></tr>'
+
+    const flowEmoji = { strong: '🔴', attention: '🟠', watch: '🟡' }
+    const flowRows = (flow.picks || []).slice(0, 8).map((x) => `
+      <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
+        <td>${flowEmoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span></td>
+        <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
+        <td class="text-xs opacity-70">${x.ratio == null ? '' : x.ratio + 'x'}</td>
+      </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'
+
+    const lowLiq = res.buyLowLiq || []
+    const sell = res.sell || []
+
     view.innerHTML = `
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold">대시보드</h2>
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-2xl font-bold">🏠 종합</h2>
         <button id="scanBtn" class="btn btn-primary btn-sm">🔄 수동 스캔</button>
       </div>
-      <p class="opacity-60 text-sm mb-3">마지막 스캔: ${res.timestamp ? new Date(res.timestamp).toLocaleString('ko-KR') : '없음'}
-        ${res.timestamp && (Date.now() - new Date(res.timestamp)) > 14 * 3600 * 1000 ? '<span class="badge badge-warning badge-sm">⏰ 스캔 지연(14h+)</span>' : ''}
-        ${res.regime ? `· 시장 레짐 <span class="badge badge-sm ${res.regime.label === '확장' ? 'badge-success' : res.regime.label === '수축' ? 'badge-error' : 'badge-warning'}">${res.regime.emoji} ${esc(res.regime.label)} (BTC ${esc(res.regime.trend)}, 비율 ${res.regime.ratio})</span>` : ''}</p>
-      <div id="scanProgress" class="mb-4"></div>
-      <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200 w-full mb-4">
-        <div class="stat"><div class="stat-title">매수</div><div class="stat-value text-success">${kpi.buyCount ?? 0}</div></div>
-        <div class="stat"><div class="stat-title">매도</div><div class="stat-value text-error">${kpi.sellCount ?? 0}</div></div>
-        <div class="stat"><div class="stat-title">누적 스캔</div><div class="stat-value">${kpi.totalScans ?? 0}</div></div>
-        <div class="stat"><div class="stat-title">최다 신호</div><div class="stat-desc text-base mt-2">${esc(ins.topSignal?.key) || '-'}</div></div>
-        <div class="stat"><div class="stat-title">적중률 1위</div><div class="stat-desc text-base mt-2">${best ? esc(best.key) + ' ' + Math.round(best.hitRate * 100) + '%' : '-'}</div></div>
-      </div>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-        <div class="card bg-base-200 shadow"><div class="card-body p-4">
-          <h3 class="card-title text-sm opacity-70">콤보 분포</h3>
-          <div class="flex flex-wrap gap-2 mt-1">
-            <span class="badge badge-success gap-1">반등확인 ${cd.rebound}</span>
-            <span class="badge badge-error gap-1">과매도함정 ${cd.trap}</span>
-            <span class="badge badge-warning gap-1">거래량 ${cd.volume}</span>
-            <span class="badge badge-info gap-1">MTF ${cd.mtf}</span>
-          </div>
+      <p class="opacity-60 text-sm mb-3">${lastScans} ${regime} ${stale ? '<span class="badge badge-warning badge-sm">⏰ 스캔지연</span>' : ''}</p>
+      <div id="scanProgress" class="mb-3"></div>
+      ${posBar}
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="card bg-base-200 shadow"><div class="card-body p-3">
+          <h3 class="card-title text-sm">🟢 반등 TOP</h3>
+          ${topTable((res.buy || []).slice(0, 8), 8)}
+          ${lowLiq.length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">⚠️ 저유동성 ${lowLiq.length}개</summary>${topTable(lowLiq, 99)}</details>` : ''}
+          ${sell.length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">🔴 매도 ${sell.length}개</summary>${topTable(sell, 99)}</details>` : ''}
         </div></div>
-        <div class="card bg-base-200 shadow"><div class="card-body p-4">
-          <h3 class="card-title text-sm opacity-70">🕯️ 캔들 모양</h3>
-          <div class="flex gap-4 mt-1">
-            <div><span class="text-success font-bold text-lg">${cs.bullishCount}</span> <span class="opacity-60 text-xs">강세</span></div>
-            <div><span class="text-error font-bold text-lg">${cs.bearishCount}</span> <span class="opacity-60 text-xs">약세</span></div>
-          </div>
-          <div class="text-xs opacity-60 mt-1">${cs.topBullish.map((p) => esc(p.name) + '×' + p.count).join(', ') || '-'}</div>
+        <div class="card bg-base-200 shadow"><div class="card-body p-3">
+          <h3 class="card-title text-sm">🚀 모멘텀 TOP</h3>
+          <table class="table table-zebra table-sm"><tbody>${momRows}</tbody></table>
         </div></div>
-        <div class="card bg-base-200 shadow"><div class="card-body p-4">
-          <h3 class="card-title text-sm opacity-70">스캔 추이 (매수/매도)</h3>
-          <div class="text-success">${buySpark}</div>
-          <div class="text-error">${sellSpark}</div>
+        <div class="card bg-base-200 shadow"><div class="card-body p-3">
+          <h3 class="card-title text-sm">💸 자금유입 TOP</h3>
+          <table class="table table-zebra table-sm"><tbody>${flowRows}</tbody></table>
         </div></div>
-      </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🟢 매수 TOP 10</h3>${topTable([...(res.buy||[]), ...(res.buyLowLiq||[])].sort((a,b)=>b.score-a.score), 10)}</div></div>
-        <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🔴 매도 TOP 10</h3>${topTable(res.sell, 10)}</div></div>
       </div>`
     $('#scanBtn').onclick = runScan
   },
