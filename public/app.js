@@ -87,7 +87,7 @@ const routes = {
         </div></div>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🟢 매수 TOP 10</h3>${topTable(res.buy, 10)}</div></div>
+        <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🟢 매수 TOP 10</h3>${topTable([...(res.buy||[]), ...(res.buyLowLiq||[])].sort((a,b)=>b.score-a.score), 10)}</div></div>
         <div class="card bg-base-200 shadow"><div class="card-body p-4"><h3 class="card-title text-sm">🔴 매도 TOP 10</h3>${topTable(res.sell, 10)}</div></div>
       </div>`
     $('#scanBtn').onclick = runScan
@@ -163,15 +163,25 @@ const routes = {
     view.innerHTML = '<h2 class="text-2xl font-bold mb-4">추천</h2><span class="loading loading-spinner"></span>'
     const res = await api('/api/results')
     let side = 'buy'
+    const rowHtml = (x) => `<tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
+      <td><span class="font-medium">${esc(x.korean_name)}</span> <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
+      <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
+      <td>${fmt(x.price)}</td><td>${signalTags(x.signals)}</td>
+    </tr>`
+    const matches = (x, q) => !q || x.korean_name.includes(q) || x.market.includes(q.toUpperCase())
     const render = (q = '') => {
-      const list = (res[side] || []).filter((x) => !q || x.korean_name.includes(q) || x.market.includes(q.toUpperCase()))
+      const list = (res[side] || []).filter((x) => matches(x, q))
+      let rows = list.map(rowHtml).join('') || '<tr><td colspan="4" class="opacity-60">없음</td></tr>'
+      if (side === 'buy') {
+        const low = (res.buyLowLiq || []).filter((x) => matches(x, q))
+        if (low.length) {
+          rows += `<tr><td colspan="4" class="text-xs opacity-60 pt-3">⚠️ 저유동성 후보 (5억 미만 · 슬리피지 주의) ${low.length}개</td></tr>`
+          rows += low.map(rowHtml).join('')
+        }
+      }
       $('#recBody').innerHTML = `<div class="overflow-x-auto"><table class="table table-zebra table-sm">
         <thead><tr><th>종목</th><th>점수</th><th>현재가</th><th>신호</th></tr></thead>
-        <tbody>${list.map((x) => `<tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-          <td><span class="font-medium">${esc(x.korean_name)}</span> <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
-          <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
-          <td>${fmt(x.price)}</td><td>${signalTags(x.signals)}</td>
-        </tr>`).join('') || '<tr><td colspan="4" class="opacity-60">없음</td></tr>'}</tbody></table></div>`
+        <tbody>${rows}</tbody></table></div>`
     }
     view.innerHTML = `<h2 class="text-2xl font-bold mb-4">추천</h2>
       <div class="flex flex-wrap gap-2 items-center mb-3">

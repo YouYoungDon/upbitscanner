@@ -157,3 +157,19 @@ describe('buildFlow', () => {
     expect(r.btc.favorable).toBe(true)
   })
 })
+
+describe('buildResults 저유동성 분리', () => {
+  it('buy를 메인/저유동성으로 가른다', () => {
+    const log = { totalScans: 1, scans: [{
+      timestamp: 't', regime: null,
+      buy: [
+        { market: 'KRW-A', korean_name: 'A', price: 1, score: 10, signals: [] },
+        { market: 'KRW-B', korean_name: 'B', price: 1, score: 8, signals: [], lowLiquidity: true },
+      ],
+      sell: [],
+    }] }
+    const r = buildResults(log)
+    expect(r.buy.map((b) => b.market)).toEqual(['KRW-A'])
+    expect(r.buyLowLiq.map((b) => b.market)).toEqual(['KRW-B'])
+  })
+})
