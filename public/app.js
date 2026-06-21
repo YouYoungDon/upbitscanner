@@ -295,80 +295,117 @@ const routes = {
     if (selected) load()
   },
 
-  async verify() {
-    setActiveTab('verify')
-    view.innerHTML = '<h2 class="text-2xl font-bold mb-4">신호 검증</h2><span class="loading loading-spinner"></span>'
-    const v = await api('/api/verify')
-    const bar = (rate) => `<progress class="progress progress-success w-24 align-middle" value="${Math.round((rate || 0) * 100)}" max="100"></progress>`
-    const retCell = (ar) => ar == null ? '-' : `<span class="${ar >= 0 ? 'text-success' : 'text-error'}">${ar >= 0 ? '+' : ''}${ar}%</span>`
-    const statsRows = Object.entries(v.signalStats || {})
-      .sort((a, b) => (b[1].hitRate) - (a[1].hitRate))
-      .map(([k, s]) => `<tr><td>${esc(k)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td>${retCell(s.avgReturn)}</td><td><span class="badge badge-ghost badge-sm">${(v.weights[k] ?? 1).toFixed(2)}</span></td></tr>`).join('')
-    const timed = v.timedHitRates || {}
-    const mom = v.momentum
-    const momCard = !mom ? '' : `
-      <div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
-        <h3 class="card-title text-sm">🚀 모멘텀 스캐너 적중률</h3>
-        <div class="stats stats-horizontal shadow-none w-full">
-          <div class="stat p-2"><div class="stat-title text-xs">전체</div><div class="stat-value text-xl">${mom.overallHitRate != null ? Math.round(mom.overallHitRate * 100) + '%' : '-'}</div><div class="stat-desc">${mom.picks}건</div></div>
-          <div class="stat p-2"><div class="stat-title text-xs">+1일</div><div class="stat-value text-xl">${mom.timedHitRates?.['+1일'] ? Math.round(mom.timedHitRates['+1일'].hitRate * 100) + '%' : '-'}</div></div>
-          <div class="stat p-2"><div class="stat-title text-xs">+3일</div><div class="stat-value text-xl">${mom.timedHitRates?.['+3일'] ? Math.round(mom.timedHitRates['+3일'].hitRate * 100) + '%' : '-'}</div></div>
-          <div class="stat p-2"><div class="stat-title text-xs">+7일</div><div class="stat-value text-xl">${mom.timedHitRates?.['+7일'] ? Math.round(mom.timedHitRates['+7일'].hitRate * 100) + '%' : '-'}</div></div>
-        </div>
-      </div></div>`
-    const r = v.report
-    const sigBadge = (s) => `<tr><td>${esc(s.key)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}%</td><td><span class="badge badge-success badge-sm">${s.hits}</span></td></tr>`
-    const wChange = (w) => `<tr><td>${esc(w.key)}</td><td>${w.old.toFixed(2)} → ${w.new.toFixed(2)}</td><td>${w.direction === 'up' ? '<span class="text-success">▲</span>' : '<span class="text-error">▼</span>'}</td><td class="opacity-70">${esc(w.reason)}</td></tr>`
-    const coinBadge = (c) => `<span class="badge badge-success badge-outline gap-1">${esc(c.korean_name || c.market.replace('KRW-', ''))} <span class="opacity-60">${c.hits}/${c.total}</span></span>`
-    const sigTable = (list, label) => `
-      <div>
-        <div class="text-xs opacity-60 mb-1">${label} <span class="opacity-50">(표본 3+ · 적중률순)</span></div>
-        <table class="table table-sm"><thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>적중</th></tr></thead>
-          <tbody>${(list || []).map(sigBadge).join('') || '<tr><td colspan="4" class="opacity-60">없음</td></tr>'}</tbody></table>
-      </div>`
-    const reportCard = !r ? '' : `
-      <div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
-        <h3 class="card-title text-sm">📅 이번 주 요약</h3>
-        <div class="grid md:grid-cols-2 gap-4">
-          ${sigTable(r.topBuySignals, '🟢 매수 신호 TOP')}
-          ${sigTable(r.topSellSignals, '🔴 매도 신호 TOP')}
-        </div>
-        <div class="text-xs opacity-60 mt-2 mb-1">가중치 변화</div>
-        <div class="overflow-x-auto"><table class="table table-sm"><thead><tr><th>신호</th><th>변화</th><th></th><th>이유</th></tr></thead>
-          <tbody>${(r.weightChanges || []).map(wChange).join('') || '<tr><td colspan="4" class="opacity-60">변화 없음</td></tr>'}</tbody></table></div>
-        <div class="text-xs opacity-60 mt-2 mb-1">적중 코인</div>
-        <div class="flex flex-wrap gap-1">${(r.hitCoins || []).map(coinBadge).join('') || '<span class="opacity-60">없음</span>'}</div>
-      </div></div>`
-    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">신호 검증</h2>
-      <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200 w-full mb-4">
-        <div class="stat"><div class="stat-title">전체 적중률</div><div class="stat-value">${v.overallHitRate != null ? Math.round(v.overallHitRate * 100) + '%' : '-'}</div></div>
-        <div class="stat"><div class="stat-title">+1일</div><div class="stat-value text-2xl">${timed['+1일'] ? Math.round(timed['+1일'].hitRate * 100) + '%' : '-'}</div></div>
-        <div class="stat"><div class="stat-title">+3일</div><div class="stat-value text-2xl">${timed['+3일'] ? Math.round(timed['+3일'].hitRate * 100) + '%' : '-'}</div></div>
-        <div class="stat"><div class="stat-title">+7일</div><div class="stat-value text-2xl">${timed['+7일'] ? Math.round(timed['+7일'].hitRate * 100) + '%' : '-'}</div></div>
-      </div>
-      ${momCard}
-      ${reportCard}
-      <div class="card bg-base-200 shadow"><div class="card-body p-4">
-        <h3 class="card-title text-sm">신호별 적중률 / 평균수익 / 가중치</h3>
-        <div class="overflow-x-auto"><table class="table table-zebra table-sm">
-          <thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>평균수익</th><th>가중치</th></tr></thead>
-          <tbody>${statsRows || '<tr><td colspan="5" class="opacity-60">데이터 없음 (주간 분석 필요)</td></tr>'}</tbody></table></div>
-      </div></div>`
-  },
-
-  async history() {
-    setActiveTab('history')
-    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">📜 스캔기록</h2>
+  async review() {
+    setActiveTab('review')
+    view.innerHTML = `<h2 class="text-2xl font-bold mb-4">📊 기록·검증</h2>
       <div class="join mb-4">
-        <button class="btn btn-sm join-item btn-active" id="hSegDate">날짜별</button>
-        <button class="btn btn-sm join-item" id="hSegCoin">종목별</button>
+        <button class="btn btn-sm join-item btn-active" id="rSegVerify">📈 검증</button>
+        <button class="btn btn-sm join-item" id="rSegHistory">📜 기록</button>
       </div>
-      <div id="hBody"></div>`
-    const showDate = () => renderDateView()
-    const showCoin = () => renderCoinView()
-    $('#hSegDate').onclick = () => { $('#hSegDate').classList.add('btn-active'); $('#hSegCoin').classList.remove('btn-active'); showDate() }
-    $('#hSegCoin').onclick = () => { $('#hSegCoin').classList.add('btn-active'); $('#hSegDate').classList.remove('btn-active'); showCoin() }
-    showDate()
+      <div id="rBody"></div>`
+    const showVerify = async () => {
+      $('#rBody').innerHTML = '<span class="loading loading-spinner"></span>'
+      const [v, ins, res, hist] = await Promise.all([
+        api('/api/verify'), api('/api/insights'), api('/api/results'), api('/api/history'),
+      ])
+      const bar = (rate) => `<progress class="progress progress-success w-24 align-middle" value="${Math.round((rate || 0) * 100)}" max="100"></progress>`
+      const retCell = (ar) => ar == null ? '-' : `<span class="${ar >= 0 ? 'text-success' : 'text-error'}">${ar >= 0 ? '+' : ''}${ar}%</span>`
+      const statsRows = Object.entries(v.signalStats || {})
+        .sort((a, b) => (b[1].hitRate) - (a[1].hitRate))
+        .map(([k, s]) => `<tr><td>${esc(k)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td>${retCell(s.avgReturn)}</td><td><span class="badge badge-ghost badge-sm">${(v.weights[k] ?? 1).toFixed(2)}</span></td></tr>`).join('')
+      const timed = v.timedHitRates || {}
+      const mom = v.momentum
+      const momCard = !mom ? '' : `
+        <div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
+          <h3 class="card-title text-sm">🚀 모멘텀 스캐너 적중률</h3>
+          <div class="stats stats-horizontal shadow-none w-full">
+            <div class="stat p-2"><div class="stat-title text-xs">전체</div><div class="stat-value text-xl">${mom.overallHitRate != null ? Math.round(mom.overallHitRate * 100) + '%' : '-'}</div><div class="stat-desc">${mom.picks}건</div></div>
+            <div class="stat p-2"><div class="stat-title text-xs">+1일</div><div class="stat-value text-xl">${mom.timedHitRates?.['+1일'] ? Math.round(mom.timedHitRates['+1일'].hitRate * 100) + '%' : '-'}</div></div>
+            <div class="stat p-2"><div class="stat-title text-xs">+3일</div><div class="stat-value text-xl">${mom.timedHitRates?.['+3일'] ? Math.round(mom.timedHitRates['+3일'].hitRate * 100) + '%' : '-'}</div></div>
+            <div class="stat p-2"><div class="stat-title text-xs">+7일</div><div class="stat-value text-xl">${mom.timedHitRates?.['+7일'] ? Math.round(mom.timedHitRates['+7일'].hitRate * 100) + '%' : '-'}</div></div>
+          </div>
+        </div></div>`
+      const r = v.report
+      const sigBadge = (s) => `<tr><td>${esc(s.key)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}%</td><td><span class="badge badge-success badge-sm">${s.hits}</span></td></tr>`
+      const wChange = (w) => `<tr><td>${esc(w.key)}</td><td>${w.old.toFixed(2)} → ${w.new.toFixed(2)}</td><td>${w.direction === 'up' ? '<span class="text-success">▲</span>' : '<span class="text-error">▼</span>'}</td><td class="opacity-70">${esc(w.reason)}</td></tr>`
+      const coinBadge = (c) => `<span class="badge badge-success badge-outline gap-1">${esc(c.korean_name || c.market.replace('KRW-', ''))} <span class="opacity-60">${c.hits}/${c.total}</span></span>`
+      const sigTable = (list, label) => `
+        <div>
+          <div class="text-xs opacity-60 mb-1">${label} <span class="opacity-50">(표본 3+ · 적중률순)</span></div>
+          <table class="table table-sm"><thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>적중</th></tr></thead>
+            <tbody>${(list || []).map(sigBadge).join('') || '<tr><td colspan="4" class="opacity-60">없음</td></tr>'}</tbody></table>
+        </div>`
+      const reportCard = !r ? '' : `
+        <div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
+          <h3 class="card-title text-sm">📅 이번 주 요약</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            ${sigTable(r.topBuySignals, '🟢 매수 신호 TOP')}
+            ${sigTable(r.topSellSignals, '🔴 매도 신호 TOP')}
+          </div>
+          <div class="text-xs opacity-60 mt-2 mb-1">가중치 변화</div>
+          <div class="overflow-x-auto"><table class="table table-sm"><thead><tr><th>신호</th><th>변화</th><th></th><th>이유</th></tr></thead>
+            <tbody>${(r.weightChanges || []).map(wChange).join('') || '<tr><td colspan="4" class="opacity-60">변화 없음</td></tr>'}</tbody></table></div>
+          <div class="text-xs opacity-60 mt-2 mb-1">적중 코인</div>
+          <div class="flex flex-wrap gap-1">${(r.hitCoins || []).map(coinBadge).join('') || '<span class="opacity-60">없음</span>'}</div>
+        </div></div>`
+      const cd = res.comboDist || { rebound: 0, trap: 0, volume: 0, mtf: 0 }
+      const cs = res.candleSummary || { bullishCount: 0, bearishCount: 0, topBullish: [], topBearish: [] }
+      const buySpark = Charts.sparkline((hist || []).map((h) => h.buyCount), '#36d399')
+      const sellSpark = Charts.sparkline((hist || []).map((h) => h.sellCount), '#f87272')
+      const analyticsCard = `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+          <div class="card bg-base-200 shadow"><div class="card-body p-4">
+            <h3 class="card-title text-sm opacity-70">콤보 분포</h3>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="badge badge-success gap-1">반등확인 ${cd.rebound}</span>
+              <span class="badge badge-error gap-1">과매도함정 ${cd.trap}</span>
+              <span class="badge badge-warning gap-1">거래량 ${cd.volume}</span>
+              <span class="badge badge-info gap-1">MTF ${cd.mtf}</span>
+            </div>
+          </div></div>
+          <div class="card bg-base-200 shadow"><div class="card-body p-4">
+            <h3 class="card-title text-sm opacity-70">🕯️ 캔들 모양</h3>
+            <div class="flex gap-4 mt-1">
+              <div><span class="text-success font-bold text-lg">${cs.bullishCount}</span> <span class="opacity-60 text-xs">강세</span></div>
+              <div><span class="text-error font-bold text-lg">${cs.bearishCount}</span> <span class="opacity-60 text-xs">약세</span></div>
+            </div>
+            <div class="text-xs opacity-60 mt-1">${cs.topBullish.map((p) => esc(p.name) + '×' + p.count).join(', ') || '-'}</div>
+          </div></div>
+          <div class="card bg-base-200 shadow"><div class="card-body p-4">
+            <h3 class="card-title text-sm opacity-70">스캔 추이 (매수/매도)</h3>
+            <div class="text-success">${buySpark}</div>
+            <div class="text-error">${sellSpark}</div>
+          </div></div>
+        </div>`
+      $('#rBody').innerHTML = `
+        <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200 w-full mb-4">
+          <div class="stat"><div class="stat-title">전체 적중률</div><div class="stat-value">${v.overallHitRate != null ? Math.round(v.overallHitRate * 100) + '%' : '-'}</div></div>
+          <div class="stat"><div class="stat-title">+1일</div><div class="stat-value text-2xl">${timed['+1일'] ? Math.round(timed['+1일'].hitRate * 100) + '%' : '-'}</div></div>
+          <div class="stat"><div class="stat-title">+3일</div><div class="stat-value text-2xl">${timed['+3일'] ? Math.round(timed['+3일'].hitRate * 100) + '%' : '-'}</div></div>
+          <div class="stat"><div class="stat-title">+7일</div><div class="stat-value text-2xl">${timed['+7일'] ? Math.round(timed['+7일'].hitRate * 100) + '%' : '-'}</div></div>
+        </div>
+        ${analyticsCard}
+        ${momCard}
+        ${reportCard}
+        <div class="card bg-base-200 shadow"><div class="card-body p-4">
+          <h3 class="card-title text-sm">신호별 적중률 / 평균수익 / 가중치</h3>
+          <div class="overflow-x-auto"><table class="table table-zebra table-sm">
+            <thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>평균수익</th><th>가중치</th></tr></thead>
+            <tbody>${statsRows || '<tr><td colspan="5" class="opacity-60">데이터 없음 (주간 분석 필요)</td></tr>'}</tbody></table></div>
+        </div></div>`
+    }
+    const showHistory = () => {
+      $('#rBody').innerHTML = `<div class="join mb-4">
+          <button class="btn btn-sm join-item btn-active" id="hSegDate">날짜별</button>
+          <button class="btn btn-sm join-item" id="hSegCoin">종목별</button>
+        </div><div id="hBody"></div>`
+      $('#hSegDate').onclick = () => { $('#hSegDate').classList.add('btn-active'); $('#hSegCoin').classList.remove('btn-active'); renderDateView() }
+      $('#hSegCoin').onclick = () => { $('#hSegCoin').classList.add('btn-active'); $('#hSegDate').classList.remove('btn-active'); renderCoinView() }
+      renderDateView()
+    }
+    $('#rSegVerify').onclick = () => { $('#rSegVerify').classList.add('btn-active'); $('#rSegHistory').classList.remove('btn-active'); showVerify() }
+    $('#rSegHistory').onclick = () => { $('#rSegHistory').classList.add('btn-active'); $('#rSegVerify').classList.remove('btn-active'); showHistory() }
+    showVerify()
   },
 }
 
