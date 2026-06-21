@@ -305,14 +305,15 @@ const routes = {
       <div id="rBody"></div>`
     const showVerify = async () => {
       $('#rBody').innerHTML = '<span class="loading loading-spinner"></span>'
-      const [v, ins, res, hist] = await Promise.all([
-        api('/api/verify'), api('/api/insights'), api('/api/results'), api('/api/history'),
+      const [v, res, hist] = await Promise.all([
+        api('/api/verify'), api('/api/results'), api('/api/history'),
       ])
+      if (!$('#rSegVerify')?.classList.contains('btn-active')) return // 그새 기록 탭으로 전환됐으면 중단(레이스 방지)
       const bar = (rate) => `<progress class="progress progress-success w-24 align-middle" value="${Math.round((rate || 0) * 100)}" max="100"></progress>`
       const retCell = (ar) => ar == null ? '-' : `<span class="${ar >= 0 ? 'text-success' : 'text-error'}">${ar >= 0 ? '+' : ''}${ar}%</span>`
       const statsRows = Object.entries(v.signalStats || {})
         .sort((a, b) => (b[1].hitRate) - (a[1].hitRate))
-        .map(([k, s]) => `<tr><td>${esc(k)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td>${retCell(s.avgReturn)}</td><td><span class="badge badge-ghost badge-sm">${(v.weights[k] ?? 1).toFixed(2)}</span></td></tr>`).join('')
+        .map(([k, s]) => `<tr><td>${esc(k)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td>${retCell(s.avgReturn)}</td><td><span class="badge badge-ghost badge-sm">${(v.weights?.[k] ?? 1).toFixed(2)}</span></td></tr>`).join('')
       const timed = v.timedHitRates || {}
       const mom = v.momentum
       const momCard = !mom ? '' : `
@@ -350,8 +351,9 @@ const routes = {
         </div></div>`
       const cd = res.comboDist || { rebound: 0, trap: 0, volume: 0, mtf: 0 }
       const cs = res.candleSummary || { bullishCount: 0, bearishCount: 0, topBullish: [], topBearish: [] }
-      const buySpark = Charts.sparkline((hist || []).map((h) => h.buyCount), '#36d399')
-      const sellSpark = Charts.sparkline((hist || []).map((h) => h.sellCount), '#f87272')
+      const histArr = Array.isArray(hist) ? hist : []
+      const buySpark = Charts.sparkline(histArr.map((h) => h.buyCount), '#36d399')
+      const sellSpark = Charts.sparkline(histArr.map((h) => h.sellCount), '#f87272')
       const analyticsCard = `
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           <div class="card bg-base-200 shadow"><div class="card-body p-4">
