@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getScanUniverse, MIN_TRADE_PRICE_24H } from '../lib/scan-universe.mjs'
+import { getScanUniverse, MIN_TRADE_PRICE_24H, liquidityMultiplier, LOW_LIQUIDITY_24H } from '../lib/scan-universe.mjs'
 
 describe('getScanUniverse', () => {
   const markets = [
@@ -26,5 +26,22 @@ describe('getScanUniverse', () => {
   it('마켓 없으면 빈 결과', async () => {
     const r = await getScanUniverse({ getMarkets: async () => [], getTicker: async () => [], delay: 0 })
     expect(r).toEqual({ targets: [], nameOf: {}, total: 0 })
+  })
+})
+
+describe('liquidityMultiplier', () => {
+  it('구간별 배수', () => {
+    expect(liquidityMultiplier(60_0000_0000)).toBe(1.0)   // 60억
+    expect(liquidityMultiplier(30_0000_0000)).toBe(0.9)   // 30억
+    expect(liquidityMultiplier(10_0000_0000)).toBe(0.8)   // 10억
+    expect(liquidityMultiplier(3_0000_0000)).toBe(0.6)    // 3억
+  })
+  it('경계: 50억=1.0, 20억=0.9, 5억=0.8', () => {
+    expect(liquidityMultiplier(50_0000_0000)).toBe(1.0)
+    expect(liquidityMultiplier(20_0000_0000)).toBe(0.9)
+    expect(liquidityMultiplier(5_0000_0000)).toBe(0.8)
+  })
+  it('저유동성 기준선 5억', () => {
+    expect(LOW_LIQUIDITY_24H).toBe(500_000_000)
   })
 })
