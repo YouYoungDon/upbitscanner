@@ -41,7 +41,7 @@ const pat = detectPatterns(ohlcv)
 // monitor.mjs와 동일하게 패턴 점수를 buyScore에 더한 뒤 콤보 보정 (점수 일관성 유지)
 let buyScoreWithPatterns = sig.buyScore
 for (const p of pat.buy) buyScoreWithPatterns += PATTERN_SCORE[p] || 0
-const combo = applyCombos([...sig.buy, ...pat.buy], [...sig.sell, ...pat.sell], buyScoreWithPatterns)
+const combo = applyCombos([...sig.buy, ...pat.buy], [...sig.sell, ...pat.sell], buyScoreWithPatterns, sig.volRatio)
 console.log('\n매수 신호:', combo.buy.join(', ') || '없음')
 console.log('매도 신호:', [...sig.sell, ...pat.sell].join(', ') || '없음')
 console.log('매수 점수:', combo.buyScore.toFixed(1), '/ 매도 점수:', sig.sellScore.toFixed(1))
