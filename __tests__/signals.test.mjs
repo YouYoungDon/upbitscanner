@@ -76,4 +76,21 @@ describe('detectSignals', () => {
     const r = detectSignals([...base, hammer], {})
     expect(r.buy.some((s) => s.startsWith('캔들'))).toBe(true)
   })
+
+  it('거래량 배율 등급: 10~20x 상승 → +3점 + volRatio 반환', () => {
+    // 59봉 횡보(거래량 10) + 마지막 봉 +3% 상승 & 거래량 150(=15x)
+    const base = Array.from({ length: 59 }, () => ({ open: 100, close: 100, high: 101, low: 99, volume: 10 }))
+    const spike = { open: 100, close: 103, high: 104, low: 100, volume: 150 }
+    const r = detectSignals([...base, spike], {})
+    const volLabel = r.buy.find((s) => s.startsWith('거래량 급증'))
+    expect(volLabel).toBeTruthy()
+    expect(r.volRatio).toBeGreaterThan(10)
+  })
+
+  it('거래량 급증해도 상승 +2% 미만이면 매수 거래량 신호 미부여', () => {
+    const base = Array.from({ length: 59 }, () => ({ open: 100, close: 100, high: 101, low: 99, volume: 10 }))
+    const weak = { open: 100, close: 100.5, high: 101, low: 99, volume: 150 } // +0.5%
+    const r = detectSignals([...base, weak], {})
+    expect(r.buy.some((s) => s.startsWith('거래량 급증'))).toBe(false)
+  })
 })
