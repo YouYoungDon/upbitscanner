@@ -113,3 +113,40 @@ describe('rsiOk', () => {
     expect(rsiOk(up)).toBe(true)
   })
 })
+
+import { scoreFlow, alertLevel } from '../lib/moneyflow.mjs'
+
+describe('scoreFlow', () => {
+  it('전 항목 충족 → 100', () => {
+    const { score } = scoreFlow({ ratio: 6, accel: 2, value5m: 2_000_000_000, breakout: true, near24h: true, emaOK: true, rsiOK: true, early: true, btcFavorable: true, btcBad: false })
+    expect(score).toBe(100)
+  })
+  it('머니비율 등급(5/3/2x)', () => {
+    expect(scoreFlow({ ratio: 5 }).parts.money).toBe(30)
+    expect(scoreFlow({ ratio: 3 }).parts.money).toBe(20)
+    expect(scoreFlow({ ratio: 2 }).parts.money).toBe(10)
+    expect(scoreFlow({ ratio: 1.5 }).parts.money).toBeUndefined()
+  })
+  it('btcBad → ×0.8', () => {
+    const full = scoreFlow({ ratio: 6, accel: 2, value5m: 2_000_000_000, breakout: true, near24h: true, emaOK: true, rsiOK: true, early: true, btcFavorable: false, btcBad: true })
+    expect(full.score).toBe(76) // (100-5btc)=95 ×0.8=76
+  })
+  it('0~100 클램프, 빈 입력 → 0', () => {
+    expect(scoreFlow({}).score).toBe(0)
+  })
+})
+
+describe('alertLevel', () => {
+  it('strong: ratio≥3 + 돌파 + BTC우호', () => {
+    expect(alertLevel({ ratio: 3, breakout: true, btcFavorable: true })).toBe('strong')
+  })
+  it('attention: ratio≥2 + 돌파', () => {
+    expect(alertLevel({ ratio: 2, breakout: true, btcFavorable: false })).toBe('attention')
+  })
+  it('watch: ratio≥2', () => {
+    expect(alertLevel({ ratio: 2, breakout: false, btcFavorable: false })).toBe('watch')
+  })
+  it('ratio<2 → null', () => {
+    expect(alertLevel({ ratio: 1.5, breakout: true, btcFavorable: true })).toBe(null)
+  })
+})
