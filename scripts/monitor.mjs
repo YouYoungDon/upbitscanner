@@ -5,7 +5,7 @@ import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
-import { getScanUniverse, BATCH, DELAY, sleep, LOW_LIQUIDITY_24H, liquidityMultiplier } from '../lib/scan-universe.mjs'
+import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty } from '../lib/scan-universe.mjs'
 import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
@@ -71,11 +71,9 @@ async function main() {
       if (pump) { finalBuyScore += pump.score; buySignals = [...buySignals, `🚀Pump Start (vol ${pump.volRatio}x)`]; pumpSL = pump.stopLoss1 }
       // 레짐 게이트: BTC 약세장에선 반등 매수 신뢰도 하향
       if (regime.trend === 'bear') { finalBuyScore *= 0.85; buySignals = [...buySignals, '[레짐] BTC 약세 감점'] }
-      // 유동성 차등 감점 (구간별 배수)
-      const tp = tradePrice[market] ?? 0
-      const liqMult = liquidityMultiplier(tp)
-      if (liqMult < 1) { finalBuyScore *= liqMult; buySignals = [...buySignals, `⚠️유동성 ×${liqMult}`] }
-      const lowLiq = tp < LOW_LIQUIDITY_24H
+      // 유동성 차등 감점 (구간별 배수, 두 스캐너 공용 헬퍼)
+      const { liqMult, lowLiq, label: liqLabel } = liquidityPenalty(tradePrice[market])
+      if (liqMult < 1) { finalBuyScore *= liqMult; buySignals = [...buySignals, liqLabel] }
       // 지속성 보너스 (이력 기반, 마지막 가산)
       const hasVolumeSurge = buySignals.some((s) => s.startsWith('거래량 급증'))
       const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)
