@@ -11,6 +11,7 @@
     "backtest": "node scripts/backtest.mjs",
     "backtest:momentum": "node scripts/backtest-momentum.mjs",
     "analyze": "node scripts/analyze.mjs",
+    "flow": "node scripts/flow-scan.mjs",
     "test": "vitest run"
   },
   "devDependencies": {
