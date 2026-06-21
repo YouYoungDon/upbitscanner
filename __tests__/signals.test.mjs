@@ -85,6 +85,7 @@ describe('detectSignals', () => {
     const volLabel = r.buy.find((s) => s.startsWith('거래량 급증'))
     expect(volLabel).toBeTruthy()
     expect(r.volRatio).toBeGreaterThan(10)
+    expect(r.buyScore).toBeGreaterThanOrEqual(3) // 15x → grade 3 가산 반영
   })
 
   it('거래량 급증해도 상승 +2% 미만이면 매수 거래량 신호 미부여', () => {
@@ -92,5 +93,12 @@ describe('detectSignals', () => {
     const weak = { open: 100, close: 100.5, high: 101, low: 99, volume: 150 } // +0.5%
     const r = detectSignals([...base, weak], {})
     expect(r.buy.some((s) => s.startsWith('거래량 급증'))).toBe(false)
+  })
+
+  it('거래량 급증 + 하락이면 매도 거래량 신호 부여', () => {
+    const base = Array.from({ length: 59 }, () => ({ open: 100, close: 100, high: 101, low: 99, volume: 10 }))
+    const drop = { open: 100, close: 99, high: 101, low: 98, volume: 150 } // -1%, 15x
+    const r = detectSignals([...base, drop], {})
+    expect(r.sell.some((s) => s.startsWith('거래량 급증'))).toBe(true)
   })
 })
