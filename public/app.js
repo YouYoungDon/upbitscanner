@@ -431,8 +431,11 @@ function scoreBreakdownHtml(r) {
   if (!bd) { // 구버전 응답 호환
     return `매수: ${esc(r.buy.join(', ')) || '없음'} <b>(${r.buyScore.toFixed(1)})</b><br>매도: ${esc(r.sell.join(', ')) || '없음'} <b>(${r.sellScore.toFixed(1)})</b>`
   }
-  const side = (b, color, title) => {
-    if (!b.items.length && !b.combos.length) return `<div class="text-xs opacity-60">${title}: 없음</div>`
+  const side = (b, fullLabels, color, title) => {
+    // 점수 없는 정보 라벨([익절]/[콤보] 등 항목·콤보에 안 잡힌 것) 보존
+    const shown = new Set([...b.items.map((x) => x.label), ...b.combos.map((c) => c.label)])
+    const extras = (fullLabels || []).filter((l) => !shown.has(l))
+    if (!b.items.length && !b.combos.length && !extras.length) return `<div class="text-xs opacity-60">${title}: 없음</div>`
     const rows = b.items.map((it) => `
       <tr><td>${esc(it.label)}</td>
         <td class="text-right opacity-70">${(+it.base).toFixed(0)}</td>
@@ -445,18 +448,21 @@ function scoreBreakdownHtml(r) {
       <tr><td class="${c.mult >= 1 ? 'text-success' : 'text-error'}">${esc(c.label)}</td>
         <td colspan="2" class="text-center opacity-70">×${c.mult.toFixed(2)}</td>
         <td></td></tr>`).join('')
-    return `
-      <div class="font-semibold text-sm ${color} mb-1">${title} <span class="badge badge-sm ${color === 'text-success' ? 'badge-success' : 'badge-error'}">${b.total.toFixed(1)}</span></div>
+    const table = !b.items.length && !b.combos.length ? '' : `
       <table class="table table-xs">
         <thead><tr><th>신호</th><th class="text-right">기본</th><th class="text-center">가중</th><th class="text-right">점수</th></tr></thead>
         <tbody>${rows}${subtotalRow}${comboRows}</tbody>
         <tfoot><tr class="border-t-2 border-base-300"><td class="font-bold" colspan="3">합계</td>
           <td class="text-right font-bold ${color}">${b.total.toFixed(2)}</td></tr></tfoot>
       </table>`
+    const extrasNote = extras.length ? `<div class="text-xs opacity-50 mt-1">ℹ️ ${extras.map(esc).join(' · ')}</div>` : ''
+    return `
+      <div class="font-semibold text-sm ${color} mb-1">${title} <span class="badge badge-sm ${color === 'text-success' ? 'badge-success' : 'badge-error'}">${b.total.toFixed(1)}</span></div>
+      ${table}${extrasNote}`
   }
   return `<div class="flex flex-col gap-3">
-    <div>${side(bd.buy, 'text-success', '🟢 매수')}</div>
-    <div>${side(bd.sell, 'text-error', '🔴 매도')}</div>
+    <div>${side(bd.buy, r.buy, 'text-success', '🟢 매수')}</div>
+    <div>${side(bd.sell, r.sell, 'text-error', '🔴 매도')}</div>
   </div>`
 }
 
