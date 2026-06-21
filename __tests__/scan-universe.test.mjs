@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getScanUniverse, MIN_TRADE_PRICE_24H, liquidityMultiplier, LOW_LIQUIDITY_24H } from '../lib/scan-universe.mjs'
+import { getScanUniverse, MIN_TRADE_PRICE_24H, liquidityMultiplier, liquidityPenalty, LOW_LIQUIDITY_24H } from '../lib/scan-universe.mjs'
 
 describe('getScanUniverse', () => {
   const markets = [
@@ -43,5 +43,20 @@ describe('liquidityMultiplier', () => {
   })
   it('저유동성 기준선 5억', () => {
     expect(LOW_LIQUIDITY_24H).toBe(500_000_000)
+  })
+})
+
+describe('liquidityPenalty', () => {
+  it('50억+ → 감점·라벨 없음, lowLiq false', () => {
+    expect(liquidityPenalty(60_0000_0000)).toEqual({ liqMult: 1.0, lowLiq: false, label: null })
+  })
+  it('5~20억 → ×0.8 라벨, lowLiq false (5억 이상)', () => {
+    expect(liquidityPenalty(10_0000_0000)).toEqual({ liqMult: 0.8, lowLiq: false, label: '⚠️유동성 ×0.8' })
+  })
+  it('1~5억 → ×0.6 라벨, lowLiq true', () => {
+    expect(liquidityPenalty(3_0000_0000)).toEqual({ liqMult: 0.6, lowLiq: true, label: '⚠️유동성 ×0.6' })
+  })
+  it('미상(undefined) → 0 취급 ×0.6·lowLiq true', () => {
+    expect(liquidityPenalty(undefined)).toEqual({ liqMult: 0.6, lowLiq: true, label: '⚠️유동성 ×0.6' })
   })
 })
