@@ -199,7 +199,7 @@ const routes = {
         ...cp.bearish.map((p) => `<span class="badge badge-error gap-1 m-0.5">▼ ${esc(p)}</span>`),
         ...cp.neutral.map((p) => `<span class="badge badge-ghost gap-1 m-0.5">· ${esc(p)}</span>`),
       ].join(' ') || '<span class="opacity-60">감지된 패턴 없음</span>'
-      $('#sig').innerHTML = `매수: ${esc(r.buy.join(', ')) || '없음'} <b>(${r.buyScore.toFixed(1)})</b><br>매도: ${esc(r.sell.join(', ')) || '없음'} <b>(${r.sellScore.toFixed(1)})</b>`
+      $('#sig').innerHTML = scoreBreakdownHtml(r)
     }
     view.querySelectorAll('[data-tf]').forEach((el) => el.onclick = () => {
       tf = el.dataset.tf; view.querySelectorAll('[data-tf]').forEach((x) => x.classList.toggle('btn-active', x === el)); load()
@@ -423,6 +423,41 @@ function topTable(list = [], n = 10) {
         <td>${fmt(x.price)}</td>
         <td>${signalTags(x.signals)}</td>
       </tr>`).join('')}</tbody></table></div>`
+}
+
+// 개별분석 점수 합산 내역 (기본점수 × 가중치 → 소계 → 콤보 배수 → 합계)
+function scoreBreakdownHtml(r) {
+  const bd = r.scoreBreakdown
+  if (!bd) { // 구버전 응답 호환
+    return `매수: ${esc(r.buy.join(', ')) || '없음'} <b>(${r.buyScore.toFixed(1)})</b><br>매도: ${esc(r.sell.join(', ')) || '없음'} <b>(${r.sellScore.toFixed(1)})</b>`
+  }
+  const side = (b, color, title) => {
+    if (!b.items.length && !b.combos.length) return `<div class="text-xs opacity-60">${title}: 없음</div>`
+    const rows = b.items.map((it) => `
+      <tr><td>${esc(it.label)}</td>
+        <td class="text-right opacity-70">${(+it.base).toFixed(0)}</td>
+        <td class="text-center opacity-70">×${(+it.weight).toFixed(2)}</td>
+        <td class="text-right font-medium">${(+it.score).toFixed(2)}</td></tr>`).join('')
+    const subtotalRow = b.combos.length ? `
+      <tr class="border-t border-base-300"><td class="opacity-60 text-xs" colspan="3">소계</td>
+        <td class="text-right opacity-70">${b.subtotal.toFixed(2)}</td></tr>` : ''
+    const comboRows = b.combos.map((c) => `
+      <tr><td class="${c.mult >= 1 ? 'text-success' : 'text-error'}">${esc(c.label)}</td>
+        <td colspan="2" class="text-center opacity-70">×${c.mult.toFixed(2)}</td>
+        <td></td></tr>`).join('')
+    return `
+      <div class="font-semibold text-sm ${color} mb-1">${title} <span class="badge badge-sm ${color === 'text-success' ? 'badge-success' : 'badge-error'}">${b.total.toFixed(1)}</span></div>
+      <table class="table table-xs">
+        <thead><tr><th>신호</th><th class="text-right">기본</th><th class="text-center">가중</th><th class="text-right">점수</th></tr></thead>
+        <tbody>${rows}${subtotalRow}${comboRows}</tbody>
+        <tfoot><tr class="border-t-2 border-base-300"><td class="font-bold" colspan="3">합계</td>
+          <td class="text-right font-bold ${color}">${b.total.toFixed(2)}</td></tr></tfoot>
+      </table>`
+  }
+  return `<div class="flex flex-col gap-3">
+    <div>${side(bd.buy, 'text-success', '🟢 매수')}</div>
+    <div>${side(bd.sell, 'text-error', '🔴 매도')}</div>
+  </div>`
 }
 
 // 자금유입 상세 지표 테이블 (구 자금유입 탭의 전체 컬럼)

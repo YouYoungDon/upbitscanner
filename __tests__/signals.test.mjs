@@ -132,4 +132,40 @@ describe('detectSignals', () => {
     const r = detectSignals([...base, drop], {})
     expect(r.sell.some((s) => s.startsWith('거래량 급증'))).toBe(true)
   })
+
+  it('buyItems/sellItems 분해: 각 항목 score=base×weight, 합이 점수와 일치', () => {
+    // RSI 과매도(base 3) 유발: 50봉 하락
+    const ohlcv = Array.from({ length: 60 }, (_, i) => {
+      const close = 200 - i * 2
+      return { open: close, close, high: close + 1, low: close - 1, volume: 10 }
+    })
+    const weights = { 'RSI 과매도': 1.2 }
+    const r = detectSignals(ohlcv, weights)
+    expect(Array.isArray(r.buyItems)).toBe(true)
+    for (const it of r.buyItems) {
+      expect(it).toHaveProperty('label')
+      expect(it).toHaveProperty('base')
+      expect(it).toHaveProperty('weight')
+      expect(it.score).toBeCloseTo(it.base * it.weight, 5)
+    }
+    const sumBuy = r.buyItems.reduce((a, b) => a + b.score, 0)
+    expect(sumBuy).toBeCloseTo(r.buyScore, 5)
+    const rsiItem = r.buyItems.find((x) => x.label.startsWith('RSI 과매도'))
+    if (rsiItem) expect(rsiItem.weight).toBeCloseTo(1.2, 5)
+  })
+})
+
+describe('applyCombos breakdown', () => {
+  it('combos 배열로 각 콤보의 배수를 반환', () => {
+    const buy = ['Stoch 과매도 골든크로스 (5)', '거래량 급증 (2.5x)']
+    const { combos } = applyCombos(buy, [], 10)
+    expect(Array.isArray(combos)).toBe(true)
+    expect(combos.find((c) => c.label.includes('반등확인'))?.mult).toBeCloseTo(1.4, 5)
+    expect(combos.find((c) => c.label.includes('거래량확인'))?.mult).toBeCloseTo(1.3, 5)
+  })
+
+  it('콤보 없으면 combos 빈 배열', () => {
+    const { combos } = applyCombos(['BB 하단 지지'], [], 2)
+    expect(combos).toEqual([])
+  })
 })
