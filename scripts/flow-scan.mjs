@@ -10,11 +10,11 @@ import {
 } from '../lib/moneyflow.mjs'
 
 const MAX_SCANS = 30
-const FIVE_MIN_COUNT = 80
+const FIVE_MIN_COUNT = 81 // 81개 조회 후 형성 중인 최신 봉 1개 제외 → 완성봉 80개
 const LEVEL_EMOJI = { strong: '🔴', attention: '🟠', watch: '🟡' }
 
 async function main() {
-  const { targets, nameOf, tradePrice } = await getScanUniverse({ minTradePrice: CONFIG.minTradePrice24h })
+  const { targets, nameOf } = await getScanUniverse({ minTradePrice: CONFIG.minTradePrice24h })
   if (!targets.length) { console.error('자금유입 스캔 대상 없음'); process.exit(1) }
   console.log(`자금유입 스캔 대상 ${targets.length}종목 (24h≥${CONFIG.minTradePrice24h / 1e8}억)`)
 
@@ -37,8 +37,8 @@ async function main() {
     const chunk = targets.slice(i, i + BATCH)
     await Promise.all(chunk.map(async (market) => {
       const c5 = await getMinuteCandles(market, 5, FIVE_MIN_COUNT)
-      if (!c5 || c5.length < CONFIG.moneyWindow + 2) return
-      const o5 = candlesToOhlcv(c5)
+      if (!c5 || c5.length < CONFIG.moneyWindow + 3) return
+      const o5 = candlesToOhlcv(c5).slice(0, -1) // 형성 중인 최신 봉 제외(완성봉만 사용)
       const closes5 = o5.map((c) => c.close)
       const values = tradingValues(o5)
       const value5m = values.at(-1)
