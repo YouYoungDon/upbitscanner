@@ -7,7 +7,7 @@ import { sendTelegram } from '../lib/notify.mjs'
 const MAX_SCANS = 30
 
 async function main() {
-  const { targets, nameOf, total, tradePrice } = await getScanUniverse()
+  const { targets, nameOf, total, tradePrice, warnOf } = await getScanUniverse()
   if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
   console.log(`모멘텀 스캔 대상 ${targets.length}종목 (전체 ${total})`)
 
@@ -21,9 +21,12 @@ async function main() {
       let { score, signals } = scoreMomentum(ohlcv)
       const { liqMult, lowLiq, label: liqLabel } = liquidityPenalty(tradePrice[market])
       if (liqMult < 1) { score = +(score * liqMult).toFixed(1); signals = [...signals, liqLabel] }
-      if (score >= MIN_MOMENTUM_SCORE) {
+      const warn = warnOf[market]
+      // 경고(상폐심사급)는 추세지속 후보에서 제외. 주의는 ⚠️배지로 표시만.
+      if (score >= MIN_MOMENTUM_SCORE && warn !== 'warning') {
         const pick = { market, korean_name: nameOf[market], price: ohlcv.at(-1).close, score, signals }
         if (lowLiq) pick.lowLiquidity = true
+        if (warn) pick.warn = warn
         picks.push(pick)
       }
     }))

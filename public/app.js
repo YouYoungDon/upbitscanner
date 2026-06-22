@@ -16,6 +16,14 @@ function setActiveTab(tab) {
   document.querySelectorAll('.menu a').forEach((a) => a.classList.toggle('active', a.dataset.tab === tab))
 }
 
+// 투자유의 배지: warning(경고)·caution(주의). 종목명 옆에 표기.
+function warnBadge(x) {
+  if (!x || !x.warn) return ''
+  return x.warn === 'warning'
+    ? '<span class="badge badge-error badge-xs gap-0.5" title="투자유의 경고(상폐심사급)">⚠️경고</span>'
+    : '<span class="badge badge-warning badge-xs gap-0.5" title="투자주의(가격/거래량 이상)">⚠️유의</span>'
+}
+
 function signalTags(signals) {
   return (signals || []).map((s) => {
     if (s.includes('골든크로스')) return '<span class="badge badge-success badge-sm">GC</span>'
@@ -70,7 +78,7 @@ const routes = {
 
     const momRows = (mom.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span></td>
+        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)}</td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${signalTags(x.signals)}</td>
       </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'
@@ -79,7 +87,7 @@ const routes = {
     const pct = (v) => v == null ? '' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${v}%</span>`
     const flowRows = (flow.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td>${flowEmoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> ${x.breakout ? '<span class="badge badge-warning badge-xs">돌파</span>' : ''}</td>
+        <td>${flowEmoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${x.breakout ? '<span class="badge badge-warning badge-xs">돌파</span>' : ''}</td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td class="text-xs opacity-70">${x.ratio == null ? '' : x.ratio + 'x'}</td>
         <td class="text-xs">${pct(x.ch1m)}</td>
@@ -418,7 +426,7 @@ function topTable(list = [], n = 10) {
     <thead><tr><th>종목</th><th>점수</th><th>현재가</th><th>신호</th></tr></thead>
     <tbody>${list.slice(0, n).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span> <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
+        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${fmt(x.price)}</td>
         <td>${signalTags(x.signals)}</td>
@@ -476,7 +484,7 @@ function flowDetailTable(picks = []) {
     <thead><tr><th>종목</th><th>점수</th><th>머니</th><th>가속</th><th>5분대금</th><th>1분</th><th>5분</th><th>30분</th><th>24h</th><th>돌파</th><th>근접</th><th>EMA</th><th>RSI</th></tr></thead>
     <tbody>${picks.map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td>${emoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span></td>
+        <td>${emoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)}</td>
         <td><span class="badge badge-primary badge-xs">${x.score}</span></td>
         <td>${x.ratio == null ? '-' : x.ratio + 'x'}</td>
         <td>${x.accel == null ? '-' : x.accel + 'x'}</td>

@@ -25,7 +25,7 @@ async function check4hStochGC(market) {
 
 async function main() {
   const weights = await readJson('signal-weights.json', {})
-  const { targets, nameOf, total, tradePrice } = await getScanUniverse()
+  const { targets, nameOf, total, tradePrice, warnOf } = await getScanUniverse()
   if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
   console.log(`스캔 대상 ${targets.length}종목 (전체 ${total})`)
 
@@ -80,15 +80,20 @@ async function main() {
       finalBuyScore += pers.bonus
       if (pers.signals.length) buySignals = [...buySignals, ...pers.signals]
 
-      if (finalBuyScore >= BUY_THRESHOLD) {
+      const warn = warnOf[market] // 'warning'(경고) | 'caution'(주의) | undefined
+      // 경고(상폐심사급)는 매수후보에서 제외. 주의는 ⚠️배지로 표시만.
+      if (finalBuyScore >= BUY_THRESHOLD && warn !== 'warning') {
         const item = { market, korean_name: nameOf[market], price: sig.price, score: +finalBuyScore.toFixed(1), signals: buySignals }
         if (vbottomSL != null) item.vbottomSL = vbottomSL
         if (pumpSL != null) item.pumpSL = pumpSL
         if (lowLiq) item.lowLiquidity = true
+        if (warn) item.warn = warn
         buy.push(item)
       }
       if (sellScore >= SELL_THRESHOLD) {
-        sell.push({ market, korean_name: nameOf[market], price: sig.price, score: +sellScore.toFixed(1), signals: sellSignals })
+        const item = { market, korean_name: nameOf[market], price: sig.price, score: +sellScore.toFixed(1), signals: sellSignals }
+        if (warn) item.warn = warn // 매도/청산 신호는 유지하되 유의 표시
+        sell.push(item)
       }
     }))
     await sleep(DELAY)

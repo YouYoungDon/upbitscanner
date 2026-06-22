@@ -13,7 +13,8 @@ describe('get 재시도/백오프', () => {
     }))
     const r = await getMarkets()
     expect(n).toBe(3)
-    expect(r).toEqual([{ market: 'KRW-BTC' }]) // USDT 스테이블 제외
+    // USDT 스테이블 제외 + market_event 없으면 warning/caution false
+    expect(r).toEqual([{ market: 'KRW-BTC', warning: false, caution: false }])
   })
   it('4xx는 즉시 포기(재시도 안 함)', async () => {
     let n = 0

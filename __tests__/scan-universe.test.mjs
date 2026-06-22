@@ -25,7 +25,23 @@ describe('getScanUniverse', () => {
   })
   it('마켓 없으면 빈 결과', async () => {
     const r = await getScanUniverse({ getMarkets: async () => [], getTicker: async () => [], delay: 0 })
-    expect(r).toEqual({ targets: [], nameOf: {}, total: 0 })
+    expect(r).toEqual({ targets: [], nameOf: {}, total: 0, warnOf: {} })
+  })
+  it('유의종목 플래그를 warnOf에 매핑 (warning/caution만, 정상은 제외)', async () => {
+    const warned = [
+      { market: 'KRW-A', korean_name: '에이', warning: true },
+      { market: 'KRW-B', korean_name: '비', caution: true },
+      { market: 'KRW-C', korean_name: '씨' }, // 정상
+    ]
+    const tickers = warned.map((m) => ({ market: m.market, acc_trade_price_24h: MIN_TRADE_PRICE_24H * 2 }))
+    const r = await getScanUniverse({
+      getMarkets: async () => warned,
+      getTicker: async (codes) => tickers.filter((t) => codes.includes(t.market)),
+      delay: 0,
+    })
+    expect(r.warnOf['KRW-A']).toBe('warning')
+    expect(r.warnOf['KRW-B']).toBe('caution')
+    expect(r.warnOf['KRW-C']).toBeUndefined() // 정상 종목은 키 없음
   })
 })
 
