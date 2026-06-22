@@ -1,6 +1,6 @@
 import { getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { readPositions, evalPositions } from '../lib/positions.mjs'
-import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
+import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE, fallingKnifePenalty } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
@@ -74,6 +74,9 @@ async function main() {
       // 유동성 차등 감점 (구간별 배수, 두 스캐너 공용 헬퍼)
       const { liqMult, lowLiq, label: liqLabel } = liquidityPenalty(tradePrice[market])
       if (liqMult < 1) { finalBuyScore *= liqMult; buySignals = [...buySignals, liqLabel] }
+      // 떨어지는 칼 필터: 거래량 없는 과매도 GC + 하락배열이면 매수 감점
+      const knife = fallingKnifePenalty(buySignals, sellSignals)
+      if (knife.mult < 1) { finalBuyScore *= knife.mult; buySignals = [...buySignals, knife.label] }
       // 지속성 보너스 (이력 기반, 마지막 가산)
       const hasVolumeSurge = buySignals.some((s) => s.startsWith('거래량 급증'))
       const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)

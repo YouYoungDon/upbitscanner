@@ -29,6 +29,7 @@ function signalTags(signals) {
     if (s.includes('골든크로스')) return '<span class="badge badge-success badge-sm">GC</span>'
     if (s.includes('[MTF]')) return '<span class="badge badge-info badge-sm">MTF</span>'
     if (s.includes('함정')) return '<span class="badge badge-error badge-sm">함정</span>'
+    if (s.includes('떨어지는칼')) return '<span class="badge badge-error badge-sm">🔪칼</span>'
     if (s.includes('데드크로스')) return '<span class="badge badge-error badge-sm">DC</span>'
     if (s.includes('거래량')) return '<span class="badge badge-warning badge-sm">VOL</span>'
     if (s.includes('캔들 강세')) return '<span class="badge badge-success badge-sm">🕯강세</span>'

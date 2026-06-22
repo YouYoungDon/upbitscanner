@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applyCombos, detectSignals, volComboMult, volumeGrade } from '../lib/signals.mjs'
+import { applyCombos, detectSignals, volComboMult, volumeGrade, fallingKnifePenalty } from '../lib/signals.mjs'
 
 describe('volComboMult', () => {
   it('구간별 배수: null→1.3, 3x→1.3, 15x→1.45, 25x→1.6', () => {
@@ -152,6 +152,31 @@ describe('detectSignals', () => {
     expect(sumBuy).toBeCloseTo(r.buyScore, 5)
     const rsiItem = r.buyItems.find((x) => x.label.startsWith('RSI 과매도'))
     if (rsiItem) expect(rsiItem.weight).toBeCloseTo(1.2, 5)
+  })
+})
+
+describe('fallingKnifePenalty', () => {
+  it('골든크로스 + 거래량無 + EMA 하락배열 → ×0.5 감점·라벨', () => {
+    const buy = ['Stoch 과매도 골든크로스 (8)', 'RSI 과매도 (29)']
+    const sell = ['EMA 하락배열']
+    const r = fallingKnifePenalty(buy, sell)
+    expect(r.mult).toBe(0.5)
+    expect(r.label).toMatch(/떨어지는칼/)
+  })
+  it('거래량 동반이면 감점 없음 (진짜 반등)', () => {
+    const buy = ['Stoch 과매도 골든크로스 (8)', '거래량 급증 (5.0x)']
+    const sell = ['EMA 하락배열']
+    expect(fallingKnifePenalty(buy, sell)).toEqual({ mult: 1, label: null })
+  })
+  it('EMA 하락배열 아니면 감점 없음 (추세 살아있음)', () => {
+    const buy = ['Stoch 과매도 골든크로스 (8)']
+    const sell = ['BB 상단 돌파']
+    expect(fallingKnifePenalty(buy, sell)).toEqual({ mult: 1, label: null })
+  })
+  it('골든크로스 없으면 감점 없음 (반등신호 자체가 약함)', () => {
+    const buy = ['RSI 과매도 (29)', 'BB 하단 지지']
+    const sell = ['EMA 하락배열']
+    expect(fallingKnifePenalty(buy, sell)).toEqual({ mult: 1, label: null })
   })
 })
 
