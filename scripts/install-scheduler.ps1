@@ -1,58 +1,66 @@
-# 업비트 스캐너 작업 스케줄러 등록 (반등 09:00/21:00 · 모멘텀 09:02/21:02 · 주간 일 22:00 · 자금유입 3시간(xx:05), KST)
-# 사용법:
-#   등록:   powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1
-#   제거:   powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1 -Uninstall
+# Upbit scanner Task Scheduler registration -- 3-hour full pipeline (KST)
+# Every 3h (00 03 06 09 12 15 18 21): monitor xx:00 -> momentum xx:02 -> flow xx:05 -> trend xx:17
+# Weekly analysis Sun 22:00. WakeToRun + powercfg wake timer wakes PC from sleep (full shutdown still cannot run).
+# Usage:
+#   install:   powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1
+#   uninstall: powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1 -Uninstall
 param([switch]$Uninstall)
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$monitor = Join-Path $projectRoot 'scripts\monitor.mjs'
-$momentum = Join-Path $projectRoot 'scripts\momentum-scan.mjs'
-$trend = Join-Path $projectRoot 'scripts\trend-journal.mjs'
-$flow = Join-Path $projectRoot 'scripts\flow-scan.mjs'
 $nodePath = (Get-Command node).Source
 
-# 반등(monitor) 09:00/21:00 → 모멘텀 09:02/21:02 → 추이저널 09:17/21:17 순차
-$tasks = @(
-  @{ Name = 'UpbitMonitor_0900';  Time = '09:00'; Script = $monitor },
-  @{ Name = 'UpbitMonitor_2100';  Time = '21:00'; Script = $monitor },
-  @{ Name = 'UpbitMomentum_0902'; Time = '09:02'; Script = $momentum },
-  @{ Name = 'UpbitMomentum_2102'; Time = '21:02'; Script = $momentum },
-  @{ Name = 'UpbitTrend_0917';    Time = '09:17'; Script = $trend },
-  @{ Name = 'UpbitTrend_2117';    Time = '21:17'; Script = $trend },
-  @{ Name = 'UpbitFlow_0005'; Time = '00:05'; Script = $flow },
-  @{ Name = 'UpbitFlow_0305'; Time = '03:05'; Script = $flow },
-  @{ Name = 'UpbitFlow_0605'; Time = '06:05'; Script = $flow },
-  @{ Name = 'UpbitFlow_0905'; Time = '09:05'; Script = $flow },
-  @{ Name = 'UpbitFlow_1205'; Time = '12:05'; Script = $flow },
-  @{ Name = 'UpbitFlow_1505'; Time = '15:05'; Script = $flow },
-  @{ Name = 'UpbitFlow_1805'; Time = '18:05'; Script = $flow },
-  @{ Name = 'UpbitFlow_2105'; Time = '21:05'; Script = $flow }
+# 3-hour slots (KST = local time)
+$hours = @('00','03','06','09','12','15','18','21')
+
+# per-script minute offset within slot -- sequential ordering
+$jobs = @(
+  @{ Name = 'UpbitMonitor';  Script = 'monitor.mjs';       Min = '00' },
+  @{ Name = 'UpbitMomentum'; Script = 'momentum-scan.mjs'; Min = '02' },
+  @{ Name = 'UpbitFlow';     Script = 'flow-scan.mjs';      Min = '05' },
+  @{ Name = 'UpbitTrend';    Script = 'trend-journal.mjs';  Min = '17' }
 )
 
-if ($Uninstall) {
-  foreach ($name in @($tasks.Name + 'UpbitWeekly_Sun')) {
-    try { Unregister-ScheduledTask -TaskName $name -Confirm:$false; Write-Host "제거됨: $name" }
-    catch { Write-Host "없음: $name" }
-  }
-  return
+# wipe ALL existing Upbit* tasks first (removes old per-time tasks, avoids orphans)
+Get-ScheduledTask -TaskName 'Upbit*' -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
+Write-Host "cleared existing Upbit* tasks"
+
+if ($Uninstall) { Write-Host "uninstall complete"; return }
+
+# power: allow wake timers (AC/DC) so WakeToRun actually fires
+try {
+  powercfg -SETACVALUEINDEX SCHEME_CURRENT SUB_SLEEP RTCWAKE 1 | Out-Null
+  powercfg -SETDCVALUEINDEX SCHEME_CURRENT SUB_SLEEP RTCWAKE 1 | Out-Null
+  powercfg -SETACTIVE SCHEME_CURRENT | Out-Null
+  Write-Host "wake timers enabled (AC/DC)"
+} catch { Write-Host "wake timer step skipped: $_" }
+
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd
+
+# capture stdout/stderr per task -> data\task-logs\<Name>.log (so intermittent failures leave evidence)
+$logDir = Join-Path $projectRoot 'data\task-logs'
+New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+
+# wrap node in cmd /c so output can be appended to a log file (prefix each line via node, kept simple here)
+function New-LoggingAction([string]$scriptPath, [string]$logName) {
+  $log = Join-Path $logDir "$logName.log"
+  $inner = "`"$nodePath`" `"$scriptPath`" 1>> `"$log`" 2>&1"
+  New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c `"$inner`"" -WorkingDirectory $projectRoot
 }
 
-foreach ($t in $tasks) {
-  $action = New-ScheduledTaskAction -Execute $nodePath -Argument "`"$($t.Script)`"" -WorkingDirectory $projectRoot
-  $trigger = New-ScheduledTaskTrigger -Daily -At $t.Time
-  # WakeToRun: 절전 중이면 PC를 깨워 실행 / 배터리에서도 시작·유지 / 놓친 작업은 깨어난 뒤 실행
-  $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd
-  Register-ScheduledTask -TaskName $t.Name -Action $action -Trigger $trigger -Settings $settings -Force | Out-Null
-  Write-Host "등록됨: $($t.Name) @ $($t.Time) (로컬 시간 = KST)"
+foreach ($j in $jobs) {
+  $script = Join-Path $projectRoot "scripts\$($j.Script)"
+  $action = New-LoggingAction $script $j.Name
+  $triggers = foreach ($h in $hours) { New-ScheduledTaskTrigger -Daily -At "$($h):$($j.Min)" }
+  Register-ScheduledTask -TaskName $j.Name -Action $action -Trigger $triggers -Settings $settings -Force | Out-Null
+  Write-Host "registered: $($j.Name) @ every 3h xx:$($j.Min) (8/day)"
 }
 
-# 주간 분석: 매주 일요일 22:00 (일일 스캔 21:00 종료 후)
+# weekly analysis: Sunday 22:00
 $weekly = Join-Path $projectRoot 'scripts\weekly-analysis.mjs'
-$wAction = New-ScheduledTaskAction -Execute $nodePath -Argument "`"$weekly`"" -WorkingDirectory $projectRoot
+$wAction = New-LoggingAction $weekly 'UpbitWeekly_Sun'
 $wTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '22:00'
-$wSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd
-Register-ScheduledTask -TaskName 'UpbitWeekly_Sun' -Action $wAction -Trigger $wTrigger -Settings $wSettings -Force | Out-Null
-Write-Host "등록됨: UpbitWeekly_Sun @ Sun 22:00 (로컬 시간 = KST)"
+Register-ScheduledTask -TaskName 'UpbitWeekly_Sun' -Action $wAction -Trigger $wTrigger -Settings $settings -Force | Out-Null
+Write-Host "registered: UpbitWeekly_Sun @ Sun 22:00"
 
-Write-Host "`n확인: Get-ScheduledTask -TaskName 'Upbit*'"
+Write-Host "`nverify: Get-ScheduledTask -TaskName 'Upbit*'"
