@@ -133,6 +133,45 @@ describe('detectSignals', () => {
     expect(r.sell.some((s) => s.startsWith('거래량 급증'))).toBe(true)
   })
 
+  // 거래량 선행 매집: 과매도 + 가격 횡보(-3%~+2%) + 거래량 미세증가(1.5x↑) → 폭발 전 포착
+  it('과매도+횡보+거래량 1.5x↑ → 거래량 선행 매집 신호 부여', () => {
+    const base = Array.from({ length: 59 }, (_, i) => {
+      const close = 200 - i * 2 // 강한 하락 → 과매도(RSI<30/Stoch<20)
+      return { open: close, close, high: close + 1, low: close - 1, volume: 10 }
+    })
+    const accum = { open: 84, close: 84.3, high: 85, low: 83.5, volume: 16 } // +0.36% 횡보, 1.6x
+    const r = detectSignals([...base, accum], {})
+    expect(r.buy.some((s) => s.startsWith('거래량 선행 매집'))).toBe(true)
+  })
+
+  it('+2% 이상 상승이면 선행 매집 미발동(거래량 급증이 담당)', () => {
+    const base = Array.from({ length: 59 }, (_, i) => {
+      const close = 200 - i * 2
+      return { open: close, close, high: close + 1, low: close - 1, volume: 10 }
+    })
+    const up = { open: 84, close: 84 * 1.03, high: 87, low: 84, volume: 25 } // +3%, 2.5x
+    const r = detectSignals([...base, up], {})
+    expect(r.buy.some((s) => s.startsWith('거래량 선행 매집'))).toBe(false)
+    expect(r.buy.some((s) => s.startsWith('거래량 급증'))).toBe(true)
+  })
+
+  it('과매도 아니면 거래량 미세증가여도 선행 매집 미발동', () => {
+    const base = Array.from({ length: 59 }, () => ({ open: 100, close: 100, high: 101, low: 99, volume: 10 }))
+    const accum = { open: 100, close: 100.3, high: 101, low: 99, volume: 16 } // 횡보·1.6x이나 과매도 아님
+    const r = detectSignals([...base, accum], {})
+    expect(r.buy.some((s) => s.startsWith('거래량 선행 매집'))).toBe(false)
+  })
+
+  it('거래량 1.5x 미만이면 선행 매집 미발동', () => {
+    const base = Array.from({ length: 59 }, (_, i) => {
+      const close = 200 - i * 2
+      return { open: close, close, high: close + 1, low: close - 1, volume: 10 }
+    })
+    const weak = { open: 84, close: 84.3, high: 85, low: 83.5, volume: 12 } // 과매도·횡보지만 1.2x
+    const r = detectSignals([...base, weak], {})
+    expect(r.buy.some((s) => s.startsWith('거래량 선행 매집'))).toBe(false)
+  })
+
   it('buyItems/sellItems 분해: 각 항목 score=base×weight, 합이 점수와 일치', () => {
     // RSI 과매도(base 3) 유발: 50봉 하락
     const ohlcv = Array.from({ length: 60 }, (_, i) => {
