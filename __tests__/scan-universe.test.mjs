@@ -24,8 +24,19 @@ describe('getScanUniverse', () => {
     expect(r.tradePrice['KRW-C']).toBe(MIN_TRADE_PRICE_24H * 2)
   })
   it('마켓 없으면 빈 결과', async () => {
-    const r = await getScanUniverse({ getMarkets: async () => [], getTicker: async () => [], delay: 0 })
+    const r = await getScanUniverse({ getMarkets: async () => [], getTicker: async () => [], delay: 0, marketRetryDelay: 0 })
     expect(r).toEqual({ targets: [], nameOf: {}, total: 0, warnOf: {} })
+  })
+  it('마켓 조회 일시 실패 시 재시도 후 성공 (다초 장애 흡수 → 스캔 공백 방지)', async () => {
+    let calls = 0
+    const r = await getScanUniverse({
+      getMarkets: async () => { calls++; return calls <= 2 ? null : markets }, // 2회 실패 후 성공
+      getTicker: async (codes) => markets.map((m) => ({ market: m.market, acc_trade_price_24h: MIN_TRADE_PRICE_24H * 2 })).filter((t) => codes.includes(t.market)),
+      delay: 0,
+      marketRetryDelay: 0,
+    })
+    expect(calls).toBe(3) // 1회차 + 재시도 2회
+    expect(r.targets).toEqual(['KRW-A', 'KRW-B', 'KRW-C'])
   })
   it('유의종목 플래그를 warnOf에 매핑 (warning/caution만, 정상은 제외)', async () => {
     const warned = [
