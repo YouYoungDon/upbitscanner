@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applyCombos, detectSignals, volComboMult, volumeGrade, fallingKnifePenalty } from '../lib/signals.mjs'
+import { applyCombos, detectSignals, volComboMult, volumeGrade, accumulationGrade, fallingKnifePenalty } from '../lib/signals.mjs'
 
 describe('volComboMult', () => {
   it('구간별 배수: null→1.3, 3x→1.3, 15x→1.45, 25x→1.6', () => {
@@ -17,6 +17,17 @@ describe('volumeGrade', () => {
     expect(volumeGrade(7)).toBe(2)
     expect(volumeGrade(15)).toBe(3)
     expect(volumeGrade(30)).toBe(4)
+  })
+})
+
+describe('accumulationGrade', () => {
+  it('volR 등급: <1.5→0, 1.5x→1, 4x→2, 7x→3, 13x→4', () => {
+    expect(accumulationGrade(1.2)).toBe(0)
+    expect(accumulationGrade(1.5)).toBe(1)
+    expect(accumulationGrade(2.9)).toBe(1)
+    expect(accumulationGrade(4)).toBe(2)
+    expect(accumulationGrade(7)).toBe(3)
+    expect(accumulationGrade(13)).toBe(4)
   })
 })
 
@@ -170,6 +181,28 @@ describe('detectSignals', () => {
     const weak = { open: 84, close: 84.3, high: 85, low: 83.5, volume: 12 } // 과매도·횡보지만 1.2x
     const r = detectSignals([...base, weak], {})
     expect(r.buy.some((s) => s.startsWith('거래량 선행 매집'))).toBe(false)
+  })
+
+  it('선행 매집 점수가 거래량 등급에 비례: 13x → base 4 (파워렛저 사례)', () => {
+    const base = Array.from({ length: 59 }, (_, i) => {
+      const close = 200 - i * 2
+      return { open: close, close, high: close + 1, low: close - 1, volume: 10 }
+    })
+    const accum = { open: 84, close: 84.3, high: 85, low: 83.5, volume: 130 } // 13x, 횡보
+    const r = detectSignals([...base, accum], {})
+    const item = r.buyItems.find((it) => it.label.startsWith('거래량 선행 매집'))
+    expect(item.base).toBe(4)
+  })
+
+  it('선행 매집 저volR은 낮은 등급: 1.6x → base 1 (맨틀 사례)', () => {
+    const base = Array.from({ length: 59 }, (_, i) => {
+      const close = 200 - i * 2
+      return { open: close, close, high: close + 1, low: close - 1, volume: 10 }
+    })
+    const accum = { open: 84, close: 84.3, high: 85, low: 83.5, volume: 16 } // 1.6x, 횡보
+    const r = detectSignals([...base, accum], {})
+    const item = r.buyItems.find((it) => it.label.startsWith('거래량 선행 매집'))
+    expect(item.base).toBe(1)
   })
 
   it('buyItems/sellItems 분해: 각 항목 score=base×weight, 합이 점수와 일치', () => {
