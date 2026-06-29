@@ -3,7 +3,7 @@ import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE, fallingKnifePenalty } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
-import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
+import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty } from '../lib/scan-universe.mjs'
 import { scorePersistence } from '../lib/persistence.mjs'
@@ -108,12 +108,18 @@ async function main() {
   const ratio = +(buy.length / Math.max(sell.length, 1)).toFixed(2)
   const regimeInfo = { trend: regime.trend, ratio, ...regimeLabel(ratio, regime.trend) }
   const entry = { timestamp: new Date().toISOString(), buy, sell, regime: regimeInfo }
-  log.totalScans = (log.totalScans || 0) + 1
-  log.scans = rollingAppend(log.scans || [], entry, MAX_SCANS)
-  await writeJson('monitor-log.json', log)
+  // 락 안에서 fresh 재읽기 → 증가 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
+  let scanNum
+  await withLock('monitor-log', async () => {
+    const fresh = await readJson('monitor-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
+    fresh.totalScans = (fresh.totalScans || 0) + 1
+    fresh.scans = rollingAppend(fresh.scans || [], entry, MAX_SCANS)
+    await writeJson('monitor-log.json', fresh)
+    scanNum = fresh.totalScans
+  })
   appendScan(entry)
 
-  console.log(`스캔 #${log.totalScans} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
+  console.log(`스캔 #${scanNum} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
 
   await notifyTelegram(buy)

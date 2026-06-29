@@ -1,5 +1,39 @@
-import { describe, it, expect } from 'vitest'
-import { rollingAppend, clampWeight, ewmTarget } from '../lib/store.mjs'
+import { describe, it, expect, afterEach } from 'vitest'
+import { rollingAppend, clampWeight, ewmTarget, writeJson, readJson, withLock, DATA_DIR } from '../lib/store.mjs'
+import { rm } from 'node:fs/promises'
+import { join } from 'node:path'
+
+const TEST_FILES = ['__t_counter__.json', '__t_counter__.lock', '__t_throw__.lock']
+afterEach(async () => {
+  for (const f of TEST_FILES) await rm(join(DATA_DIR, f), { force: true }).catch(() => {})
+})
+
+describe('withLock', () => {
+  it('동시 read-modify-write 직렬화 → 갱신 유실 없음', async () => {
+    await writeJson('__t_counter__.json', { n: 0 })
+    const inc = () => withLock('__t_counter__', async () => {
+      const c = await readJson('__t_counter__.json', { n: 0 })
+      await new Promise((r) => setTimeout(r, 15)) // 경합창 확대
+      await writeJson('__t_counter__.json', { n: c.n + 1 })
+    })
+    await Promise.all([inc(), inc(), inc()])
+    expect((await readJson('__t_counter__.json', { n: 0 })).n).toBe(3) // 락 없으면 1
+  })
+
+  it('fn이 throw해도 락 해제 (다음 획득 가능)', async () => {
+    await expect(withLock('__t_throw__', async () => { throw new Error('boom') })).rejects.toThrow('boom')
+    let ran = false
+    await withLock('__t_throw__', async () => { ran = true })
+    expect(ran).toBe(true)
+  })
+})
+
+describe('writeJson (원자적)', () => {
+  it('쓰기 후 정확한 내용 반환', async () => {
+    await writeJson('__t_counter__.json', { n: 42, s: 'x' })
+    expect(await readJson('__t_counter__.json', null)).toEqual({ n: 42, s: 'x' })
+  })
+})
 
 describe('rollingAppend', () => {
   it('최대 길이 초과 시 오래된 항목 제거', () => {
