@@ -111,18 +111,20 @@ async function main() {
 
 async function notifyFlow(picks) {
   const now = Date.now()
-  // 락 안에서 fresh 재읽기 → 판정/갱신 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
-  let fire = []
+  // 락 안에서 fresh 재읽기 → 판정 → 전송 → 성공 시에만 상태 갱신·쓰기.
+  // 전송 실패(네트워크 오류/non-2xx)에도 억제창이 시작되면 실제로는 못 받은 알림이 억제되어 버린다.
   await withLock('flow-alert-state', async () => {
-    let state = await readJson('flow-alert-state.json', {})
-    fire = picks.filter((p) => (p.level === 'strong' || p.level === 'attention') && shouldAlert({ market: p.market, score: p.score, now }, state, CONFIG))
-    for (const p of fire) state = updateAlertState(state, p.market, p.score, now)
-    await writeJson('flow-alert-state.json', state)
+    const state = await readJson('flow-alert-state.json', {})
+    const fire = picks.filter((p) => (p.level === 'strong' || p.level === 'attention') && shouldAlert({ market: p.market, score: p.score, now }, state, CONFIG))
+    if (!fire.length) return
+    const lines = fire.map((p) => `${LEVEL_EMOJI[p.level]} ${p.korean_name}(${p.market.replace('KRW-', '')}) ${p.score}점 · 머니 ${p.ratio}x${p.accel ? ` ·가속 ${p.accel}x` : ''}${p.breakout ? ' ·돌파' : ''}`)
+    const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+    const sent = await sendTelegram(`💸 자금유입 ${when}\n\n${lines.join('\n')}`)
+    if (!sent) return
+    let newState = state
+    for (const p of fire) newState = updateAlertState(newState, p.market, p.score, now)
+    await writeJson('flow-alert-state.json', newState)
   })
-  if (!fire.length) return
-  const lines = fire.map((p) => `${LEVEL_EMOJI[p.level]} ${p.korean_name}(${p.market.replace('KRW-', '')}) ${p.score}점 · 머니 ${p.ratio}x${p.accel ? ` ·가속 ${p.accel}x` : ''}${p.breakout ? ' ·돌파' : ''}`)
-  const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
-  await sendTelegram(`💸 자금유입 ${when}\n\n${lines.join('\n')}`)
 }
 
 main().catch(async (e) => { console.error(e); await sendTelegram(`❌ 자금유입 스캔 실패: ${e.message}`); process.exit(1) })
