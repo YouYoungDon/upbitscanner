@@ -31,7 +31,8 @@
 
 ### 3. 시세 캐시 `data/coingecko-cache.json`
 
-- 구조: `{ fetchedAt, byMarket: { "KRW-ID": { globalVolKrw, mcapKrw, rank } } }`
+- 구조: `{ fetchedAt, byMarket: { "KRW-ID": { globalVolKrw, mcapKrw, rank, fdvKrw, circRatio, athChangePct, ret7dPct, ret30dPct } } }`
+- **확장 필드(추가 콜 0)**: 같은 `/coins/markets` 응답에서 `fully_diluted_valuation`(→ `circRatio` = mcap÷FDV, 유통량 비율·언락 오버행 프록시), `ath_change_percentage`(ATH 대비 낙폭), `price_change_percentage_7d_in_currency`·`30d`(요청 파라미터 `price_change_percentage=7d,30d` 추가) 저장. **이번 사이클에선 감점 규칙에 쓰지 않고 데이터만 축적** — subsystem B 정량 검증 후 활용 판단. FDV 없는 코인은 `circRatio: null`.
 - TTL 150분: 스캐너 시작 시 `fetchedAt`이 150분 이상 지났으면 갱신. 3시간 사이클의 첫 스캐너(monitor xx:00)가 보통 수행, momentum(xx:02)·flow(xx:05)는 캐시만 읽음.
 - 쓰기는 store.mjs `withLock` + 원자적 `writeJson` 재사용(2026-06-29 경합 버그 재발 방지).
 - 예상 사용량: 사이클당 1콜(유니버스 ~100-250종) × 8회/일 ≈ 월 250콜 + 주간 매핑 재구축. Demo 한도의 ~3%.
@@ -48,7 +49,11 @@ upbitDominancePenalty(upbit24hKrw, globalVolKrw):
 ```
 
 - 적용 지점: monitor/momentum/flow에서 `liquidityPenalty`와 같은 곱셈 단계. 겹치면 곱연산(예: ×0.8 × ×0.8 = ×0.64).
-- 아카이브 픽 엔트리에 `dominance: { share, mult }` 저장 → subsystem B(outcome tracking)에서 성과 정량 검증용.
+- 아카이브 픽 엔트리에 `dominance: { share, mult }` + 확장 필드(`circRatio`·`athChangePct`·`rank`) 저장 → subsystem B(outcome tracking)에서 성과 정량 검증용.
+
+## 명시적 비스코프 (다음 사이클 후보)
+
+- `/global` BTC 도미넌스·글로벌 시총 (subsystem C 레짐 재료), `/search/trending` 교차확인 라벨, 픽 종목 `/tickers` 스프레드 조회 — 2026-07-04 사용자 결정으로 이번 스코프에서 제외.
 
 ## 의도적 설계 결정 (버그로 오인 금지)
 
