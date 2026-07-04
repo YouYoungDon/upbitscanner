@@ -4,5 +4,9 @@ node_modules/
 
 .superpowers/
 data/scan-archive.jsonl
+data/coingecko-map.json
+data/coingecko-cache.json
+data/flow-log.json
+data/flow-alert-state.json
 data/coingecko-key.json
 .worktrees/
