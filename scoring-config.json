@@ -1,0 +1,18 @@
+{
+  "version": "scoring-v1",
+  "weights": {
+    "relative_volume": 1.0, "relative_trading_value": 1.0, "abs_trading_value": 0.3,
+    "money_acceleration": 1.3, "consolidation": 1.0, "vol_compression": 1.0, "liquidity": 0.3,
+    "breakout_strength": 1.0, "trend_alignment": 0.8, "vol_expansion_on_breakout": 0.8
+  },
+  "groups": {
+    "relative_volume": "early", "relative_trading_value": "early", "abs_trading_value": "early",
+    "money_acceleration": "early", "consolidation": "early", "vol_compression": "early", "liquidity": "early",
+    "breakout_strength": "confirm", "trend_alignment": "confirm", "vol_expansion_on_breakout": "confirm"
+  },
+  "tierCutoffs": { "S": 85, "A": 70, "B": 55, "C": 40 },
+  "thresholds": { "earlyHigh": 70, "confirmHigh": 60, "extensionLow": 0.15, "extensionCap": 0.30 },
+  "regimeMultiplier": { "bull": 1.1, "neutral": 1.0, "bear": 0.9 },
+  "qualityGuard": { "liquidity": { "mode": "weight" }, "abs_trading_value": { "mode": "weight" } },
+  "archiveTopN": 20
+}
