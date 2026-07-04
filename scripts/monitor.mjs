@@ -35,7 +35,7 @@ async function main() {
 
   // 코인게코 글로벌 데이터 (사이클 첫 스캐너가 갱신, 실패 시 중립 — 스캔 불사침)
   const cg = await ensureCgData(targets, { allowFetch: true })
-  console.log(`코인게코 커버리지: ${(cg.coverage * 100).toFixed(0)}%`)
+  console.log(`코인게코 커버리지: ${(cg.coverage * 100).toFixed(0)}%${cg.reason ? ` (${cg.reason})` : ''}`)
 
   // 시장 레짐: BTC 일봉 추세 (약세면 반등 매수 감점)
   const btcCandles = await getDayCandles('KRW-BTC', 200)
