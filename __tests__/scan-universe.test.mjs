@@ -114,4 +114,7 @@ describe('upbitDominancePenalty', () => {
     expect(r.share).toBe(1)
     expect(r.mult).toBe(0.8)
   })
+  it('경계 반올림 일관성: 0.7995 → share 0.8 → tier ×0.8 + 80% 라벨', () => {
+    expect(upbitDominancePenalty(7.995e9, 1e10)).toEqual({ mult: 0.8, share: 0.8, label: '⚠️업비트단독 80%' })
+  })
 })
