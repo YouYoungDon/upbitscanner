@@ -1,7 +1,7 @@
 # 코인게코 연동: 업비트 단독 펌프 감지 (Upbit Dominance) 설계
 
 날짜: 2026-07-04
-상태: 설계 승인 대기
+상태: 구현 완료 (2026-07-04)
 관련: `docs/superpowers/specs/2026-07-04-momentum-scoring-engine-*.md` (스코어링 엔진 subsystem A)
 
 ## 목적
