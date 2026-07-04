@@ -9,6 +9,9 @@ import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty } from '../lib/s
 import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
+import scoringRegistry from '../lib/scoring/features/index.mjs'
+import { loadScoringConfig } from '../lib/scoring/config.mjs'
+import { runScoringShadow } from '../lib/scoring/context.mjs'
 
 const MAX_SCANS = 30
 const BUY_THRESHOLD = 5
@@ -37,6 +40,7 @@ async function main() {
   const log = await readJson('monitor-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
   const priorScans = log.scans || []
 
+  const candleMap = {}
   const buy = [], sell = []
   for (let i = 0; i < targets.length; i += BATCH) {
     const chunk = targets.slice(i, i + BATCH)
@@ -44,6 +48,7 @@ async function main() {
       const candles = await getDayCandles(market, 200)
       if (!candles || candles.length < 60) return
       const ohlcv = candlesToOhlcv(candles)
+      candleMap[market] = ohlcv
       const sig = detectSignals(ohlcv, weights)
       const pat = detectPatterns(ohlcv)
       for (const p of pat.buy) { sig.buy.push(p); sig.buyScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
@@ -108,6 +113,14 @@ async function main() {
   const ratio = +(buy.length / Math.max(sell.length, 1)).toFixed(2)
   const regimeInfo = { trend: regime.trend, ratio, ...regimeLabel(ratio, regime.trend) }
   const entry = { timestamp: new Date().toISOString(), buy, sell, regime: regimeInfo }
+  // 쉐도우 스코어링(신규 API 0, 실패해도 기존 스캔 불변). 기존 buy/sell/regime는 손대지 않는다.
+  const tickerMap = Object.fromEntries(Object.keys(candleMap).map((m) => [m, { acc_trade_price_24h: tradePrice[m] }]))
+  const buyMarkets = buy.map((b) => b.market)
+  let scoringConfig = null
+  try { scoringConfig = await loadScoringConfig(readJson, scoringRegistry) } catch (e) { console.warn('[scoring] config load failed:', e.message) }
+  const shadow = runScoringShadow(Object.keys(candleMap), candleMap, tickerMap, { btcTrend: regime.trend }, scoringRegistry, scoringConfig, buyMarkets)
+  if (shadow.scoringError) entry.scoringError = shadow.scoringError
+  else { entry.scoring = shadow.scoring; entry.scoringMeta = shadow.scoringMeta }
   // 락 안에서 fresh 재읽기 → 증가 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
   let scanNum
   await withLock('monitor-log', async () => {
