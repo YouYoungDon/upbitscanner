@@ -39,6 +39,14 @@ describe('fetchCgMarkets', () => {
     const rows = await fetchCgMarkets(['a'], 'k', { fetchImpl, sleepMs: 1 })
     expect(rows).toEqual([{ id: 'a' }])
   })
+  it('sleepMs 미지정 시 기본 백오프는 5s (분당 30콜 창에서 0.5s/1.0s는 재-429 확정적)', async () => {
+    const delays = []
+    const spy = vi.spyOn(global, 'setTimeout').mockImplementation((fn, ms) => { delays.push(ms); fn(); return 0 })
+    const fetchImpl = vi.fn().mockResolvedValueOnce(err(429)).mockResolvedValueOnce(ok([{ id: 'a' }]))
+    await fetchCgMarkets(['a'], 'k', { fetchImpl })
+    expect(delays).toEqual([5000])
+    spy.mockRestore()
+  })
   it('4xx(429 제외)는 즉시 null', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(err(400))
     expect(await fetchCgMarkets(['a'], 'k', { fetchImpl, sleepMs: 1 })).toBe(null)
