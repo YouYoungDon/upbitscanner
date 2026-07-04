@@ -23,4 +23,20 @@ describe('get 재시도/백오프', () => {
     expect(n).toBe(1)
     expect(r).toEqual([])
   })
+  it('ok 응답이어도 json 파싱이 reject되면 재시도 경로를 탄다(리턴된 프라미스가 우회하지 않음)', async () => {
+    let n = 0
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      n++
+      if (n <= 2) return { ok: true, json: async () => { throw new Error('bad json') } }
+      return { ok: true, json: async () => [{ market: 'KRW-BTC' }] }
+    }))
+    const r = await getMarkets()
+    expect(n).toBe(3)
+    expect(r).toEqual([{ market: 'KRW-BTC', warning: false, caution: false }])
+  })
+  it('json 파싱이 재시도 소진까지 계속 reject되면 null(→ getMarkets는 [])', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => { throw new Error('bad json') } })))
+    const r = await getMarkets()
+    expect(r).toEqual([])
+  })
 })

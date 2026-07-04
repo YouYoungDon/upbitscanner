@@ -50,6 +50,14 @@ describe('fetchCgMarkets', () => {
     const rows = await fetchCgMarkets(ids, 'k', { fetchImpl, retries: 1, sleepMs: 1 })
     expect(rows).toBe(null) // 1페이지는 확보했지만 2페이지 실패 → 계약상 전체 null
   })
+  it('ok 응답이어도 json 파싱이 reject되면 재시도 경로를 탄다(우회 안 함)', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => { throw new Error('bad json') } })
+      .mockResolvedValueOnce(ok([{ id: 'a' }]))
+    const rows = await fetchCgMarkets(['a'], 'k', { fetchImpl, sleepMs: 1 })
+    expect(fetchImpl).toHaveBeenCalledTimes(2)
+    expect(rows).toEqual([{ id: 'a' }])
+  })
 })
 
 describe('fetchCgCoinsList', () => {
