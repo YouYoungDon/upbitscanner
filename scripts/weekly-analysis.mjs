@@ -1,5 +1,5 @@
 import { getTicker, getDayCandlesBefore } from '../lib/upbit.mjs'
-import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
+import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns } from '../lib/weekly.mjs'
 import { readArchive, scansInLastDays } from '../lib/archive.mjs'
 
@@ -80,9 +80,13 @@ const records = preds
 const stats = aggregateHitRates(records)
 const returns = aggregateReturns(records)
 for (const k of Object.keys(stats)) stats[k].avgReturn = returns[k] ?? 0
-const oldWeights = await readJson('signal-weights.json', {})
-const newWeights = updateWeights(oldWeights, stats)
-await writeJson('signal-weights.json', newWeights)
+// 락 안에서 fresh 재읽기 → 갱신 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
+let oldWeights, newWeights
+await withLock('signal-weights', async () => {
+  oldWeights = await readJson('signal-weights.json', {})
+  newWeights = updateWeights(oldWeights, stats)
+  await writeJson('signal-weights.json', newWeights)
+})
 
 const report = buildWeeklyReport(records, stats, oldWeights, newWeights)
 
@@ -125,9 +129,12 @@ const result = {
   report,
   momentum,
 }
-const hist = await readJson('weekly-analysis.json', { weeks: [] })
-hist.weeks = rollingAppend(hist.weeks || [], result, MAX_WEEKS)
-await writeJson('weekly-analysis.json', hist)
+// 락 안에서 fresh 재읽기 → 증가 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
+await withLock('weekly-analysis', async () => {
+  const fresh = await readJson('weekly-analysis.json', { weeks: [] })
+  fresh.weeks = rollingAppend(fresh.weeks || [], result, MAX_WEEKS)
+  await writeJson('weekly-analysis.json', fresh)
+})
 
 console.log(`주간 분석 완료 — 예측 ${records.length}건, 적중 ${hitCount}건 (${result.overallHitRate})`)
 console.log('가중치 갱신:', Object.keys(stats).filter((k) => stats[k].count >= 3).join(', ') || '없음')

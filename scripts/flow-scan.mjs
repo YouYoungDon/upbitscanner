@@ -1,6 +1,6 @@
 import { getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, upbitDominancePenalty } from '../lib/scan-universe.mjs'
-import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
+import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import { shouldAlert, updateAlertState } from '../lib/flow-alert.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
@@ -91,14 +91,19 @@ async function main() {
   picks.sort((a, b) => b.score - a.score || (b.ratio ?? 0) - (a.ratio ?? 0) || (b.breakout ? 1 : 0) - (a.breakout ? 1 : 0))
 
   const entry = { timestamp: new Date().toISOString(), btc: { ret: btc5mRet, favorable: btcFavorable, bad: btcBad }, picks }
-  const log = await readJson('flow-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
-  log.totalScans = (log.totalScans || 0) + 1
-  log.scans = rollingAppend(log.scans || [], entry, MAX_SCANS)
-  await writeJson('flow-log.json', log)
+  // 락 안에서 fresh 재읽기 → 증가 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
+  let scanNum
+  await withLock('flow-log', async () => {
+    const fresh = await readJson('flow-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
+    fresh.totalScans = (fresh.totalScans || 0) + 1
+    fresh.scans = rollingAppend(fresh.scans || [], entry, MAX_SCANS)
+    await writeJson('flow-log.json', fresh)
+    scanNum = fresh.totalScans
+  })
 
   const counts = { strong: 0, attention: 0, watch: 0 }
   for (const p of picks) counts[p.level]++
-  console.log(`자금유입 스캔 #${log.totalScans} — 🔴${counts.strong} 🟠${counts.attention} 🟡${counts.watch}`)
+  console.log(`자금유입 스캔 #${scanNum} — 🔴${counts.strong} 🟠${counts.attention} 🟡${counts.watch}`)
   console.log('상위:', picks.slice(0, 5).map((p) => `${p.korean_name}(${p.score})`).join(', ') || '없음')
 
   await notifyFlow(picks)
@@ -106,10 +111,14 @@ async function main() {
 
 async function notifyFlow(picks) {
   const now = Date.now()
-  let state = await readJson('flow-alert-state.json', {})
-  const fire = picks.filter((p) => (p.level === 'strong' || p.level === 'attention') && shouldAlert({ market: p.market, score: p.score, now }, state, CONFIG))
-  for (const p of fire) state = updateAlertState(state, p.market, p.score, now)
-  await writeJson('flow-alert-state.json', state)
+  // 락 안에서 fresh 재읽기 → 판정/갱신 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
+  let fire = []
+  await withLock('flow-alert-state', async () => {
+    let state = await readJson('flow-alert-state.json', {})
+    fire = picks.filter((p) => (p.level === 'strong' || p.level === 'attention') && shouldAlert({ market: p.market, score: p.score, now }, state, CONFIG))
+    for (const p of fire) state = updateAlertState(state, p.market, p.score, now)
+    await writeJson('flow-alert-state.json', state)
+  })
   if (!fire.length) return
   const lines = fire.map((p) => `${LEVEL_EMOJI[p.level]} ${p.korean_name}(${p.market.replace('KRW-', '')}) ${p.score}점 · 머니 ${p.ratio}x${p.accel ? ` ·가속 ${p.accel}x` : ''}${p.breakout ? ' ·돌파' : ''}`)
   const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })

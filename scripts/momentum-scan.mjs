@@ -1,6 +1,6 @@
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { scoreMomentum, MIN_MOMENTUM_SCORE } from '../lib/momentum.mjs'
-import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
+import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
@@ -42,12 +42,17 @@ async function main() {
 
   picks.sort((a, b) => b.score - a.score)
 
-  const log = await readJson('momentum-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
-  log.totalScans = (log.totalScans || 0) + 1
-  log.scans = rollingAppend(log.scans || [], { timestamp: new Date().toISOString(), picks }, MAX_SCANS)
-  await writeJson('momentum-log.json', log)
+  // 락 안에서 fresh 재읽기 → 증가 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
+  let scanNum
+  await withLock('momentum-log', async () => {
+    const fresh = await readJson('momentum-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
+    fresh.totalScans = (fresh.totalScans || 0) + 1
+    fresh.scans = rollingAppend(fresh.scans || [], { timestamp: new Date().toISOString(), picks }, MAX_SCANS)
+    await writeJson('momentum-log.json', fresh)
+    scanNum = fresh.totalScans
+  })
 
-  console.log(`모멘텀 스캔 #${log.totalScans} 완료 — 추세지속 ${picks.length}종목`)
+  console.log(`모멘텀 스캔 #${scanNum} 완료 — 추세지속 ${picks.length}종목`)
   console.log('상위:', picks.slice(0, 5).map((p) => `${p.korean_name}(${p.score})`).join(', ') || '없음')
 
   await notifyTelegram(picks)
