@@ -1,5 +1,5 @@
 // OS 스케줄러용 결정적 추이 저널 기록 (LLM 불필요). 09:17/21:17 실행.
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readArchive } from '../lib/archive.mjs'
@@ -21,5 +21,8 @@ if (content.includes(entry.marker)) { console.log('이미 기록됨:', entry.sca
 const pos = content.indexOf('---')
 const insertAt = pos === -1 ? content.length : content.indexOf('\n', pos) + 1
 content = content.slice(0, insertAt) + '\n' + entry.markdown + content.slice(insertAt)
-writeFileSync(JOURNAL, content, 'utf-8')
+// 원자적 쓰기: temp(고유 pid 접미사)에 쓰고 rename으로 교체 → 부분 쓰기/깨진 파일 방지.
+const tmp = `${JOURNAL}.${process.pid}.tmp`
+writeFileSync(tmp, content, 'utf-8')
+renameSync(tmp, JOURNAL)
 console.log('추이 저널 기록:', entry.scanTs)
