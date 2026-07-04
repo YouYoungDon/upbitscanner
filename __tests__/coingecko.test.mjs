@@ -64,6 +64,13 @@ describe('fetchCgMarkets', () => {
     const [, init] = fetchImpl.mock.calls[0]
     expect(init.signal).toBeInstanceOf(AbortSignal)
   })
+  it('markets는 10s 타임아웃을 사용한다(수 MB 응답이 아니므로 짧아도 됨)', async () => {
+    const spy = vi.spyOn(AbortSignal, 'timeout')
+    const fetchImpl = vi.fn().mockResolvedValue(ok([{ id: 'a' }]))
+    await fetchCgMarkets(['a'], 'k', { fetchImpl })
+    expect(spy).toHaveBeenCalledWith(10_000)
+    spy.mockRestore()
+  })
 })
 
 describe('fetchCgCoinsList', () => {
@@ -71,5 +78,12 @@ describe('fetchCgCoinsList', () => {
   it('정상 조회', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(ok([{ id: 'bitcoin', symbol: 'btc', name: 'Bitcoin' }]))
     expect(await fetchCgCoinsList('k', { fetchImpl })).toEqual([{ id: 'bitcoin', symbol: 'btc', name: 'Bitcoin' }])
+  })
+  it('본문이 수 MB인 coins/list는 30s 타임아웃을 사용한다(느린 회선에서 abort 방지)', async () => {
+    const spy = vi.spyOn(AbortSignal, 'timeout')
+    const fetchImpl = vi.fn().mockResolvedValue(ok([]))
+    await fetchCgCoinsList('k', { fetchImpl })
+    expect(spy).toHaveBeenCalledWith(30_000)
+    spy.mockRestore()
   })
 })
