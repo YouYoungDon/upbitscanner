@@ -1,8 +1,9 @@
 import { getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
-import { getScanUniverse, BATCH, DELAY, sleep } from '../lib/scan-universe.mjs'
+import { getScanUniverse, BATCH, DELAY, sleep, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 import { readJson, writeJson, rollingAppend } from '../lib/store.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import { shouldAlert, updateAlertState } from '../lib/flow-alert.mjs'
+import { ensureCgData } from '../lib/cg-data.mjs'
 import {
   CONFIG, tradingValues, moneyRatio, moneyAcceleration, pctChange,
   isPumped, isEarlyZone, breakout20, near24hHigh, isConsolidationBreakout,
@@ -14,9 +15,11 @@ const FIVE_MIN_COUNT = 81 // 81개 조회 후 형성 중인 최신 봉 1개 제�
 const LEVEL_EMOJI = { strong: '🔴', attention: '🟠', watch: '🟡' }
 
 async function main() {
-  const { targets, nameOf, warnOf } = await getScanUniverse({ minTradePrice: CONFIG.minTradePrice24h })
+  const { targets, nameOf, warnOf, tradePrice } = await getScanUniverse({ minTradePrice: CONFIG.minTradePrice24h })
   if (!targets.length) { console.error('자금유입 스캔 대상 없음'); process.exit(1) }
   console.log(`자금유입 스캔 대상 ${targets.length}종목 (24h≥${CONFIG.minTradePrice24h / 1e8}억)`)
+
+  const cg = await ensureCgData(targets, { allowFetch: false }) // 캐시만 읽기
 
   // BTC 5m 컨텍스트 (형성 중인 최신 봉 제외 — 완성봉만)
   const btcC = await getMinuteCandles('KRW-BTC', 5, 4)
@@ -63,6 +66,8 @@ async function main() {
       const rsiOK = rsiOk(closes5)
       const early = isEarlyZone(ch1m, ch30m)
       const { score, parts } = scoreFlow({ ratio, accel, value5m, breakout, near24h, emaOK, rsiOK, early, btcFavorable, btcBad })
+      const dom = upbitDominancePenalty(tradePrice[market], cg.byMarket[market]?.globalVolKrw)
+      const finalScore = dom.mult < 1 ? +(score * dom.mult).toFixed(1) : score
       const level = alertLevel({ ratio, breakout, btcFavorable })
       if (!level) return
 
@@ -70,13 +75,14 @@ async function main() {
       if (warn === 'warning') return // 경고(상폐심사급)는 자금유입 후보에서 제외
 
       picks.push({
-        market, korean_name: nameOf[market], price, score, level, parts,
+        market, korean_name: nameOf[market], price, score: finalScore, level, parts,
         ratio: ratio == null ? null : +ratio.toFixed(2),
         accel: accel == null ? null : +accel.toFixed(2),
         value5m, ch1m, ch5m, ch15m, ch30m, ch24h: ch24hOf[market] ?? null,
         breakout, consol, near24h, emaOK,
         rsi: rsiOK,
         ...(warn ? { warn } : {}),
+        ...(dom.share != null ? { dominance: { share: dom.share, mult: dom.mult } } : {}),
       })
     }))
     await sleep(DELAY)
