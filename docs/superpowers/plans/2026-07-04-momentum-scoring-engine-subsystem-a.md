@@ -20,7 +20,7 @@
 - Create `lib/scoring/features/index.mjs` — registry (array of feature modules).
 - Create `lib/scoring/features/*.mjs` — one file per feature (10).
 - Create `lib/scoring/config.mjs` — config loader + validation.
-- Create `scoring-config.json` — weights, groups, cutoffs, thresholds, multipliers.
+- Create `data/scoring-config.json` — weights, groups, cutoffs, thresholds, multipliers. (data/ 폴더 — `loadScoringConfig`가 `readJson`으로 읽고, readJson은 DATA_DIR=`data/`를 보므로 반드시 여기.)
 - Create `lib/scoring/engine.mjs` — two-pass engine, extension penalty, confidence, contextLabel, tier, archive-entry assembler.
 - Create `lib/scoring/context.mjs` — FeatureContext builder from candles/ticker.
 - Modify `scripts/monitor.mjs` — shadow-mode wiring (compute + archive attach + fallback).
@@ -416,7 +416,7 @@ Final `features/index.mjs` exports all 10 in the order: relativeVolume, relative
 ## Task 4: Config loader + validation
 
 **Files:**
-- Create: `scoring-config.json`
+- Create: `data/scoring-config.json`  ← data/ 폴더(readJson이 DATA_DIR=data/를 읽음)
 - Create: `lib/scoring/config.mjs`
 - Test: `__tests__/scoring/config.test.mjs`
 
