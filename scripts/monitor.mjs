@@ -140,9 +140,9 @@ async function main() {
     fresh.totalScans = (fresh.totalScans || 0) + 1
     fresh.scans = rollingAppend(fresh.scans || [], entry, MAX_SCANS)
     await writeJson('monitor-log.json', fresh)
+    appendScan(entry)
     scanNum = fresh.totalScans
   })
-  appendScan(entry)
 
   console.log(`스캔 #${scanNum} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
