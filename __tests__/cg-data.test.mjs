@@ -163,6 +163,27 @@ describe('ensureCgData', () => {
     expect(calls.marketsFetches).toBe(1)                  // fetch는 락 밖에서 이미 실행됨(결과는 버려짐)
     expect(cacheWrites).toEqual([])                       // 캐시 파일 덮어쓰기 없음(승자 존중)
   })
+  it('자기 refresh 실패(fetch null) 후 동시 승자가 fresh 캐시를 써놨으면 그걸 사용(중립 아님)', async () => {
+    // 공유 키 429 시나리오: 내 fetch는 실패했지만 다른 스캐너가 그 사이 캐시를 갱신함 — 재읽기 폴백
+    const staleCache = { fetchedAt: '2026-07-04T08:00:00Z', byMarket: {} }
+    const winnerCache = { fetchedAt: new Date(NOW - 60000).toISOString(), byMarket: { 'KRW-ID': { globalVolKrw: 7e10 } } }
+    const files = {
+      'coingecko-map.json': { builtAt: '2026-07-03T00:00:00Z', byMarket: { 'KRW-ID': 'space-id' } },
+    }
+    const { deps } = makeDeps(files, { marketRows: null }) // fetchCgMarkets 실패(429 등)
+    let cacheReads = 0
+    deps.readJson = async (name, fb) => {
+      if (name === 'coingecko-cache.json') {
+        cacheReads++
+        return cacheReads === 1 ? staleCache : winnerCache // 첫 읽기: stale → 재읽기: 승자가 방금 씀
+      }
+      return files[name] ?? fb
+    }
+    const r = await ensureCgData(['KRW-ID'], { now: NOW, deps })
+    expect(r.byMarket['KRW-ID'].globalVolKrw).toBe(7e10) // 승자 캐시 사용
+    expect(r.reason).toBeUndefined()                      // 중립(stale-cache) 아님
+    expect(r.coverage).toBe(1)
+  })
   it('맵 없음 + coinsList 정상 + markets 실패(null) → 맵 오염 없이 기존 상태 유지, 재시도 가능', async () => {
     const { deps, files } = makeDeps({}, {
       coinsList: [{ id: 'space-id', symbol: 'id' }],
