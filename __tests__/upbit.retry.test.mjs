@@ -39,4 +39,11 @@ describe('get 재시도/백오프', () => {
     const r = await getMarkets()
     expect(r).toEqual([])
   })
+  it('fetch에 10s 타임아웃 signal을 전달한다(소켓 행 방지)', async () => {
+    const fetchMock = vi.fn(async () => ({ ok: true, json: async () => [] }))
+    vi.stubGlobal('fetch', fetchMock)
+    await getMarkets()
+    const [, init] = fetchMock.mock.calls[0]
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+  })
 })

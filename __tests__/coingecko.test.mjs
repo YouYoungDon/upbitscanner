@@ -58,6 +58,12 @@ describe('fetchCgMarkets', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2)
     expect(rows).toEqual([{ id: 'a' }])
   })
+  it('fetch에 10s 타임아웃 signal을 전달한다', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(ok([{ id: 'a' }]))
+    await fetchCgMarkets(['a'], 'k', { fetchImpl })
+    const [, init] = fetchImpl.mock.calls[0]
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+  })
 })
 
 describe('fetchCgCoinsList', () => {
