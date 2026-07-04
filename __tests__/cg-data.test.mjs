@@ -136,7 +136,8 @@ describe('ensureCgData', () => {
     const { deps } = makeDeps({}) // coinsList/marketRows = null
     expect(await ensureCgData(['KRW-ID'], { now: NOW, deps })).toEqual({ byMarket: {}, coverage: 0, reason: 'no-map' })
   })
-  it('락 안 재확인: 다른 스캐너가 방금 갱신했으면 fetch·쓰기 생략(double-check)', async () => {
+  it('락 안 재확인: 다른 스캐너가 방금 갱신했으면 자기 fetch 결과 버리고 승자 캐시 반환(write 생략)', async () => {
+    // 신 계약: fetch는 락 밖에서 이미 실행된다 — 락 안 재확인은 write 여부만 결정한다.
     const staleCache = { fetchedAt: '2026-07-04T08:00:00Z', byMarket: {} }
     const freshCache = { fetchedAt: new Date(NOW - 60000).toISOString(), byMarket: { 'KRW-ID': { globalVolKrw: 7e10 } } }
     const files = {
@@ -148,7 +149,7 @@ describe('ensureCgData', () => {
     deps.readJson = async (name, fb) => {
       if (name === 'coingecko-cache.json') {
         cacheReads++
-        return cacheReads === 1 ? staleCache : freshCache // 락 밖: stale → 락 안: 다른 스캐너가 방금 씀
+        return cacheReads === 1 ? staleCache : freshCache // outer 체크: stale → 락 안: 다른 스캐너가 방금 씀
       }
       return files[name] ?? fb
     }
@@ -157,9 +158,9 @@ describe('ensureCgData', () => {
       files[name] = data
     }
     const r = await ensureCgData(['KRW-ID'], { now: NOW, deps })
-    expect(r.byMarket['KRW-ID'].globalVolKrw).toBe(7e10) // fresh 캐시의 엔트리
-    expect(calls.marketsFetches).toBe(0)                  // fetch 생략
-    expect(cacheWrites).toEqual([])                       // 캐시 파일 덮어쓰기 없음
+    expect(r.byMarket['KRW-ID'].globalVolKrw).toBe(7e10) // fresh 캐시(승자)의 엔트리
+    expect(calls.marketsFetches).toBe(1)                  // fetch는 락 밖에서 이미 실행됨(결과는 버려짐)
+    expect(cacheWrites).toEqual([])                       // 캐시 파일 덮어쓰기 없음(승자 존중)
   })
   it('맵 없음 + coinsList 정상 + markets 실패(null) → 맵 오염 없이 기존 상태 유지, 재시도 가능', async () => {
     const { deps, files } = makeDeps({}, {
@@ -173,7 +174,8 @@ describe('ensureCgData', () => {
     const r2 = await ensureCgData(['KRW-ID'], { now: NOW, deps })
     expect(r2).toEqual({ byMarket: {}, coverage: 0, reason: 'no-map' })
   })
-  it('맵 재구축 락 안 재확인: 다른 스캐너가 방금 재구축했으면 fetch·쓰기 생략(double-check)', async () => {
+  it('맵 재구축 락 안 재확인: 다른 스캐너가 방금 재구축했으면 자기 fetch 결과 버리고 승자 맵 반환(write 생략)', async () => {
+    // 신 계약: coins/list·markets fetch는 락 밖에서 이미 실행된다 — 락 안 재확인은 write 여부만 결정한다.
     const staleMap = { builtAt: '2026-06-20T00:00:00Z', byMarket: {} } // stale & KRW-ID 없음(missing)
     const freshMap = { builtAt: new Date(NOW - 60000).toISOString(), byMarket: { 'KRW-ID': 'space-id' } }
     const files = {
@@ -185,7 +187,7 @@ describe('ensureCgData', () => {
     deps.readJson = async (name, fb) => {
       if (name === 'coingecko-map.json') {
         mapReads++
-        return mapReads === 1 ? staleMap : freshMap // 락 밖: stale+missing → 락 안: 다른 스캐너가 방금 재구축함
+        return mapReads === 1 ? staleMap : freshMap // outer 체크: stale+missing → 락 안: 다른 스캐너가 방금 재구축함
       }
       return files[name] ?? fb
     }
@@ -195,8 +197,8 @@ describe('ensureCgData', () => {
     }
     const r = await ensureCgData(['KRW-ID'], { now: NOW, deps })
     expect(r.byMarket['KRW-ID'].globalVolKrw).toBe(6e10)
-    expect(calls.listFetches).toBe(0)     // coins/list(수 MB) 재다운로드 생략
-    expect(calls.marketsFetches).toBe(0)  // markets 재조회 생략
+    expect(calls.listFetches).toBe(1)     // coins/list fetch는 락 밖에서 이미 실행됨(결과는 버려짐)
+    expect(calls.marketsFetches).toBe(1)  // markets fetch도 락 밖에서 이미 실행됨(결과는 버려짐)
     expect(mapWrites).toEqual([])         // 맵 파일 덮어쓰기 없음
   })
   it('맵 fresh지만 새 심볼 등장 → allowFetch면 재구축', async () => {
