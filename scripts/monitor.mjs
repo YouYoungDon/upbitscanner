@@ -5,7 +5,8 @@ import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
-import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty } from '../lib/scan-universe.mjs'
+import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
+import { ensureCgData } from '../lib/cg-data.mjs'
 import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
@@ -31,6 +32,10 @@ async function main() {
   const { targets, nameOf, total, tradePrice, warnOf } = await getScanUniverse()
   if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
   console.log(`스캔 대상 ${targets.length}종목 (전체 ${total})`)
+
+  // 코인게코 글로벌 데이터 (사이클 첫 스캐너가 갱신, 실패 시 중립 — 스캔 불사침)
+  const cg = await ensureCgData(targets, { allowFetch: true })
+  console.log(`코인게코 커버리지: ${(cg.coverage * 100).toFixed(0)}%`)
 
   // 시장 레짐: BTC 일봉 추세 (약세면 반등 매수 감점)
   const btcCandles = await getDayCandles('KRW-BTC', 200)
@@ -79,6 +84,9 @@ async function main() {
       // 유동성 차등 감점 (구간별 배수, 두 스캐너 공용 헬퍼)
       const { liqMult, lowLiq, label: liqLabel } = liquidityPenalty(tradePrice[market])
       if (liqMult < 1) { finalBuyScore *= liqMult; buySignals = [...buySignals, liqLabel] }
+      // 업비트 단독 펌프 감점 (코인게코 글로벌 거래대금 대비 비중)
+      const dom = upbitDominancePenalty(tradePrice[market], cg.byMarket[market]?.globalVolKrw)
+      if (dom.mult < 1) { finalBuyScore *= dom.mult; buySignals = [...buySignals, dom.label] }
       // 떨어지는 칼 필터: 거래량 없는 과매도 GC + 하락배열이면 매수 감점
       const knife = fallingKnifePenalty(buySignals, sellSignals)
       if (knife.mult < 1) { finalBuyScore *= knife.mult; buySignals = [...buySignals, knife.label] }
@@ -95,6 +103,9 @@ async function main() {
         if (vbottomSL != null) item.vbottomSL = vbottomSL
         if (pumpSL != null) item.pumpSL = pumpSL
         if (lowLiq) item.lowLiquidity = true
+        if (dom.share != null) item.dominance = { share: dom.share, mult: dom.mult }
+        const cgE = cg.byMarket[market]
+        if (cgE) item.cg = { circRatio: cgE.circRatio, athChangePct: cgE.athChangePct, rank: cgE.rank }
         if (warn) item.warn = warn
         buy.push(item)
       }
@@ -113,6 +124,7 @@ async function main() {
   const ratio = +(buy.length / Math.max(sell.length, 1)).toFixed(2)
   const regimeInfo = { trend: regime.trend, ratio, ...regimeLabel(ratio, regime.trend) }
   const entry = { timestamp: new Date().toISOString(), buy, sell, regime: regimeInfo }
+  entry.cgCoverage = cg.coverage
   // 쉐도우 스코어링(신규 API 0, 실패해도 기존 스캔 불변). 기존 buy/sell/regime는 손대지 않는다.
   const tickerMap = Object.fromEntries(Object.keys(candleMap).map((m) => [m, { acc_trade_price_24h: tradePrice[m] }]))
   const buyMarkets = buy.map((b) => b.market)
