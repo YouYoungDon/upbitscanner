@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getScanUniverse, MIN_TRADE_PRICE_24H, liquidityMultiplier, liquidityPenalty, LOW_LIQUIDITY_24H } from '../lib/scan-universe.mjs'
+import { getScanUniverse, MIN_TRADE_PRICE_24H, liquidityMultiplier, liquidityPenalty, LOW_LIQUIDITY_24H, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 
 describe('getScanUniverse', () => {
   const markets = [
@@ -85,5 +85,33 @@ describe('liquidityPenalty', () => {
   })
   it('미상(undefined) → 0 취급 ×0.6·lowLiq true', () => {
     expect(liquidityPenalty(undefined)).toEqual({ liqMult: 0.6, lowLiq: true, label: '⚠️유동성 ×0.6' })
+  })
+})
+
+describe('upbitDominancePenalty', () => {
+  it('글로벌 데이터 없음/0/업비트 null → 중립', () => {
+    expect(upbitDominancePenalty(1e9, null)).toEqual({ mult: 1.0, share: null, label: null })
+    expect(upbitDominancePenalty(1e9, 0)).toEqual({ mult: 1.0, share: null, label: null })
+    expect(upbitDominancePenalty(null, 1e9)).toEqual({ mult: 1.0, share: null, label: null })
+  })
+  it('비중 80%+ → ×0.8 + 업비트단독 라벨', () => {
+    const r = upbitDominancePenalty(8e9, 1e10)
+    expect(r.mult).toBe(0.8)
+    expect(r.share).toBe(0.8)
+    expect(r.label).toBe('⚠️업비트단독 80%')
+  })
+  it('비중 50%+ → ×0.9 + 업비트비중 라벨', () => {
+    const r = upbitDominancePenalty(5e9, 1e10)
+    expect(r.mult).toBe(0.9)
+    expect(r.label).toBe('⚠️업비트비중 50%')
+  })
+  it('비중 50% 미만 → 감점 없음, share는 기록', () => {
+    const r = upbitDominancePenalty(3e9, 1e10)
+    expect(r).toEqual({ mult: 1.0, share: 0.3, label: null })
+  })
+  it('업비트가 글로벌보다 크면(집계 시차) share는 1로 캡', () => {
+    const r = upbitDominancePenalty(2e10, 1e10)
+    expect(r.share).toBe(1)
+    expect(r.mult).toBe(0.8)
   })
 })
