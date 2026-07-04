@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { candidatesBySymbol, resolveCollisions, isFresh, CACHE_TTL_MS, MAP_TTL_MS, toCacheEntry } from '../lib/cg-data.mjs'
+import { candidatesBySymbol, resolveCollisions, isFresh, CACHE_TTL_MS, MAP_TTL_MS, toCacheEntry, ensureCgData } from '../lib/cg-data.mjs'
 
 describe('candidatesBySymbol', () => {
   it('업비트 심볼과 코인게코 심볼 대소문자 무시 매칭', () => {
@@ -69,5 +69,80 @@ describe('toCacheEntry', () => {
       circRatio: null, athChangePct: null, ret7dPct: null, ret30dPct: null,
     })
     expect(toCacheEntry({ market_cap: 1e9, fully_diluted_valuation: 0 }).circRatio).toBe(null)
+  })
+})
+
+function makeDeps(files, { key = 'k', coinsList, marketRows } = {}) {
+  const calls = { marketsFetches: 0, listFetches: 0 }
+  return {
+    deps: {
+      readJson: async (name, fb) => files[name] ?? fb,
+      writeJson: async (name, data) => { files[name] = data },
+      withLock: async (_name, fn) => fn(),
+      loadApiKey: async () => key,
+      fetchCgCoinsList: async () => { calls.listFetches++; return coinsList ?? null },
+      fetchCgMarkets: async () => { calls.marketsFetches++; return marketRows ?? null },
+      env: {},
+    },
+    calls, files,
+  }
+}
+const NOW = Date.parse('2026-07-04T12:00:00Z')
+const ROW = { id: 'space-id', total_volume: 6e10, market_cap: 2.3e10, market_cap_rank: 969 }
+
+describe('ensureCgData', () => {
+  it('맵·캐시 신선하면 fetch 없이 캐시 반환, coverage 계산', async () => {
+    const { deps, calls } = makeDeps({
+      'coingecko-map.json': { builtAt: '2026-07-03T00:00:00Z', byMarket: { 'KRW-ID': 'space-id', 'KRW-NEW': null } },
+      'coingecko-cache.json': { fetchedAt: '2026-07-04T11:00:00Z', byMarket: { 'KRW-ID': { globalVolKrw: 6e10 } } },
+    })
+    const r = await ensureCgData(['KRW-ID', 'KRW-NEW'], { now: NOW, deps })
+    expect(r.byMarket['KRW-ID'].globalVolKrw).toBe(6e10)
+    expect(r.coverage).toBe(0.5)
+    expect(calls.marketsFetches + calls.listFetches).toBe(0)
+  })
+  it('캐시 stale + allowFetch → 재조회·파일 갱신', async () => {
+    const { deps, files } = makeDeps({
+      'coingecko-map.json': { builtAt: '2026-07-03T00:00:00Z', byMarket: { 'KRW-ID': 'space-id' } },
+      'coingecko-cache.json': { fetchedAt: '2026-07-04T08:00:00Z', byMarket: {} },
+    }, { marketRows: [ROW] })
+    const r = await ensureCgData(['KRW-ID'], { now: NOW, deps })
+    expect(r.byMarket['KRW-ID'].globalVolKrw).toBe(6e10)
+    expect(files['coingecko-cache.json'].fetchedAt).toBe(new Date(NOW).toISOString())
+  })
+  it('캐시 stale + allowFetch=false → 중립', async () => {
+    const { deps } = makeDeps({
+      'coingecko-map.json': { builtAt: '2026-07-03T00:00:00Z', byMarket: { 'KRW-ID': 'space-id' } },
+      'coingecko-cache.json': { fetchedAt: '2026-07-04T08:00:00Z', byMarket: { 'KRW-ID': { globalVolKrw: 6e10 } } },
+    })
+    const r = await ensureCgData(['KRW-ID'], { allowFetch: false, now: NOW, deps })
+    expect(r).toEqual({ byMarket: {}, coverage: 0 })
+  })
+  it('맵 없음 → coins/list + markets로 재구축 후 캐시까지 채움', async () => {
+    const { deps, files } = makeDeps({}, {
+      coinsList: [{ id: 'space-id', symbol: 'id' }, { id: 'other-id-coin', symbol: 'id' }],
+      marketRows: [ROW, { id: 'other-id-coin', total_volume: 1, market_cap: 1, market_cap_rank: 4000 }],
+    })
+    const r = await ensureCgData(['KRW-ID'], { now: NOW, deps })
+    expect(files['coingecko-map.json'].byMarket['KRW-ID']).toBe('space-id')
+    expect(r.byMarket['KRW-ID'].globalVolKrw).toBe(6e10)
+  })
+  it('키 없음 → 중립', async () => {
+    const { deps } = makeDeps({}, { key: null })
+    expect(await ensureCgData(['KRW-ID'], { now: NOW, deps })).toEqual({ byMarket: {}, coverage: 0 })
+  })
+  it('fetch 전부 실패 → 중립 (throw 없음)', async () => {
+    const { deps } = makeDeps({}) // coinsList/marketRows = null
+    expect(await ensureCgData(['KRW-ID'], { now: NOW, deps })).toEqual({ byMarket: {}, coverage: 0 })
+  })
+  it('맵 fresh지만 새 심볼 등장 → allowFetch면 재구축', async () => {
+    const { deps, files } = makeDeps({
+      'coingecko-map.json': { builtAt: '2026-07-04T00:00:00Z', byMarket: { 'KRW-ID': 'space-id' } },
+    }, {
+      coinsList: [{ id: 'space-id', symbol: 'id' }, { id: 'newcoin', symbol: 'new' }],
+      marketRows: [ROW, { id: 'newcoin', total_volume: 5, market_cap: 5, market_cap_rank: 100 }],
+    })
+    await ensureCgData(['KRW-ID', 'KRW-NEW'], { now: NOW, deps })
+    expect(files['coingecko-map.json'].byMarket['KRW-NEW']).toBe('newcoin')
   })
 })
