@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { candidatesBySymbol, resolveCollisions, isFresh, CACHE_TTL_MS, MAP_TTL_MS } from '../lib/cg-data.mjs'
+import { candidatesBySymbol, resolveCollisions, isFresh, CACHE_TTL_MS, MAP_TTL_MS, toCacheEntry } from '../lib/cg-data.mjs'
 
 describe('candidatesBySymbol', () => {
   it('업비트 심볼과 코인게코 심볼 대소문자 무시 매칭', () => {
@@ -48,5 +48,26 @@ describe('isFresh', () => {
     expect(isFresh(null, CACHE_TTL_MS, now)).toBe(false)
     expect(isFresh({}, CACHE_TTL_MS, now)).toBe(false)
     expect(isFresh({ fetchedAt: 'garbage' }, CACHE_TTL_MS, now)).toBe(false)
+  })
+})
+
+describe('toCacheEntry', () => {
+  it('원본 행 → 캐시 엔트리 (circRatio = mcap/fdv)', () => {
+    expect(toCacheEntry({
+      total_volume: 64795357454, market_cap: 23052631548, market_cap_rank: 969,
+      fully_diluted_valuation: 106914346271, ath_change_percentage: -97.807,
+      price_change_percentage_7d_in_currency: -1.2, price_change_percentage_30d_in_currency: 8.4,
+    })).toEqual({
+      globalVolKrw: 64795357454, mcapKrw: 23052631548, rank: 969, fdvKrw: 106914346271,
+      circRatio: 0.216, athChangePct: -97.807, ret7dPct: -1.2, ret30dPct: 8.4,
+    })
+  })
+  it('FDV 없음/0 → circRatio null, 결측 필드는 null', () => {
+    const e = toCacheEntry({ total_volume: 1e9 })
+    expect(e).toEqual({
+      globalVolKrw: 1e9, mcapKrw: null, rank: null, fdvKrw: null,
+      circRatio: null, athChangePct: null, ret7dPct: null, ret30dPct: null,
+    })
+    expect(toCacheEntry({ market_cap: 1e9, fully_diluted_valuation: 0 }).circRatio).toBe(null)
   })
 })
