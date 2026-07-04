@@ -172,6 +172,32 @@ describe('ensureCgData', () => {
     const r2 = await ensureCgData(['KRW-ID'], { now: NOW, deps })
     expect(r2).toEqual({ byMarket: {}, coverage: 0 })
   })
+  it('맵 재구축 락 안 재확인: 다른 스캐너가 방금 재구축했으면 fetch·쓰기 생략(double-check)', async () => {
+    const staleMap = { builtAt: '2026-06-20T00:00:00Z', byMarket: {} } // stale & KRW-ID 없음(missing)
+    const freshMap = { builtAt: new Date(NOW - 60000).toISOString(), byMarket: { 'KRW-ID': 'space-id' } }
+    const files = {
+      'coingecko-cache.json': { fetchedAt: new Date(NOW - 60000).toISOString(), byMarket: { 'KRW-ID': { globalVolKrw: 6e10 } } },
+    }
+    const { deps, calls } = makeDeps(files, { coinsList: [{ id: 'space-id', symbol: 'id' }], marketRows: [ROW] })
+    let mapReads = 0
+    const mapWrites = []
+    deps.readJson = async (name, fb) => {
+      if (name === 'coingecko-map.json') {
+        mapReads++
+        return mapReads === 1 ? staleMap : freshMap // 락 밖: stale+missing → 락 안: 다른 스캐너가 방금 재구축함
+      }
+      return files[name] ?? fb
+    }
+    deps.writeJson = async (name, data) => {
+      if (name === 'coingecko-map.json') mapWrites.push(data)
+      files[name] = data
+    }
+    const r = await ensureCgData(['KRW-ID'], { now: NOW, deps })
+    expect(r.byMarket['KRW-ID'].globalVolKrw).toBe(6e10)
+    expect(calls.listFetches).toBe(0)     // coins/list(수 MB) 재다운로드 생략
+    expect(calls.marketsFetches).toBe(0)  // markets 재조회 생략
+    expect(mapWrites).toEqual([])         // 맵 파일 덮어쓰기 없음
+  })
   it('맵 fresh지만 새 심볼 등장 → allowFetch면 재구축', async () => {
     const { deps, files } = makeDeps({
       'coingecko-map.json': { builtAt: '2026-07-04T00:00:00Z', byMarket: { 'KRW-ID': 'space-id' } },
