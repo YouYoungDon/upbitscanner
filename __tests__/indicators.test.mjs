@@ -101,6 +101,23 @@ describe('calcStochastic', () => {
     expect(s).toHaveProperty('k')
     expect(s).toHaveProperty('prevD')
   })
+  it('경계 길이(period+sk+sd-2)에서는 smoothD가 1개뿐이라 prevD가 undefined → null 반환해야 함', () => {
+    // period=14, sk=3, sd=3 기본값 기준 경계 길이 = 14+3+3-2 = 18
+    const n = 18
+    const closes = Array.from({ length: n }, (_, i) => 100 + i)
+    const highs = closes.map((c) => c + 1)
+    const lows = closes.map((c) => c - 1)
+    expect(calcStochastic(highs, lows, closes)).toBeNull()
+  })
+  it('경계+1 길이(period+sk+sd-1)부터는 prevD가 유효한 객체를 반환', () => {
+    const n = 19
+    const closes = Array.from({ length: n }, (_, i) => 100 + i)
+    const highs = closes.map((c) => c + 1)
+    const lows = closes.map((c) => c - 1)
+    const s = calcStochastic(highs, lows, closes)
+    expect(s).not.toBeNull()
+    expect(s.prevD).not.toBeUndefined()
+  })
 })
 
 describe('calcWilliamsR', () => {
