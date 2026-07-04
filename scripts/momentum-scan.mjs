@@ -71,6 +71,7 @@ async function notifyTelegram(picks) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg }),
+      signal: AbortSignal.timeout(5_000),
     })
   } catch { /* 네트워크 오류 시 무시 */ }
 }
