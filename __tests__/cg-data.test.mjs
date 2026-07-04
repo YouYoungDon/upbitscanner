@@ -160,6 +160,18 @@ describe('ensureCgData', () => {
     expect(calls.marketsFetches).toBe(0)                  // fetch 생략
     expect(cacheWrites).toEqual([])                       // 캐시 파일 덮어쓰기 없음
   })
+  it('맵 없음 + coinsList 정상 + markets 실패(null) → 맵 오염 없이 기존 상태 유지, 재시도 가능', async () => {
+    const { deps, files } = makeDeps({}, {
+      coinsList: [{ id: 'space-id', symbol: 'id' }],
+      marketRows: null, // fetchCgMarkets 실패 시뮬 (신 계약: 페이지 실패 시 전체 null)
+    })
+    const r = await ensureCgData(['KRW-ID'], { now: NOW, deps })
+    expect(files['coingecko-map.json']).toBeUndefined() // 맵 파일 안 씀 → null 오염 없음
+    expect(r).toEqual({ byMarket: {}, coverage: 0 })
+    // 재시도 가능: 맵이 여전히 null이므로 다음 호출도 rebuildMap을 다시 시도한다
+    const r2 = await ensureCgData(['KRW-ID'], { now: NOW, deps })
+    expect(r2).toEqual({ byMarket: {}, coverage: 0 })
+  })
   it('맵 fresh지만 새 심볼 등장 → allowFetch면 재구축', async () => {
     const { deps, files } = makeDeps({
       'coingecko-map.json': { builtAt: '2026-07-04T00:00:00Z', byMarket: { 'KRW-ID': 'space-id' } },

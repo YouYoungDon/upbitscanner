@@ -44,11 +44,11 @@ describe('fetchCgMarkets', () => {
     expect(await fetchCgMarkets(['a'], 'k', { fetchImpl, sleepMs: 1 })).toBe(null)
     expect(fetchImpl).toHaveBeenCalledTimes(1)
   })
-  it('재시도 소진 시 null, 부분 성공은 확보분 반환', async () => {
+  it('재시도 소진 시 null (부분 성공분 있어도 전체 null — 오염 방지)', async () => {
     const ids = Array.from({ length: 300 }, (_, i) => `c${i}`)
     const fetchImpl = vi.fn().mockResolvedValueOnce(ok([{ id: 'a' }])).mockResolvedValue(err(500))
     const rows = await fetchCgMarkets(ids, 'k', { fetchImpl, retries: 1, sleepMs: 1 })
-    expect(rows).toEqual([{ id: 'a' }]) // 1페이지 확보분
+    expect(rows).toBe(null) // 1페이지는 확보했지만 2페이지 실패 → 계약상 전체 null
   })
 })
 
