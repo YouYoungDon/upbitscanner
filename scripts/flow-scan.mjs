@@ -83,6 +83,7 @@ async function main() {
         rsi: rsiOK,
         ...(warn ? { warn } : {}),
         ...(dom.share != null ? { dominance: { share: dom.share, mult: dom.mult } } : {}),
+        ...(dom.label ? { domLabel: dom.label } : {}),
       })
     }))
     await sleep(DELAY)
@@ -117,7 +118,7 @@ async function notifyFlow(picks) {
     const state = await readJson('flow-alert-state.json', {})
     const fire = picks.filter((p) => (p.level === 'strong' || p.level === 'attention') && shouldAlert({ market: p.market, score: p.score, now }, state, CONFIG))
     if (!fire.length) return
-    const lines = fire.map((p) => `${LEVEL_EMOJI[p.level]} ${p.korean_name}(${p.market.replace('KRW-', '')}) ${p.score}점 · 머니 ${p.ratio}x${p.accel ? ` ·가속 ${p.accel}x` : ''}${p.breakout ? ' ·돌파' : ''}`)
+    const lines = fire.map((p) => `${LEVEL_EMOJI[p.level]} ${p.korean_name}(${p.market.replace('KRW-', '')}) ${p.score}점 · 머니 ${p.ratio}x${p.accel ? ` ·가속 ${p.accel}x` : ''}${p.breakout ? ' ·돌파' : ''}${p.domLabel ? ' ' + p.domLabel : ''}`)
     const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
     const sent = await sendTelegram(`💸 자금유입 ${when}\n\n${lines.join('\n')}`)
     if (!sent) return
