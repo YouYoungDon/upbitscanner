@@ -4,3 +4,4 @@ node_modules/
 
 .superpowers/
 data/scan-archive.jsonl
+data/coingecko-key.json
