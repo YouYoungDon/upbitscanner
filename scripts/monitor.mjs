@@ -125,6 +125,8 @@ async function main() {
   const regimeInfo = { trend: regime.trend, ratio, ...regimeLabel(ratio, regime.trend) }
   const entry = { timestamp: new Date().toISOString(), buy, sell, regime: regimeInfo }
   entry.cgCoverage = cg.coverage
+  if (cg.fetchedAt) entry.cgFetchedAt = cg.fetchedAt
+  if (cg.reason) entry.cgReason = cg.reason
   // 쉐도우 스코어링(신규 API 0, 실패해도 기존 스캔 불변). 기존 buy/sell/regime는 손대지 않는다.
   const tickerMap = Object.fromEntries(Object.keys(candleMap).map((m) => [m, { acc_trade_price_24h: tradePrice[m] }]))
   const buyMarkets = buy.map((b) => b.market)

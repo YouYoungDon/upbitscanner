@@ -101,6 +101,7 @@ describe('ensureCgData', () => {
     expect(r.coverage).toBe(0.5)
     expect(calls.marketsFetches + calls.listFetches).toBe(0)
     expect(r.reason).toBeUndefined() // 정상 경로엔 reason 없음
+    expect(r.fetchedAt).toBe('2026-07-04T11:00:00Z') // 캐시 시점 아카이브(subsystem B 신선도 판정용)
   })
   it('캐시 stale + allowFetch → 재조회·파일 갱신', async () => {
     const { deps, files } = makeDeps({
