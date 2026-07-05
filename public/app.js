@@ -24,8 +24,26 @@ function warnBadge(x) {
     : '<span class="badge badge-warning badge-xs gap-0.5" title="투자주의(가격/거래량 이상)">⚠️유의</span>'
 }
 
+// 코인게코 글로벌 배지: 업비트 거래 비중(dominance) + 글로벌 컨텍스트 툴팁
+function cgBadge(x) {
+  if (!x || !x.dominance || x.dominance.share == null) return ''
+  const pct = Math.round(x.dominance.share * 100)
+  const cls = x.dominance.share >= 0.8 ? 'badge-error' : x.dominance.share >= 0.5 ? 'badge-warning' : 'badge-ghost'
+  const label = x.dominance.share >= 0.8 ? `🌐단독 ${pct}%` : x.dominance.share >= 0.5 ? `🌐비중 ${pct}%` : `🌐 ${pct}%`
+  const cg = x.cg || {}
+  const tip = [
+    `글로벌 대비 업비트 거래 비중 ${pct}%`,
+    cg.rank != null ? `시총 ${cg.rank}위` : '',
+    cg.circRatio != null ? `유통 ${Math.round(cg.circRatio * 100)}%` : '',
+    cg.athChangePct != null ? `ATH ${cg.athChangePct.toFixed(1)}%` : '',
+  ].filter(Boolean).join(' · ')
+  return `<span class="badge ${cls} badge-xs gap-0.5" title="${tip}">${label}</span>`
+}
+
 function signalTags(signals) {
   return (signals || []).map((s) => {
+    if (s.includes('업비트단독')) return `<span class="badge badge-error badge-sm" title="글로벌 대비 업비트 거래 비중 — 국내 단독 점화 의심, 점수 ×0.8">${esc(s.replace('⚠️', ''))}</span>`
+    if (s.includes('업비트비중')) return `<span class="badge badge-warning badge-sm" title="글로벌 대비 업비트 거래 비중 높음, 점수 ×0.9">${esc(s.replace('⚠️', ''))}</span>`
     if (s.includes('골든크로스')) return '<span class="badge badge-success badge-sm">GC</span>'
     if (s.includes('[MTF]')) return '<span class="badge badge-info badge-sm">MTF</span>'
     if (s.includes('함정')) return '<span class="badge badge-error badge-sm">함정</span>'
@@ -60,6 +78,8 @@ const routes = {
     // KPI 한 줄 (매수/매도/누적스캔) + 인사이트(최다신호·적중률1위)
     const kpi = res.kpi || {}
     const kpiLine = `매수 <b class="text-success">${kpi.buyCount ?? 0}</b> · 매도 <b class="text-error">${kpi.sellCount ?? 0}</b> · 누적 <b>${fmt(kpi.totalScans ?? 0)}</b>스캔`
+      + (res.cgCoverage != null && res.cgCoverage > 0 ? ` · <span title="코인게코 글로벌 데이터 커버리지${res.cgFetchedAt ? ' · 갱신 ' + new Date(res.cgFetchedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : ''}">🌐 ${Math.round(res.cgCoverage * 100)}%</span>` : '')
+      + (res.cgReason ? ` <span class="badge badge-warning badge-xs" title="코인게코 데이터 없음 — 이번 스캔은 글로벌 감점 미적용">🌐 ${esc(res.cgReason)}</span>` : '')
     const insLine = [
       ins?.topSignal ? `최다신호 <span class="badge badge-ghost badge-sm">${esc(ins.topSignal.key || ins.topSignal)}${ins.topSignal.count ? ' ×' + ins.topSignal.count : ''}</span>` : '',
       ins?.bestHitRate ? `적중률1위 <span class="badge badge-success badge-sm">${esc(ins.bestHitRate.key)} ${Math.round((ins.bestHitRate.hitRate || 0) * 100)}%</span>` : '',
@@ -79,7 +99,7 @@ const routes = {
 
     const momRows = (mom.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)}</td>
+        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)}</td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${signalTags(x.signals)}</td>
       </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'
@@ -88,7 +108,7 @@ const routes = {
     const pct = (v) => v == null ? '' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${v}%</span>`
     const flowRows = (flow.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td>${flowEmoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${x.breakout ? '<span class="badge badge-warning badge-xs">돌파</span>' : ''}</td>
+        <td>${flowEmoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${x.domLabel ? `<span class="badge ${x.domLabel.includes('단독') ? 'badge-error' : 'badge-warning'} badge-xs" title="글로벌 대비 업비트 거래 비중">${esc(x.domLabel.replace('⚠️', '🌐'))}</span>` : cgBadge(x)} ${x.breakout ? '<span class="badge badge-warning badge-xs">돌파</span>' : ''}</td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td class="text-xs opacity-70">${x.ratio == null ? '' : x.ratio + 'x'}</td>
         <td class="text-xs">${pct(x.ch1m)}</td>
@@ -427,7 +447,7 @@ function topTable(list = [], n = 10) {
     <thead><tr><th>종목</th><th>점수</th><th>현재가</th><th>신호</th></tr></thead>
     <tbody>${list.slice(0, n).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
+        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${fmt(x.price)}</td>
         <td>${signalTags(x.signals)}</td>

@@ -173,3 +173,18 @@ describe('buildResults 저유동성 분리', () => {
     expect(r.buyLowLiq.map((b) => b.market)).toEqual(['KRW-B'])
   })
 })
+
+describe('buildResults 코인게코 필드 전달', () => {
+  it('cgCoverage·cgReason·cgFetchedAt를 그대로 노출', () => {
+    const scan = { timestamp: 't1', buy: [], sell: [], cgCoverage: 0.98, cgFetchedAt: '2026-07-05T00:00:03Z' }
+    const r = buildResults({ totalScans: 1, scans: [scan] })
+    expect(r.cgCoverage).toBe(0.98)
+    expect(r.cgFetchedAt).toBe('2026-07-05T00:00:03Z')
+    expect(r.cgReason).toBe(null)
+  })
+  it('코인게코 없던 과거 스캔은 전부 null (하위호환)', () => {
+    const r = buildResults({ totalScans: 1, scans: [{ timestamp: 't1', buy: [], sell: [] }] })
+    expect(r.cgCoverage).toBe(null)
+    expect(r.cgReason).toBe(null)
+  })
+})

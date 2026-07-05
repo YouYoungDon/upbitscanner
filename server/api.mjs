@@ -60,6 +60,9 @@ export function buildResults(log) {
     comboDist: comboDistribution(buyAll),
     candleSummary: candleSummary(scan),
     regime: scan.regime || null,
+    cgCoverage: scan.cgCoverage ?? null,
+    cgReason: scan.cgReason ?? null,
+    cgFetchedAt: scan.cgFetchedAt ?? null,
   }
 }
 
