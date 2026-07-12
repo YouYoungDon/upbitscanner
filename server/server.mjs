@@ -9,7 +9,7 @@ import { analyzeMarket } from '../lib/analyze.mjs'
 import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum, buildFlow, buildRecommendations } from './api.mjs'
 import { createScanRunner } from './scan-job.mjs'
 import { readArchive, coinHistory, ARCHIVE } from '../lib/archive.mjs'
-import { readPositions, evalPositions } from '../lib/positions.mjs'
+import { readPositions, evalPositions, validatePosition, upsertPosition, deletePosition, writePositions } from '../lib/positions.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const PUBLIC = join(ROOT, 'public')
@@ -41,6 +41,22 @@ function sendJson(res, code, data) {
   res.end(JSON.stringify(data))
 }
 
+// 요청 본문을 상한(16KB)까지 읽어 JSON 파싱. 초과/깨진 JSON은 예외.
+function readBody(req, limit = 16 * 1024) {
+  return new Promise((resolve, reject) => {
+    let data = ''
+    req.on('data', (c) => {
+      data += c
+      if (data.length > limit) { reject(new Error('본문이 너무 큽니다')); req.destroy() }
+    })
+    req.on('end', () => {
+      if (!data) return resolve({})
+      try { resolve(JSON.parse(data)) } catch { reject(new Error('잘못된 JSON')) }
+    })
+    req.on('error', reject)
+  })
+}
+
 async function serveStatic(res, urlPath) {
   const rel = urlPath === '/' ? '/index.html' : urlPath
   const file = join(PUBLIC, rel)
@@ -64,12 +80,35 @@ const server = createServer(async (req, res) => {
     if (p === '/api/flow') {
       return sendJson(res, 200, buildFlow(await readJson('flow-log.json', { scans: [] })))
     }
-    if (p === '/api/positions') {
+    if (p === '/api/positions' && req.method === 'GET') {
       const positions = readPositions()
       if (!positions.length) return sendJson(res, 200, { positions: [] })
       const tickers = await getTicker(positions.map((x) => x.market)) || []
       const priceOf = Object.fromEntries(tickers.map((t) => [t.market, t.trade_price]))
       return sendJson(res, 200, { positions: evalPositions(positions, priceOf) })
+    }
+    if (p === '/api/positions' && req.method === 'POST') {
+      let body
+      try { body = await readBody(req) } catch (e) { return sendJson(res, 400, { error: String(e.message || e) }) }
+      const markets = await cachedMarkets()
+      const v = validatePosition(body, { markets })
+      if (!v.ok) return sendJson(res, 400, { error: v.error })
+      const next = upsertPosition(readPositions(), v.position)
+      await writePositions(next)
+      return sendJson(res, 200, { ok: true, positions: next })
+    }
+    if (p === '/api/positions' && req.method === 'DELETE') {
+      const market = url.searchParams.get('market') || ''
+      if (!/^KRW-[A-Z0-9]+$/.test(market)) return sendJson(res, 400, { error: '잘못된 마켓' })
+      const next = deletePosition(readPositions(), market)
+      await writePositions(next)
+      return sendJson(res, 200, { ok: true, positions: next })
+    }
+    if (p === '/api/ticker') {
+      const market = url.searchParams.get('market') || ''
+      if (!/^KRW-[A-Z0-9]+$/.test(market)) return sendJson(res, 400, { error: '잘못된 마켓' })
+      const t = await getTicker([market]) || []
+      return sendJson(res, 200, { market, price: t[0]?.trade_price ?? null })
     }
     if (p === '/api/insights') {
       const [log, weekly] = await Promise.all([
