@@ -78,6 +78,14 @@ describe('upsertPosition', () => {
     upsertPosition(base, { market: 'KRW-A', korean_name: '에이', entry: 150, stopLoss: null, takeProfit: null })
     expect(base[0].entry).toBe(100)
   })
+  it('기존 레코드의 추가 필드(openedAt 등) 보존 + 편집 반영', () => {
+    const l = [{ market: 'KRW-A', korean_name: '에이', entry: 100, stopLoss: null, takeProfit: null, openedAt: '2026-06-26' }]
+    const r = upsertPosition(l, { market: 'KRW-A', korean_name: '에이', entry: 150, stopLoss: 90, takeProfit: null })
+    expect(r.length).toBe(1)
+    expect(r[0].openedAt).toBe('2026-06-26')
+    expect(r[0].entry).toBe(150)
+    expect(r[0].stopLoss).toBe(90)
+  })
 })
 
 describe('deletePosition', () => {
