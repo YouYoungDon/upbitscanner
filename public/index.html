@@ -39,6 +39,28 @@
     </aside>
     <main id="view" class="flex-1 p-6 overflow-x-hidden relative z-10"></main>
   </div>
+  <dialog id="posModal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-3" id="posModalTitle">포지션 추가</h3>
+      <div id="posCoinPick" class="mb-3">
+        <input id="posSearch" class="input input-bordered input-sm w-full mb-2" placeholder="🔎 비트코인 또는 KRW-BTC">
+        <div id="posCoinList" class="coinlist" style="max-height:180px"></div>
+      </div>
+      <div id="posCoinFixed" class="mb-3 hidden text-sm opacity-80"></div>
+      <div id="posPriceHint" class="text-xs opacity-70 mb-2"></div>
+      <div class="grid grid-cols-3 gap-2 mb-3">
+        <label class="form-control"><span class="label-text text-xs">진입가</span><input id="posEntry" type="number" step="any" class="input input-bordered input-sm"></label>
+        <label class="form-control"><span class="label-text text-xs">손절가</span><input id="posSL" type="number" step="any" class="input input-bordered input-sm"></label>
+        <label class="form-control"><span class="label-text text-xs">목표가</span><input id="posTP" type="number" step="any" class="input input-bordered input-sm"></label>
+      </div>
+      <div id="posErr" class="text-error text-xs mb-2"></div>
+      <div class="modal-action">
+        <button id="posCancel" class="btn btn-sm btn-ghost">취소</button>
+        <button id="posSave" class="btn btn-sm btn-primary">저장</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
   <script src="/charts.js"></script>
   <script type="module" src="/routes.js"></script>
   <script src="/app.js"></script>

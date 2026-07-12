@@ -613,5 +613,68 @@ function router() {
   const name = resolveRoute(hash.slice(2).split('?')[0])
   routes[name]()
 }
+
+// 포지션 추가/편집 모달. mode: 'add' | 'edit'
+async function openPosModal(mode, position) {
+  const dlg = document.getElementById('posModal')
+  const $m = (id) => document.getElementById(id)
+  let picked = mode === 'edit' ? position.market : null
+  $m('posModalTitle').textContent = mode === 'edit' ? '포지션 편집' : '포지션 추가'
+  $m('posErr').textContent = ''
+  $m('posEntry').value = mode === 'edit' && position.entry != null ? position.entry : ''
+  $m('posSL').value = mode === 'edit' && position.stopLoss != null ? position.stopLoss : ''
+  $m('posTP').value = mode === 'edit' && position.takeProfit != null ? position.takeProfit : ''
+  $m('posPriceHint').innerHTML = ''
+
+  if (!marketsList) { try { marketsList = await api('/api/markets') } catch { marketsList = [] } }
+  const nameOf = Object.fromEntries((marketsList || []).map((m) => [m.market, m.korean_name]))
+
+  const showHint = async (market) => {
+    $m('posPriceHint').innerHTML = '현재가 조회 중…'
+    const t = await api(`/api/ticker?market=${encodeURIComponent(market)}`)
+    if (t && t.price != null) {
+      $m('posPriceHint').innerHTML = `현재가 <b>${fmt(t.price)}</b> <button id="posFill" class="btn btn-xs btn-ghost">진입가로</button>`
+      $m('posFill').onclick = () => { $m('posEntry').value = t.price }
+    } else { $m('posPriceHint').innerHTML = '' }
+  }
+
+  // 코인 선택 UI: add=검색 리스트, edit=고정 표시
+  if (mode === 'edit') {
+    $m('posCoinPick').classList.add('hidden')
+    $m('posCoinFixed').classList.remove('hidden')
+    $m('posCoinFixed').innerHTML = `종목 <b>${esc(position.korean_name || position.market)}</b> <span class="opacity-60">${esc(position.market)}</span>`
+    showHint(position.market)
+  } else {
+    $m('posCoinPick').classList.remove('hidden')
+    $m('posCoinFixed').classList.add('hidden')
+    const search = $m('posSearch'); search.value = ''
+    const renderList = (q = '') => {
+      const qq = q.trim(), upq = qq.toUpperCase()
+      const list = (marketsList || []).filter((m) => !qq || m.korean_name.includes(qq) || m.market.includes(upq) || m.market.replace('KRW-', '').includes(upq)).slice(0, 60)
+      $m('posCoinList').innerHTML = list.map((m) => `<div class="coin-row${m.market === picked ? ' active' : ''}" data-market="${m.market}">${esc(m.korean_name)} <span class="opacity-60 text-xs">${esc(m.market.replace('KRW-', ''))}</span></div>`).join('') || '<span class="opacity-60 text-xs">결과 없음</span>'
+      $m('posCoinList').querySelectorAll('.coin-row').forEach((row) => {
+        row.onclick = () => { picked = row.dataset.market; renderList(search.value); showHint(picked) }
+      })
+    }
+    search.oninput = () => renderList(search.value)
+    renderList()
+  }
+
+  $m('posCancel').onclick = () => dlg.close()
+  $m('posSave').onclick = async () => {
+    $m('posErr').textContent = ''
+    if (!picked) { $m('posErr').textContent = '코인을 선택하세요'; return }
+    const entry = $m('posEntry').value, sl = $m('posSL').value, tp = $m('posTP').value
+    if (!entry || Number(entry) <= 0) { $m('posErr').textContent = '진입가를 입력하세요'; return }
+    if (sl && tp && Number(tp) <= Number(sl)) { $m('posErr').textContent = '목표가는 손절가보다 커야 합니다'; return }
+    const body = { market: picked, korean_name: nameOf[picked] || '', entry, stopLoss: sl || null, takeProfit: tp || null }
+    const r = await api('/api/positions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    if (r && r.ok) { dlg.close(); routes.home() }
+    else { $m('posErr').textContent = (r && r.error) || '저장 실패' }
+  }
+  dlg.showModal()
+}
+window.openPosModal = openPosModal
+
 window.addEventListener('hashchange', router)
 window.addEventListener('DOMContentLoaded', router)
