@@ -252,6 +252,27 @@ details > summary:hover { color: hsl(var(--p)); }
 .spark { width: 100%; height: 40px; display: block; }
 
 /* ============================================================
+   KPI 스탯 타일 + 포지션 게이지 (홈)
+   ============================================================ */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; margin: 0.25rem 0 0.5rem; }
+.kpi-tile { background: linear-gradient(158deg, hsl(232 28% 13% / 0.6), hsl(233 34% 8% / 0.5)); border: 1px solid hsl(220 40% 70% / 0.09); border-radius: 0.9rem; padding: 0.6rem 0.9rem; backdrop-filter: blur(12px); }
+.kpi-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: hsl(var(--bc) / 0.62); }
+.kpi-val { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.02em; margin-top: 3px; line-height: 1.15; color: hsl(var(--bc)); }
+.kpi-val.up { color: hsl(152 84% 62%); text-shadow: 0 0 18px hsl(152 84% 50% / 0.5); }
+.kpi-val.down { color: hsl(349 96% 72%); text-shadow: 0 0 18px hsl(349 90% 60% / 0.5); }
+
+.pos-card { background: hsl(232 30% 12% / 0.55); border: 1px solid hsl(220 40% 70% / 0.09); border-radius: 0.85rem; padding: 0.75rem 0.9rem; transition: border-color 0.18s ease, transform 0.18s ease; }
+.pos-card:hover { border-color: hsl(var(--p) / 0.45); transform: translateY(-2px); }
+.pos-pl { font-weight: 800; font-size: 1rem; }
+.pos-pl.up { color: hsl(152 84% 62%); }
+.pos-pl.down { color: hsl(349 96% 72%); }
+.pos-gauge { margin-top: 0.65rem; }
+.pos-track { position: relative; height: 7px; border-radius: 999px; background: linear-gradient(90deg, hsl(349 90% 55%), hsl(38 96% 55%) 50%, hsl(152 78% 48%)); box-shadow: inset 0 0 0 1px hsl(0 0% 0% / 0.3); }
+.pos-cur { position: absolute; top: 50%; width: 13px; height: 13px; border-radius: 50%; background: #fff; transform: translate(-50%, -50%); box-shadow: 0 0 0 3px hsl(256 92% 68% / 0.55), 0 0 12px hsl(256 92% 68%); }
+.pos-entry { position: absolute; top: 50%; width: 2px; height: 13px; background: hsl(0 0% 100% / 0.7); transform: translate(-50%, -50%); border-radius: 1px; }
+.pos-scale { display: flex; justify-content: space-between; font-size: 0.6rem; color: hsl(var(--bc) / 0.65); margin-top: 5px; }
+
+/* ============================================================
    커스텀 스크롤바
    ============================================================ */
 * { scrollbar-width: thin; scrollbar-color: hsl(var(--p) / 0.4) transparent; }

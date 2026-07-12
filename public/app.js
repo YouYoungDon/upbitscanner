@@ -75,25 +75,53 @@ const routes = {
       : ''
     const lastScans = `반등 ${res.timestamp ? new Date(res.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-'} · 자금 ${flow.timestamp ? new Date(flow.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-'}`
 
-    // KPI 한 줄 (매수/매도/누적스캔) + 인사이트(최다신호·적중률1위)
+    // KPI 스탯 타일 (매수/매도/누적/커버리지/레짐)
     const kpi = res.kpi || {}
-    const kpiLine = `매수 <b class="text-success">${kpi.buyCount ?? 0}</b> · 매도 <b class="text-error">${kpi.sellCount ?? 0}</b> · 누적 <b>${fmt(kpi.totalScans ?? 0)}</b>스캔`
-      + (res.cgCoverage != null && res.cgCoverage > 0 ? ` · <span title="코인게코 글로벌 데이터 커버리지${res.cgFetchedAt ? ' · 갱신 ' + new Date(res.cgFetchedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : ''}">🌐 ${Math.round(res.cgCoverage * 100)}%</span>` : '')
-      + (res.cgReason ? ` <span class="badge badge-warning badge-xs" title="코인게코 데이터 없음 — 이번 스캔은 글로벌 감점 미적용">🌐 ${esc(res.cgReason)}</span>` : '')
+    const cov = res.cgCoverage != null && res.cgCoverage > 0 ? Math.round(res.cgCoverage * 100) + '%' : null
+    const regimeBadge = res.regime
+      ? `<span class="badge badge-sm ${res.regime.label === '확장' ? 'badge-success' : res.regime.label === '수축' ? 'badge-error' : 'badge-warning'}">${res.regime.emoji} ${esc(res.regime.label)}</span>`
+      : '-'
+    const kpiTile = (label, val, cls = '') => `<div class="kpi-tile"><div class="kpi-label">${label}</div><div class="kpi-val ${cls}">${val}</div></div>`
+    const kpiTiles = `<div class="kpi-row">
+      ${kpiTile('매수', kpi.buyCount ?? 0, 'up')}
+      ${kpiTile('매도', kpi.sellCount ?? 0, 'down')}
+      ${kpiTile('누적 스캔', fmt(kpi.totalScans ?? 0))}
+      ${cov ? kpiTile('🌐 커버리지', cov + (res.cgReason ? ' <span class="badge badge-warning badge-xs">' + esc(res.cgReason) + '</span>' : '')) : (res.cgReason ? kpiTile('🌐 글로벌', '<span class="text-base font-semibold">' + esc(res.cgReason) + '</span>') : '')}
+      ${kpiTile('레짐', regimeBadge)}
+      ${stale ? kpiTile('상태', '<span class="badge badge-warning badge-sm">⏰ 지연</span>') : ''}
+    </div>`
     const insLine = [
       ins?.topSignal ? `최다신호 <span class="badge badge-ghost badge-sm">${esc(ins.topSignal.key || ins.topSignal)}${ins.topSignal.count ? ' ×' + ins.topSignal.count : ''}</span>` : '',
       ins?.bestHitRate ? `적중률1위 <span class="badge badge-success badge-sm">${esc(ins.bestHitRate.key)} ${Math.round((ins.bestHitRate.hitRate || 0) * 100)}%</span>` : '',
     ].filter(Boolean).join(' · ')
 
     const positions = pos.positions || []
+    const clampPct = (v) => Math.max(0, Math.min(100, v))
     const posBar = !positions.length ? '' : `
-      <div class="card bg-base-200 shadow mb-3"><div class="card-body p-3">
-        <h3 class="card-title text-sm">💼 포지션</h3>
-        <div class="flex flex-wrap gap-3">${positions.map((p) => {
-          const pl = p.plPct == null ? '-' : `<span class="${p.plPct >= 0 ? 'text-success' : 'text-error'}">${p.plPct >= 0 ? '+' : ''}${p.plPct}%</span>`
-          const st = p.hitSL ? '<span class="badge badge-error badge-sm">SL도달</span>' : p.hitTP ? '<span class="badge badge-success badge-sm">TP도달</span>' : `<span class="opacity-60 text-xs">SL까지 ${p.toSLPct == null ? '-' : p.toSLPct + '%'}</span>`
-          const levels = `<span class="opacity-50 text-xs">진입 ${fmt(p.entry)}${p.stopLoss != null ? ' · SL ' + fmt(p.stopLoss) : ''}${p.takeProfit != null ? ' · TP ' + fmt(p.takeProfit) : ''}</span>`
-          return `<div class="cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(p.market)}'"><span class="font-medium">${esc(p.korean_name || p.market)}</span> ${fmt(p.price)} ${pl} ${st}<br>${levels}</div>`
+      <div class="card mb-4"><div class="card-body p-4">
+        <h3 class="card-title text-sm mb-1">💼 포지션</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${positions.map((p) => {
+          const up = p.plPct != null && p.plPct >= 0
+          const plBig = p.plPct == null ? '' : `<span class="pos-pl ${up ? 'up' : 'down'}">${up ? '+' : ''}${p.plPct}%</span>`
+          const st = p.hitSL ? '<span class="badge badge-error badge-sm">SL 도달</span>' : p.hitTP ? '<span class="badge badge-success badge-sm">TP 도달</span>' : '<span class="badge badge-ghost badge-sm">보유</span>'
+          let gauge
+          if (p.stopLoss != null && p.takeProfit != null && p.takeProfit > p.stopLoss) {
+            const span = p.takeProfit - p.stopLoss
+            const curPos = clampPct(((p.price - p.stopLoss) / span) * 100)
+            const entPos = clampPct(((p.entry - p.stopLoss) / span) * 100)
+            gauge = `<div class="pos-gauge">
+              <div class="pos-track"><div class="pos-entry" style="left:${entPos}%" title="진입 ${fmt(p.entry)}"></div><div class="pos-cur" style="left:${curPos}%" title="현재 ${fmt(p.price)}"></div></div>
+              <div class="pos-scale"><span>SL ${fmt(p.stopLoss)}</span><span>진입 ${fmt(p.entry)}</span><span>TP ${fmt(p.takeProfit)}</span></div>
+            </div>`
+          } else {
+            gauge = `<div class="text-xs opacity-70 mt-1">진입 ${fmt(p.entry)}${p.stopLoss != null ? ' · SL ' + fmt(p.stopLoss) : ''}${p.takeProfit != null ? ' · TP ' + fmt(p.takeProfit) : ''}</div>`
+          }
+          const toSL = p.hitSL || p.hitTP ? '' : `<span class="text-xs opacity-70">· SL까지 ${p.toSLPct == null ? '-' : p.toSLPct + '%'}</span>`
+          return `<div class="pos-card cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(p.market)}'">
+            <div class="flex items-center justify-between gap-2"><span class="font-semibold">${esc(p.korean_name || p.market)}</span> ${st}</div>
+            <div class="flex items-baseline flex-wrap gap-x-2 mt-0.5"><span class="text-lg font-bold">${fmt(p.price)}</span> ${plBig} ${toSL}</div>
+            ${gauge}
+          </div>`
         }).join('')}</div>
       </div></div>`
 
@@ -138,8 +166,8 @@ const routes = {
         <h2 class="text-2xl font-bold">🏠 종합</h2>
         <button id="scanBtn" class="btn btn-primary btn-sm">🔄 수동 스캔</button>
       </div>
-      <p class="opacity-70 text-sm">${kpiLine} ${regime} ${stale ? '<span class="badge badge-warning badge-sm">⏰ 스캔지연</span>' : ''}</p>
-      <p class="opacity-60 text-xs mb-1">${lastScans}${insLine ? ' · ' + insLine : ''}</p>
+      ${kpiTiles}
+      <p class="opacity-70 text-xs mb-3 mt-2">${lastScans}${insLine ? ' · ' + insLine : ''}</p>
       <div id="scanProgress" class="mb-3"></div>
       ${posBar}
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
