@@ -271,6 +271,10 @@ details > summary:hover { color: hsl(var(--p)); }
 .pos-cur { position: absolute; top: 50%; width: 13px; height: 13px; border-radius: 50%; background: #fff; transform: translate(-50%, -50%); box-shadow: 0 0 0 3px hsl(256 92% 68% / 0.55), 0 0 12px hsl(256 92% 68%); }
 .pos-entry { position: absolute; top: 50%; width: 2px; height: 13px; background: hsl(0 0% 100% / 0.7); transform: translate(-50%, -50%); border-radius: 1px; }
 .pos-scale { display: flex; justify-content: space-between; font-size: 0.6rem; color: hsl(var(--bc) / 0.65); margin-top: 5px; }
+.pos-card { position: relative; }
+.pos-actions { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.25rem; z-index: 2; }
+.pos-actions button { background: hsl(232 30% 18% / 0.7); border: 1px solid hsl(220 40% 70% / 0.12); border-radius: 0.4rem; font-size: 0.72rem; line-height: 1; padding: 0.2rem 0.34rem; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
+.pos-actions button:hover { border-color: hsl(var(--p) / 0.5); transform: translateY(-1px); }
 
 /* ============================================================
    커스텀 스크롤바

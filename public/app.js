@@ -97,32 +97,45 @@ const routes = {
 
     const positions = pos.positions || []
     const clampPct = (v) => Math.max(0, Math.min(100, v))
-    const posBar = !positions.length ? '' : `
+    const posCardInner = (p) => {
+      const up = p.plPct != null && p.plPct >= 0
+      const plBig = p.plPct == null ? '' : `<span class="pos-pl ${up ? 'up' : 'down'}">${up ? '+' : ''}${p.plPct}%</span>`
+      const st = p.hitSL ? '<span class="badge badge-error badge-sm">SL 도달</span>' : p.hitTP ? '<span class="badge badge-success badge-sm">TP 도달</span>' : '<span class="badge badge-ghost badge-sm">보유</span>'
+      let gauge
+      if (p.stopLoss != null && p.takeProfit != null && p.takeProfit > p.stopLoss) {
+        const span = p.takeProfit - p.stopLoss
+        const curPos = clampPct(((p.price - p.stopLoss) / span) * 100)
+        const entPos = clampPct(((p.entry - p.stopLoss) / span) * 100)
+        gauge = `<div class="pos-gauge">
+          <div class="pos-track"><div class="pos-entry" style="left:${entPos}%" title="진입 ${fmt(p.entry)}"></div><div class="pos-cur" style="left:${curPos}%" title="현재 ${fmt(p.price)}"></div></div>
+          <div class="pos-scale"><span>SL ${fmt(p.stopLoss)}</span><span>진입 ${fmt(p.entry)}</span><span>TP ${fmt(p.takeProfit)}</span></div>
+        </div>`
+      } else {
+        gauge = `<div class="text-xs opacity-70 mt-1">진입 ${fmt(p.entry)}${p.stopLoss != null ? ' · SL ' + fmt(p.stopLoss) : ''}${p.takeProfit != null ? ' · TP ' + fmt(p.takeProfit) : ''}</div>`
+      }
+      const toSL = p.hitSL || p.hitTP ? '' : `<span class="text-xs opacity-70">· SL까지 ${p.toSLPct == null ? '-' : p.toSLPct + '%'}</span>`
+      const payload = esc(JSON.stringify({ market: p.market, korean_name: p.korean_name, entry: p.entry, stopLoss: p.stopLoss, takeProfit: p.takeProfit }))
+      return `<div class="pos-card">
+        <div class="pos-actions">
+          <button class="pos-edit" data-payload="${payload}" title="편집">✏️</button>
+          <button class="pos-del" data-market="${esc(p.market)}" data-name="${esc(p.korean_name || p.market)}" title="삭제">🗑</button>
+        </div>
+        <div class="pos-body cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(p.market)}'">
+          <div class="flex items-center justify-between gap-2 pr-12"><span class="font-semibold">${esc(p.korean_name || p.market)}</span> ${st}</div>
+          <div class="flex items-baseline flex-wrap gap-x-2 mt-0.5"><span class="text-lg font-bold">${fmt(p.price)}</span> ${plBig} ${toSL}</div>
+          ${gauge}
+        </div>
+      </div>`
+    }
+    const posBar = `
       <div class="card mb-4"><div class="card-body p-4">
-        <h3 class="card-title text-sm mb-1">💼 포지션</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${positions.map((p) => {
-          const up = p.plPct != null && p.plPct >= 0
-          const plBig = p.plPct == null ? '' : `<span class="pos-pl ${up ? 'up' : 'down'}">${up ? '+' : ''}${p.plPct}%</span>`
-          const st = p.hitSL ? '<span class="badge badge-error badge-sm">SL 도달</span>' : p.hitTP ? '<span class="badge badge-success badge-sm">TP 도달</span>' : '<span class="badge badge-ghost badge-sm">보유</span>'
-          let gauge
-          if (p.stopLoss != null && p.takeProfit != null && p.takeProfit > p.stopLoss) {
-            const span = p.takeProfit - p.stopLoss
-            const curPos = clampPct(((p.price - p.stopLoss) / span) * 100)
-            const entPos = clampPct(((p.entry - p.stopLoss) / span) * 100)
-            gauge = `<div class="pos-gauge">
-              <div class="pos-track"><div class="pos-entry" style="left:${entPos}%" title="진입 ${fmt(p.entry)}"></div><div class="pos-cur" style="left:${curPos}%" title="현재 ${fmt(p.price)}"></div></div>
-              <div class="pos-scale"><span>SL ${fmt(p.stopLoss)}</span><span>진입 ${fmt(p.entry)}</span><span>TP ${fmt(p.takeProfit)}</span></div>
-            </div>`
-          } else {
-            gauge = `<div class="text-xs opacity-70 mt-1">진입 ${fmt(p.entry)}${p.stopLoss != null ? ' · SL ' + fmt(p.stopLoss) : ''}${p.takeProfit != null ? ' · TP ' + fmt(p.takeProfit) : ''}</div>`
-          }
-          const toSL = p.hitSL || p.hitTP ? '' : `<span class="text-xs opacity-70">· SL까지 ${p.toSLPct == null ? '-' : p.toSLPct + '%'}</span>`
-          return `<div class="pos-card cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(p.market)}'">
-            <div class="flex items-center justify-between gap-2"><span class="font-semibold">${esc(p.korean_name || p.market)}</span> ${st}</div>
-            <div class="flex items-baseline flex-wrap gap-x-2 mt-0.5"><span class="text-lg font-bold">${fmt(p.price)}</span> ${plBig} ${toSL}</div>
-            ${gauge}
-          </div>`
-        }).join('')}</div>
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="card-title text-sm">💼 포지션</h3>
+          <button id="posAddBtn" class="btn btn-primary btn-xs">＋ 추가</button>
+        </div>
+        ${positions.length
+          ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${positions.map(posCardInner).join('')}</div>`
+          : '<p class="opacity-60 text-xs">등록된 포지션이 없습니다. ＋추가로 등록하세요.</p>'}
       </div></div>`
 
     const momRows = (mom.picks || []).slice(0, 8).map((x) => `
@@ -195,6 +208,20 @@ const routes = {
         </div></div>
       </div>`
     $('#scanBtn').onclick = runScan
+    // 포지션 편집 버튼 연결
+    const addBtn = $('#posAddBtn')
+    if (addBtn) addBtn.onclick = () => window.openPosModal && window.openPosModal('add')
+    view.querySelectorAll('.pos-edit').forEach((b) => {
+      b.onclick = (e) => { e.stopPropagation(); const pos = JSON.parse(b.dataset.payload); window.openPosModal && window.openPosModal('edit', pos) }
+    })
+    view.querySelectorAll('.pos-del').forEach((b) => {
+      b.onclick = async (e) => {
+        e.stopPropagation()
+        if (!confirm(`${b.dataset.name} 포지션을 삭제할까요?`)) return
+        await api(`/api/positions?market=${encodeURIComponent(b.dataset.market)}`, { method: 'DELETE' })
+        routes.home()
+      }
+    })
     // 반등 카드 실시간 필터 (종목명·티커). 빈 검색이면 TOP8.
     const rs = $('#reboundSearch')
     rs.oninput = () => {
