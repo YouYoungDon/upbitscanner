@@ -667,7 +667,7 @@ async function openPosModal(mode, position) {
     const entry = $m('posEntry').value, sl = $m('posSL').value, tp = $m('posTP').value
     if (!entry || Number(entry) <= 0) { $m('posErr').textContent = '진입가를 입력하세요'; return }
     if (sl && tp && Number(tp) <= Number(sl)) { $m('posErr').textContent = '목표가는 손절가보다 커야 합니다'; return }
-    const body = { market: picked, korean_name: nameOf[picked] || '', entry, stopLoss: sl || null, takeProfit: tp || null }
+    const body = { market: picked, korean_name: nameOf[picked] || (position && position.korean_name) || '', entry, stopLoss: sl || null, takeProfit: tp || null }
     const r = await api('/api/positions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     if (r && r.ok) { dlg.close(); routes.home() }
     else { $m('posErr').textContent = (r && r.error) || '저장 실패' }
