@@ -1,25 +1,43 @@
 <!DOCTYPE html>
-<html lang="ko" data-theme="business">
+<html lang="ko" data-theme="night">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>업비트 스캐너</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/styles.css">
   <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body class="min-h-screen bg-base-100 text-base-content">
-  <div class="flex min-h-screen">
-    <aside class="w-56 bg-base-200 border-r border-base-300 shrink-0">
-      <div class="px-4 py-4 text-lg font-bold">🪙 업비트 스캐너</div>
-      <ul class="menu px-2 gap-1">
-        <li><a href="#/home" data-tab="home">🏠 종합</a></li>
-        <li><a href="#/analyze" data-tab="analyze">🔍 개별분석</a></li>
-        <li><a href="#/review" data-tab="review">📊 기록·검증</a></li>
+  <!-- 네온 오로라 배경 레이어 -->
+  <div class="aurora" aria-hidden="true">
+    <span class="aurora-blob a1"></span>
+    <span class="aurora-blob a2"></span>
+    <span class="aurora-blob a3"></span>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <div class="flex min-h-screen relative">
+    <aside class="sidebar w-60 shrink-0">
+      <div class="brand">
+        <div class="brand-mark">🪙</div>
+        <div class="brand-text">
+          <div class="brand-title">UPBIT SCANNER</div>
+          <div class="brand-sub">momentum terminal</div>
+        </div>
+      </div>
+      <div class="live-pill"><span class="live-dot"></span> LIVE · 3h auto-scan</div>
+      <ul class="menu nav-menu px-2 gap-1 mt-2">
+        <li><a href="#/home" data-tab="home"><span class="nav-ico">🏠</span> 종합</a></li>
+        <li><a href="#/analyze" data-tab="analyze"><span class="nav-ico">🔍</span> 개별분석</a></li>
+        <li><a href="#/review" data-tab="review"><span class="nav-ico">📊</span> 기록·검증</a></li>
       </ul>
+      <div class="sidebar-foot">v2 · neon</div>
     </aside>
-    <main id="view" class="flex-1 p-6 overflow-x-hidden"></main>
+    <main id="view" class="flex-1 p-6 overflow-x-hidden relative z-10"></main>
   </div>
   <script src="/charts.js"></script>
   <script type="module" src="/routes.js"></script>

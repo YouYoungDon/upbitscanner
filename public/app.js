@@ -105,7 +105,7 @@ const routes = {
       </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'
 
     const flowEmoji = { strong: '🔴', attention: '🟠', watch: '🟡' }
-    const pct = (v) => v == null ? '' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${v}%</span>`
+    const pct = (v) => v == null ? '' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${Math.round(v * 10) / 10}%</span>`
     const flowRows = (flow.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
         <td>${flowEmoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${x.domLabel ? `<span class="badge ${x.domLabel.includes('단독') ? 'badge-error' : 'badge-warning'} badge-xs" title="글로벌 대비 업비트 거래 비중">${esc(x.domLabel.replace('⚠️', '🌐'))}</span>` : cgBadge(x)} ${x.breakout ? '<span class="badge badge-warning badge-xs">돌파</span>' : ''}</td>
@@ -515,7 +515,7 @@ function scoreBreakdownHtml(r) {
 function flowDetailTable(picks = []) {
   if (!picks.length) return '<p class="opacity-60 text-sm">없음</p>'
   const emoji = { strong: '🔴', attention: '🟠', watch: '🟡' }
-  const pct = (v) => v == null ? '-' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${v}%</span>`
+  const pct = (v) => v == null ? '-' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${Math.round(v * 10) / 10}%</span>`
   const yn = (b) => b ? '<span class="badge badge-success badge-xs">O</span>' : '<span class="opacity-30">·</span>'
   return `<div class="overflow-x-auto"><table class="table table-zebra table-xs">
     <thead><tr><th>종목</th><th>점수</th><th>머니</th><th>가속</th><th>5분대금</th><th>1분</th><th>5분</th><th>30분</th><th>24h</th><th>돌파</th><th>근접</th><th>EMA</th><th>RSI</th></tr></thead>

@@ -1,8 +1,261 @@
-/* DaisyUI/Tailwind 위 최소 오버라이드 */
-.menu a.active { background-color: hsl(var(--p) / 0.15); color: hsl(var(--p)); }
+/* ============================================================
+   UPBIT SCANNER — Neon Trading Terminal skin (v2)
+   daisyUI/Tailwind 위에 얹는 커스텀 테마 + 글래스모피즘 레이어.
+   app.js의 마크업/클래스는 건드리지 않는다(비주얼 리스킨 전용).
+   ============================================================ */
+
+/* --- 네온 팔레트 (daisyUI 변수 오버라이드) --- */
+[data-theme="night"] {
+  --b1: 233 33% 6%;
+  --b2: 232 27% 10%;
+  --b3: 231 22% 17%;
+  --bc: 210 25% 98%;
+  --p: 256 92% 68%;   --pc: 256 100% 96%;
+  --s: 190 96% 56%;   --sc: 195 100% 8%;
+  --a: 315 92% 64%;   --ac: 315 100% 96%;
+  --n: 231 20% 15%;   --nc: 222 32% 91%;
+  --su: 152 78% 46%;  --suc: 152 90% 7%;
+  --er: 349 90% 63%;  --erc: 349 100% 96%;
+  --wa: 38 96% 58%;   --wac: 38 100% 9%;
+  --in: 200 96% 60%;  --inc: 200 100% 8%;
+  --rounded-box: 1.1rem;
+  --rounded-btn: 0.7rem;
+  --rounded-badge: 0.55rem;
+  color-scheme: dark;
+}
+
+html, body {
+  font-family: 'Pretendard Variable', Pretendard, system-ui, -apple-system, sans-serif;
+  background: hsl(233 40% 4%);
+  letter-spacing: -0.01em;
+  color: hsl(var(--bc));
+}
+body { position: relative; }
+
+/* ============================================================
+   가독성 — 죽인 텍스트 밝히기 (다크 배경에서 흰색계열 유지)
+   ============================================================ */
+.opacity-20, .opacity-30, .opacity-40, .opacity-50, .opacity-60, .opacity-70, .opacity-80, .opacity-90 { opacity: 1 !important; }
+/* 검은/어두운 글씨 원천 차단: 모든 텍스트 요소 기본색을 밝은 흰색으로.
+   :where()는 특이도 0이라 badge/text-success/그라데이션 등 컬러 클래스가 항상 우선. */
+:where(h1, h2, h3, h4, h5, h6, p, span, div, li, a, td, th, label, summary, details, b, strong, em, small, dt, dd, figcaption, button) {
+  color: hsl(var(--bc));
+}
+.opacity-20 { color: hsl(var(--bc) / 0.55); }
+.opacity-30 { color: hsl(var(--bc) / 0.62); }
+.opacity-40 { color: hsl(var(--bc) / 0.74); }
+.opacity-50 { color: hsl(var(--bc) / 0.84); }
+.opacity-60 { color: hsl(var(--bc) / 0.9); }
+.opacity-70 { color: hsl(var(--bc) / 0.95); }
+.opacity-80 { color: hsl(var(--bc) / 0.97); }
+.opacity-90 { color: hsl(var(--bc) / 0.98); }
+
+/* ============================================================
+   오로라 네온 배경
+   ============================================================ */
+.aurora {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  background:
+    radial-gradient(1200px 800px at 100% -10%, hsl(256 92% 68% / 0.10), transparent 60%),
+    radial-gradient(1000px 700px at -10% 110%, hsl(190 96% 56% / 0.09), transparent 60%),
+    hsl(233 40% 4%);
+}
+.aurora-blob {
+  position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5;
+  animation: floaty 18s ease-in-out infinite;
+}
+.aurora-blob.a1 { width: 42vw; height: 42vw; left: -8vw; top: -10vw; background: hsl(256 92% 60% / 0.55); }
+.aurora-blob.a2 { width: 38vw; height: 38vw; right: -8vw; top: 20vh; background: hsl(315 92% 60% / 0.40); animation-delay: -6s; }
+.aurora-blob.a3 { width: 34vw; height: 34vw; left: 30vw; bottom: -14vw; background: hsl(190 96% 56% / 0.35); animation-delay: -11s; }
+.grid-overlay {
+  position: absolute; inset: 0; opacity: 0.5;
+  background-image:
+    linear-gradient(hsl(220 40% 60% / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(220 40% 60% / 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(80% 80% at 50% 20%, #000 40%, transparent 100%);
+}
+@keyframes floaty {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(4vw, 3vh) scale(1.08); }
+  66% { transform: translate(-3vw, -2vh) scale(0.96); }
+}
+
+/* ============================================================
+   사이드바
+   ============================================================ */
+.sidebar {
+  position: relative; z-index: 10;
+  background: linear-gradient(180deg, hsl(232 30% 9% / 0.85), hsl(233 34% 6% / 0.9));
+  backdrop-filter: blur(18px) saturate(140%);
+  border-right: 1px solid hsl(var(--b3) / 0.7);
+  display: flex; flex-direction: column;
+}
+.brand { display: flex; align-items: center; gap: 0.7rem; padding: 1.25rem 1rem 0.5rem; }
+.brand-mark {
+  width: 40px; height: 40px; display: grid; place-items: center; font-size: 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, hsl(var(--p) / 0.9), hsl(var(--a) / 0.9));
+  box-shadow: 0 0 22px -4px hsl(var(--p) / 0.7), inset 0 1px 0 hsl(0 0% 100% / 0.25);
+}
+.brand-title {
+  font-weight: 800; font-size: 0.95rem; letter-spacing: 0.02em; line-height: 1.1;
+  background: linear-gradient(90deg, hsl(190 96% 70%), hsl(256 95% 78%), hsl(315 92% 74%));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.brand-sub { font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase; color: hsl(var(--bc) / 0.62); margin-top: 2px; }
+.live-pill {
+  margin: 0.4rem 1rem 0; display: inline-flex; align-items: center; gap: 0.4rem; width: fit-content;
+  font-size: 0.62rem; letter-spacing: 0.08em; color: hsl(152 78% 70%);
+  padding: 3px 9px; border-radius: 999px;
+  background: hsl(152 78% 46% / 0.1); border: 1px solid hsl(152 78% 46% / 0.3);
+}
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: hsl(152 84% 55%); box-shadow: 0 0 8px hsl(152 84% 55%); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+
+.nav-menu a {
+  position: relative; border-radius: 0.7rem; font-weight: 600; font-size: 0.9rem;
+  color: hsl(var(--bc) / 0.92); transition: all 0.18s ease;
+}
+.nav-menu a:hover { background: hsl(var(--p) / 0.08); color: hsl(var(--bc) / 0.95); }
+.nav-menu a.active {
+  background: linear-gradient(90deg, hsl(var(--p) / 0.22), hsl(var(--p) / 0.05));
+  color: hsl(256 95% 85%);
+  box-shadow: inset 0 0 0 1px hsl(var(--p) / 0.35), 0 0 18px -6px hsl(var(--p) / 0.6);
+}
+.nav-menu a.active::before {
+  content: ''; position: absolute; left: -2px; top: 20%; bottom: 20%; width: 3px; border-radius: 3px;
+  background: linear-gradient(hsl(var(--s)), hsl(var(--p))); box-shadow: 0 0 10px hsl(var(--p));
+}
+.nav-ico { font-size: 1rem; }
+.sidebar-foot { margin-top: auto; padding: 1rem; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: hsl(var(--bc) / 0.55); }
+
+/* ============================================================
+   글래스모피즘 카드
+   ============================================================ */
+.card {
+  background-color: transparent !important;
+  background-image: linear-gradient(158deg, hsl(232 28% 13% / 0.72), hsl(233 34% 8% / 0.6)) !important;
+  backdrop-filter: blur(14px) saturate(135%);
+  border: 1px solid hsl(220 40% 70% / 0.09);
+  border-radius: var(--rounded-box);
+  box-shadow: 0 14px 40px -18px rgba(0, 0, 0, 0.85), inset 0 1px 0 hsl(0 0% 100% / 0.05);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  border-color: hsl(var(--p) / 0.4);
+  box-shadow: 0 22px 50px -20px rgba(0, 0, 0, 0.9), 0 0 30px -10px hsl(var(--p) / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.06);
+}
+.card-title { letter-spacing: -0.01em; color: hsl(var(--bc)) !important; }
+/* 탭 로드 시 카드 부드럽게 등장 (재렌더는 카드 단위라 검색 필터엔 안 튐) */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.card { animation: fadeUp 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+@media (prefers-reduced-motion: reduce) { .card, .aurora-blob { animation: none; } }
+
+/* 페이지 제목 그라데이션 */
+h2.text-2xl {
+  font-weight: 800; letter-spacing: -0.02em;
+  background: linear-gradient(90deg, hsl(220 40% 98%), hsl(256 90% 82%));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* ============================================================
+   배지 — 네온 글로우
+   ============================================================ */
+.badge { font-weight: 700; border: none; letter-spacing: -0.01em; }
+.badge-primary {
+  background-image: linear-gradient(135deg, hsl(var(--p)), hsl(272 92% 62%));
+  color: hsl(256 100% 97%);
+  box-shadow: 0 0 14px -3px hsl(var(--p) / 0.75);
+}
+.badge-success { background-color: hsl(var(--su) / 0.16); color: hsl(152 84% 66%); box-shadow: inset 0 0 0 1px hsl(var(--su) / 0.4), 0 0 12px -4px hsl(var(--su) / 0.6); }
+.badge-error   { background-color: hsl(var(--er) / 0.16); color: hsl(349 96% 76%); box-shadow: inset 0 0 0 1px hsl(var(--er) / 0.4), 0 0 12px -4px hsl(var(--er) / 0.6); }
+.badge-warning { background-color: hsl(var(--wa) / 0.16); color: hsl(38 96% 68%); box-shadow: inset 0 0 0 1px hsl(var(--wa) / 0.4); }
+.badge-info    { background-color: hsl(var(--in) / 0.16); color: hsl(200 96% 72%); box-shadow: inset 0 0 0 1px hsl(var(--in) / 0.4); }
+.badge-neutral { background-color: hsl(var(--b3) / 0.95); color: hsl(var(--bc) / 0.96); box-shadow: inset 0 0 0 1px hsl(220 40% 70% / 0.14); }
+.badge-ghost   { background-color: hsl(220 40% 70% / 0.12); color: hsl(var(--bc) / 0.94); box-shadow: inset 0 0 0 1px hsl(220 40% 70% / 0.16); }
+.badge-outline { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
+
+/* 상승/하락 텍스트 글로우 */
+.text-success { color: hsl(152 84% 62%) !important; text-shadow: 0 0 16px hsl(152 84% 50% / 0.45); }
+.text-error   { color: hsl(349 96% 72%) !important; text-shadow: 0 0 16px hsl(349 90% 60% / 0.45); }
+
+/* ============================================================
+   Stats — 네온 수치
+   ============================================================ */
+.stats { background-color: transparent !important; background-image: linear-gradient(158deg, hsl(232 28% 13% / 0.7), hsl(233 34% 8% / 0.6)) !important; border: 1px solid hsl(220 40% 70% / 0.09); backdrop-filter: blur(14px); }
+.stat-value {
+  font-weight: 800; letter-spacing: -0.03em;
+  background: linear-gradient(120deg, hsl(190 96% 66%), hsl(256 92% 78%));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.stat-title { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.66rem !important; color: hsl(var(--bc) / 0.82); }
+.stat-desc { color: hsl(var(--bc) / 0.85); }
+
+/* ============================================================
+   테이블
+   ============================================================ */
+.table thead th {
+  text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.64rem;
+  color: hsl(var(--bc) / 0.82); font-weight: 700;
+  border-bottom: 1px solid hsl(220 40% 70% / 0.1); background: transparent;
+}
+.table td { color: hsl(var(--bc) / 0.96); }
+.table tbody tr { border-bottom: 1px solid hsl(220 40% 70% / 0.05); transition: background 0.15s, box-shadow 0.15s; }
+.table-zebra tbody tr:nth-child(even) { background: hsl(220 40% 70% / 0.025); }
+.table tbody tr.hover:hover, .table tbody tr:hover {
+  background: hsl(var(--p) / 0.08) !important;
+  box-shadow: inset 3px 0 0 hsl(var(--p) / 0.7);
+}
+
+/* ============================================================
+   버튼 / 인풋 / 프로그레스
+   ============================================================ */
+.btn-primary {
+  background-image: linear-gradient(135deg, hsl(var(--p)), hsl(300 90% 62%));
+  border: none; color: hsl(256 100% 98%); font-weight: 700;
+  box-shadow: 0 0 22px -6px hsl(var(--p) / 0.8);
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.btn-primary:hover { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 0 30px -6px hsl(var(--p) / 0.95); }
+.btn-ghost:hover { background: hsl(var(--p) / 0.1); }
+.join .btn.btn-active { background-image: linear-gradient(135deg, hsl(var(--p) / 0.9), hsl(300 90% 60% / 0.9)); border: none; color: hsl(256 100% 98%); box-shadow: 0 0 16px -6px hsl(var(--p) / 0.8); }
+
+.input, .input-bordered {
+  background: hsl(232 30% 12% / 0.7) !important;
+  border: 1px solid hsl(220 40% 70% / 0.12) !important;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input:focus, .input:focus-within {
+  outline: none; border-color: hsl(var(--p) / 0.6) !important;
+  box-shadow: 0 0 0 3px hsl(var(--p) / 0.18);
+}
+.progress { background: hsl(220 40% 70% / 0.08); }
+.progress-primary::-webkit-progress-value { background: linear-gradient(90deg, hsl(var(--s)), hsl(var(--p))); }
+.progress-primary::-moz-progress-bar { background: linear-gradient(90deg, hsl(var(--s)), hsl(var(--p))); }
+.progress-success::-webkit-progress-value { background: linear-gradient(90deg, hsl(152 78% 50%), hsl(170 84% 55%)); }
+
+.alert-error { background: hsl(var(--er) / 0.14); border: 1px solid hsl(var(--er) / 0.4); color: hsl(349 96% 80%); }
+.loading { color: hsl(var(--p)); }
+details > summary { transition: color 0.15s; }
+details > summary:hover { color: hsl(var(--p)); }
+
+/* ============================================================
+   개별분석 코인 리스트 + 스파크라인 (기존 유지 + 강화)
+   ============================================================ */
 #chart { height: 300px; }
-.coinlist { max-height: 460px; overflow-y: auto; }
-.coin-row { padding: 7px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-.coin-row:hover { background: hsl(var(--b3)); }
-.coin-row.active { background: hsl(var(--p) / 0.18); color: hsl(var(--p)); }
+.coinlist { max-height: 460px; overflow-y: auto; padding-right: 2px; }
+.coin-row { padding: 7px 9px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.14s ease; border: 1px solid transparent; color: hsl(var(--bc) / 0.96); }
+.coin-row:hover { background: hsl(var(--p) / 0.08); border-color: hsl(var(--p) / 0.2); }
+.coin-row.active { background: linear-gradient(90deg, hsl(var(--p) / 0.22), hsl(var(--p) / 0.05)); color: hsl(256 95% 85%); box-shadow: inset 0 0 0 1px hsl(var(--p) / 0.35); }
 .spark { width: 100%; height: 40px; display: block; }
+
+/* ============================================================
+   커스텀 스크롤바
+   ============================================================ */
+* { scrollbar-width: thin; scrollbar-color: hsl(var(--p) / 0.4) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: hsl(var(--p) / 0.35); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--p) / 0.6); }
+::-webkit-scrollbar-track { background: transparent; }
