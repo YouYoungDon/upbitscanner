@@ -92,3 +92,12 @@ describe('aggregateRecommendations', () => {
     expect(r[0].avgScore).toBe(8)
   })
 })
+
+describe('aggregateRecommendations 방어', () => {
+  it('buy 배열의 null 엔트리를 건너뛴다', () => {
+    const now = Date.parse('2026-07-12T12:00:00Z')
+    const scans = [{ timestamp: new Date(now - 3600000).toISOString(), buy: [null, { market: 'KRW-A', korean_name: '에이', score: 7 }] }]
+    const r = aggregateRecommendations(scans, { windowMs: 86400000, now })
+    expect(r.map((x) => x.market)).toEqual(['KRW-A'])
+  })
+})

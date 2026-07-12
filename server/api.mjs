@@ -3,9 +3,14 @@ import { summarizeScans } from '../lib/archive.mjs'
 import { aggregateRecommendations } from '../lib/recommend.mjs'
 
 // 일간(24h)/주간(7일) 누적 추천 — 아카이브 전체를 윈도우로 집계 (최신 스캔 아님).
+// 어떤 집계 실패에도 빈 배열 폴백 — 대시보드 무중단.
 export function buildRecommendations(scans, now = Date.now()) {
-  const top = (windowMs) => aggregateRecommendations(scans || [], { windowMs, now }).slice(0, 8)
-  return { daily: top(86400000), weekly: top(7 * 86400000), totalScans: (scans || []).length }
+  try {
+    const top = (windowMs) => aggregateRecommendations(scans || [], { windowMs, now }).slice(0, 8)
+    return { daily: top(86400000), weekly: top(7 * 86400000), totalScans: (scans || []).length }
+  } catch {
+    return { daily: [], weekly: [], totalScans: (scans || []).length }
+  }
 }
 
 // 매수 종목 신호 태그에서 콤보/MTF 종목 수 집계

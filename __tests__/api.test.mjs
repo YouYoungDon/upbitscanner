@@ -208,3 +208,14 @@ describe('buildRecommendations', () => {
     expect(buildRecommendations([]).daily).toEqual([])
   })
 })
+
+describe('buildRecommendations 폴백', () => {
+  it('집계 도중 예외 → 빈 배열(무중단)', async () => {
+    const { buildRecommendations } = await import('../server/api.mjs')
+    // timestamp getter가 throw하는 악성 스캔
+    const bad = [{ get timestamp() { throw new Error('boom') }, buy: [] }]
+    const r = buildRecommendations(bad)
+    expect(r.daily).toEqual([])
+    expect(r.weekly).toEqual([])
+  })
+})
