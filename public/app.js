@@ -60,10 +60,10 @@ const routes = {
   async home() {
     setActiveTab('home')
     view.innerHTML = '<span class="loading loading-spinner"></span>'
-    let res, mom, flow, pos, ins
+    let res, mom, flow, pos, ins, rec
     try {
-      [res, mom, flow, pos, ins] = await Promise.all([
-        api('/api/results'), api('/api/momentum'), api('/api/flow'), api('/api/positions'), api('/api/insights'),
+      [res, mom, flow, pos, ins, rec] = await Promise.all([
+        api('/api/results'), api('/api/momentum'), api('/api/flow'), api('/api/positions'), api('/api/insights'), api('/api/recommend'),
       ])
     } catch {
       view.innerHTML = '<div class="alert alert-error">데이터 조회 실패 — 서버 연결을 확인하세요.</div>'
@@ -117,6 +117,18 @@ const routes = {
       ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">📊 상세 지표 ${flow.picks.length}개</summary>${flowDetailTable(flow.picks)}</details>`
       : ''
 
+    const recRows = (list) => (list || []).map((x) => `
+      <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
+        <td><span class="font-medium">${esc(x.korean_name || x.market.replace('KRW-', ''))}</span> ${cgBadge(x)}</td>
+        <td><span class="badge badge-neutral badge-sm" title="윈도우 내 매수 등장 횟수">${x.appearances}회</span></td>
+        <td class="text-xs opacity-70" title="평균 점수(최고 ${x.maxScore})">avg ${x.avgScore}</td>
+      </tr>`).join('') || `<tr><td colspan="3" class="opacity-60 text-xs">누적 데이터 부족 (스캔 ${rec?.totalScans ?? 0}회)</td></tr>`
+    const recCard = (title, hint, list) => `
+      <div class="card bg-base-200 shadow"><div class="card-body p-3">
+        <h3 class="card-title text-sm">${title} <span class="text-xs font-normal opacity-50">${hint}</span></h3>
+        <table class="table table-zebra table-sm"><tbody>${recRows(list)}</tbody></table>
+      </div></div>`
+
     const lowLiq = res.buyLowLiq || []
     const sell = res.sell || []
     const buyAll = res.buy || []
@@ -130,6 +142,10 @@ const routes = {
       <p class="opacity-60 text-xs mb-1">${lastScans}${insLine ? ' · ' + insLine : ''}</p>
       <div id="scanProgress" class="mb-3"></div>
       ${posBar}
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        ${recCard('📅 오늘의 추천', '24h 누적 · 등장×평균점수', rec?.daily)}
+        ${recCard('📆 이번주 추천', '7일 누적 · 등장×평균점수', rec?.weekly)}
+      </div>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="card bg-base-200 shadow"><div class="card-body p-3">
           <div class="flex items-center justify-between gap-2">

@@ -188,3 +188,23 @@ describe('buildResults 코인게코 필드 전달', () => {
     expect(r.cgReason).toBe(null)
   })
 })
+
+describe('buildRecommendations', () => {
+  it('daily(24h)/weekly(7일) 윈도우 분리 + top8 절단', async () => {
+    const { buildRecommendations } = await import('../server/api.mjs')
+    const now = Date.parse('2026-07-12T12:00:00Z')
+    const h = (n) => new Date(now - n * 3600000).toISOString()
+    const scans = [
+      { timestamp: h(100), buy: [{ market: 'KRW-OLD', korean_name: '올드', score: 9 }] }, // 24h 밖, 7일 안
+      { timestamp: h(2), buy: [{ market: 'KRW-NEW', korean_name: '뉴', score: 8 }] },
+    ]
+    const r = buildRecommendations(scans, now)
+    expect(r.daily.map((x) => x.market)).toEqual(['KRW-NEW'])
+    expect(r.weekly.map((x) => x.market).sort()).toEqual(['KRW-NEW', 'KRW-OLD'])
+    expect(r.totalScans).toBe(2)
+  })
+  it('빈 아카이브 → 빈 배열', async () => {
+    const { buildRecommendations } = await import('../server/api.mjs')
+    expect(buildRecommendations([]).daily).toEqual([])
+  })
+})

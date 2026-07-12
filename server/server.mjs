@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { readJson } from '../lib/store.mjs'
 import { getMarkets, getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
-import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum, buildFlow } from './api.mjs'
+import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum, buildFlow, buildRecommendations } from './api.mjs'
 import { createScanRunner } from './scan-job.mjs'
 import { readArchive, coinHistory, ARCHIVE } from '../lib/archive.mjs'
 import { readPositions, evalPositions } from '../lib/positions.mjs'
@@ -90,6 +90,9 @@ const server = createServer(async (req, res) => {
     }
     if (p === '/api/history') {
       return sendJson(res, 200, buildHistory(await readJson('monitor-log.json', { scans: [] })))
+    }
+    if (p === '/api/recommend') {
+      return sendJson(res, 200, buildRecommendations(cachedArchive()))
     }
     if (p === '/api/scans') {
       const limit = Math.min(Number(url.searchParams.get('limit')) || 20, 100)
