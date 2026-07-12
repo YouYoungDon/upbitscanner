@@ -41,6 +41,15 @@
 - `/api/recommend` + 종합 페이지 상단 📅 오늘의 추천 / 📆 이번주 추천 2열 카드.
 - 설계: `docs/superpowers/specs/2026-07-12-daily-weekly-recommendations-design.md`.
 
+## 5. 대시보드 — 포지션 직접 편집 (2026-07-12)
+
+보유 포지션을 대시보드에서 직접 추가/수정/삭제. 데이터 모델은 그대로(`{market, korean_name, entry, stopLoss, takeProfit}`).
+
+- `lib/positions.mjs`: `validatePosition`(화이트리스트·TP>SL 검증)·`upsertPosition`(검증된 필드만 병합하므로 openedAt 등 기존 필드는 수정 중에도 유지)·`deletePosition`(순수 함수) + `writePositions`(store.writeJson 원자적 래퍼).
+- `POST /api/positions`(upsert)·`DELETE /api/positions?market=`·`GET /api/ticker?market=`(현재가 힌트) 라우트. 16KB 본문 상한, 서버측 화이트리스트 검증.
+- 종합 페이지 포지션 카드에 ＋추가/✏️편집/🗑삭제 + 모달 폼(개별분석 코인검색 재활용, 현재가 "진입가로 채우기"). 포지션 0개여도 카드·추가 버튼 노출.
+- 설계·계획: `docs/superpowers/specs|plans/2026-07-12-editable-positions*.md`.
+
 ## 운영 메모
 
 - **대시보드**: `npm run dashboard` (포트 8787). 새 API 라우트 추가 시 서버 재시작 필요.
