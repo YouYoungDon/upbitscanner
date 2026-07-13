@@ -46,4 +46,15 @@ describe('get 재시도/백오프', () => {
     const [, init] = fetchMock.mock.calls[0]
     expect(init.signal).toBeInstanceOf(AbortSignal)
   })
+  it('fetch가 AbortError를 throw하면(타임아웃 발화) 재시도한다', async () => {
+    let n = 0
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      n++
+      if (n === 1) { const e = new Error('The operation was aborted'); e.name = 'AbortError'; throw e }
+      return { ok: true, json: async () => [{ market: 'KRW-BTC' }] }
+    }))
+    const r = await getMarkets()
+    expect(n).toBe(2)
+    expect(r).toEqual([{ market: 'KRW-BTC', warning: false, caution: false }])
+  })
 })
