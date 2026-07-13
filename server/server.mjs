@@ -4,6 +4,7 @@ import { existsSync, statSync } from 'node:fs'
 import { dirname, join, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readJson } from '../lib/store.mjs'
+import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { getMarkets, getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
 import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum, buildFlow, buildRecommendations } from './api.mjs'
@@ -156,13 +157,14 @@ const server = createServer(async (req, res) => {
       const market = url.searchParams.get('market')
       const tf = url.searchParams.get('tf') || 'day'
       if (!market || !/^KRW-[A-Z0-9]+$/.test(market)) return sendJson(res, 400, { error: 'invalid market' })
-      const candles = tf === 'day' ? await getDayCandles(market, 200)
-        : await getMinuteCandles(market, tf === '4h' ? 240 : 60, 200)
-      if (!candles || candles.length < 30) return sendJson(res, 400, { error: 'no data' })
+      const candles = tf === 'day' ? await getDayCandles(market, 201)
+        : await getMinuteCandles(market, tf === '4h' ? 240 : 60, 201)
+      if (!candles || candles.length < 31) return sendJson(res, 400, { error: 'no data' })
       const ohlcv = candlesToOhlcv(candles)
+      const confirmed = confirmedOhlcv(ohlcv)
       const weights = await readJson('signal-weights.json', {})
-      const result = analyzeMarket(ohlcv, { weights })
-      return sendJson(res, 200, { market, tf, ohlcv, ...result })
+      const result = analyzeMarket(confirmed, { weights }) // 지표/신호는 확정봉
+      return sendJson(res, 200, { market, tf, ohlcv, ...result }) // 차트용 ohlcv는 전체 유지
     }
     if (p === '/api/scan' && req.method === 'POST') {
       return sendJson(res, 200, runner.start())

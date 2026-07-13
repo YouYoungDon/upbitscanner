@@ -1,6 +1,7 @@
 // 모멘텀 점수 백테스트: 상위 유동성 N종목 과거 일봉에 scoreMomentum 소급 적용 → forward return 집계.
 // 사용: node scripts/backtest-momentum.mjs [N=30]
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
+import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { backtestSamples } from '../lib/momentum.mjs'
 import { getScanUniverse, sleep } from '../lib/scan-universe.mjs'
 
@@ -13,9 +14,9 @@ console.log(`백테스트 대상 상위 유동성 ${sample.length}종목`)
 
 let all = []
 for (const m of sample) {
-  const c = await getDayCandles(m, 200)
-  if (!c || c.length < 80) continue
-  all.push(...backtestSamples(candlesToOhlcv(c), { horizons: HORIZONS }))
+  const c = await getDayCandles(m, 201)
+  if (!c || c.length < 81) continue
+  all.push(...backtestSamples(confirmedOhlcv(candlesToOhlcv(c)), { horizons: HORIZONS }))
   await sleep(150)
 }
 

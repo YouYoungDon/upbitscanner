@@ -1,4 +1,5 @@
 import { getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
+import { confirmedOhlcv, ensureMinConfirmed } from '../lib/ohlcv.mjs'
 import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE, fallingKnifePenalty } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
@@ -20,9 +21,9 @@ const SELL_THRESHOLD = 3
 
 // 멀티 타임프레임: 4시간봉 Stoch 골든크로스 확인 (반등 신뢰도 보강)
 async function check4hStochGC(market) {
-  const candles = await getMinuteCandles(market, 240, 60)
-  if (!Array.isArray(candles) || candles.length < 30) return false
-  const ohlcv = candlesToOhlcv(candles)
+  const candles = await getMinuteCandles(market, 240, 61)
+  if (!Array.isArray(candles) || candles.length < 31) return false
+  const ohlcv = confirmedOhlcv(candlesToOhlcv(candles))
   const stoch = calcStochastic(ohlcv.map((c) => c.high), ohlcv.map((c) => c.low), ohlcv.map((c) => c.close))
   return stoch ? stoch.k < 20 && stoch.prevK < stoch.prevD && stoch.k > stoch.d : false
 }
@@ -38,8 +39,8 @@ async function main() {
   console.log(`코인게코 커버리지: ${(cg.coverage * 100).toFixed(0)}%${cg.reason ? ` (${cg.reason})` : ''}`)
 
   // 시장 레짐: BTC 일봉 추세 (약세면 반등 매수 감점)
-  const btcCandles = await getDayCandles('KRW-BTC', 200)
-  const regime = btcRegime(btcCandles ? candlesToOhlcv(btcCandles) : [])
+  const btcCandles = await getDayCandles('KRW-BTC', 201)
+  const regime = btcRegime(btcCandles ? confirmedOhlcv(candlesToOhlcv(btcCandles)) : [])
   console.log(`시장 레짐(BTC): ${regime.trend}`)
 
   const log = await readJson('monitor-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
@@ -50,12 +51,13 @@ async function main() {
   for (let i = 0; i < targets.length; i += BATCH) {
     const chunk = targets.slice(i, i + BATCH)
     await Promise.all(chunk.map(async (market) => {
-      const candles = await getDayCandles(market, 200)
-      if (!candles || candles.length < 60) return
+      const candles = await getDayCandles(market, 201)
+      if (!candles || candles.length < 61) return
       const ohlcv = candlesToOhlcv(candles)
-      candleMap[market] = ohlcv
-      const sig = detectSignals(ohlcv, weights)
-      const pat = detectPatterns(ohlcv)
+      candleMap[market] = ohlcv // 표시/차트용 전체(형성봉 포함) 유지
+      const confirmed = confirmedOhlcv(ohlcv) // 신호 판정은 확정봉만
+      const sig = detectSignals(confirmed, weights)
+      const pat = detectPatterns(confirmed)
       for (const p of pat.buy) { sig.buy.push(p); sig.buyScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
       for (const p of pat.sell) { sig.sell.push(p); sig.sellScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
 
@@ -72,9 +74,9 @@ async function main() {
       // 고강도 SMC 신호 (드물지만 강력 — combo/MTF와 별개의 가산 점수)
       let sellScore = sig.sellScore, sellSignals = sig.sell
       let vbottomSL, pumpSL
-      const sweep = detectLiquiditySweep(ohlcv)
-      const vbottom = detectVBottom(ohlcv)
-      const pump = detectPumpStart(ohlcv)
+      const sweep = detectLiquiditySweep(confirmed)
+      const vbottom = detectVBottom(confirmed)
+      const pump = detectPumpStart(confirmed)
       if (sweep.side === 'buy') { finalBuyScore += sweep.score; buySignals = [...buySignals, `유동성 스윕 (깊이 ${sweep.depthPct}%)`] }
       if (sweep.side === 'sell') { sellScore += sweep.score; sellSignals = [...sellSignals, `유동성 스윕 고점 (깊이 ${sweep.depthPct}%)`] }
       if (vbottom) { finalBuyScore += vbottom.score; buySignals = [...buySignals, `🎯V-Bottom (RSI${vbottom.rsi9}·꼬리${vbottom.wickRatio}%)`]; vbottomSL = vbottom.stopLoss }

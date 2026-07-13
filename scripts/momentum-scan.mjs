@@ -1,4 +1,5 @@
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
+import { confirmedOhlcv, ensureMinConfirmed } from '../lib/ohlcv.mjs'
 import { scoreMomentum, MIN_MOMENTUM_SCORE } from '../lib/momentum.mjs'
 import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
@@ -18,10 +19,11 @@ async function main() {
   for (let i = 0; i < targets.length; i += BATCH) {
     const chunk = targets.slice(i, i + BATCH)
     await Promise.all(chunk.map(async (market) => {
-      const candles = await getDayCandles(market, 200)
-      if (!candles || candles.length < 60) return
-      const ohlcv = candlesToOhlcv(candles)
-      let { score, signals } = scoreMomentum(ohlcv)
+      const candles = await getDayCandles(market, 201)
+      if (!candles || candles.length < 61) return
+      const confirmed = ensureMinConfirmed(confirmedOhlcv(candlesToOhlcv(candles)), 60)
+      if (!confirmed) return
+      let { score, signals } = scoreMomentum(confirmed)
       const { liqMult, lowLiq, label: liqLabel } = liquidityPenalty(tradePrice[market])
       if (liqMult < 1) { score = +(score * liqMult).toFixed(1); signals = [...signals, liqLabel] }
       // 업비트 단독 펌프 감점 (코인게코 글로벌 거래대금 대비 비중)
@@ -30,7 +32,7 @@ async function main() {
       const warn = warnOf[market]
       // 경고(상폐심사급)는 추세지속 후보에서 제외. 주의는 ⚠️배지로 표시만.
       if (score >= MIN_MOMENTUM_SCORE && warn !== 'warning') {
-        const pick = { market, korean_name: nameOf[market], price: ohlcv.at(-1).close, score, signals }
+        const pick = { market, korean_name: nameOf[market], price: confirmed.at(-1).close, score, signals }
         if (lowLiq) pick.lowLiquidity = true
         if (dom.share != null) pick.dominance = { share: dom.share, mult: dom.mult }
         if (warn) pick.warn = warn

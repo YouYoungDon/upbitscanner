@@ -1,4 +1,5 @@
 import { getMarkets, getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
+import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { detectSignals, applyCombos } from '../lib/signals.mjs'
 import { readJson } from '../lib/store.mjs'
 
@@ -13,10 +14,10 @@ const markets = (await getMarkets()).slice(0, SAMPLE_LIMIT)
 
 let trades = 0, wins = 0, totalRet = 0
 for (const m of markets) {
-  const candles = await getDayCandles(m.market, 200)
+  const candles = await getDayCandles(m.market, 201)
   await sleep(200)
-  if (!candles || candles.length < 80) continue
-  const ohlcv = candlesToOhlcv(candles)
+  if (!candles || candles.length < 81) continue
+  const ohlcv = confirmedOhlcv(candlesToOhlcv(candles)) // 라이브와 동일: 형성봉 제외한 확정 히스토리로 시뮬
   for (let i = 60; i < ohlcv.length - HOLD_DAYS; i++) {
     const window = ohlcv.slice(0, i + 1)
     const sig = detectSignals(window, weights)
