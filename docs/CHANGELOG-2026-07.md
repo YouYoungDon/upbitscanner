@@ -50,6 +50,14 @@
 - 종합 페이지 포지션 카드에 ＋추가/✏️편집/🗑삭제 + 모달 폼(개별분석 코인검색 재활용, 현재가 "진입가로 채우기"). 포지션 0개여도 카드·추가 버튼 노출.
 - 설계·계획: `docs/superpowers/specs|plans/2026-07-12-editable-positions*.md`.
 
+## 6. 신호 신뢰도 개선 (2026-07-13)
+
+- **확정봉 판정**: 일봉 신호를 형성 중(오늘) 봉 제외한 확정 캔들로 판정(`lib/ohlcv.mjs::confirmedOhlcv`). monitor·momentum·backtest·`/api/analyze` 적용, 각 fetch N+1(EMA200·200봉 신고가 위해 201). 09:00 신호가 종가에 뒤집히는 구조적 문제(시커·게임빌드 손절 원인) 제거. 차트는 전체 봉 유지.
+- **수익 반영 학습**: `qualityTarget = hitComponent(적중률) × returnComponent(평균수익, B안 clamp 0.85~1.25)`, `newWeight` 0.7/0.3 블렌드, `MIN_SAMPLES 3→8`. 보유기간 혼재는 후속(+3일 고정 horizon), 검증 화면에 `mixed-horizon` 배지.
+- **버그 4건**: 게이지 널 시세 가드, 모달 저장/삭제 네트워크 예외 처리, `readBody` 바이트 누적 후 1회 디코드(한글 청크 손상 방지, `lib/http-body.mjs`), positions RMW `withLock`.
+- **가중치 파일 위생**: 라이브 `signal-weights.json` gitignore, `signal-weights.default.json`(완화 baseline)·`backup-preconfirmed.json`·`meta.json`(signalVersion). 확정봉 regime 재학습 시작.
+- 설계·계획: `docs/superpowers/specs|plans/2026-07-13-signal-reliability*.md`.
+
 ## 운영 메모
 
 - **대시보드**: `npm run dashboard` (포트 8787). 새 API 라우트 추가 시 서버 재시작 필요.
