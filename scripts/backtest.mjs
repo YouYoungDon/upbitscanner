@@ -1,7 +1,7 @@
 import { getMarkets, getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { detectSignals, applyCombos } from '../lib/signals.mjs'
-import { readJson } from '../lib/store.mjs'
+import { readJson, readWeights } from '../lib/store.mjs'
 
 const HOLD_DAYS = 3
 const BUY_THRESHOLD = 5
@@ -9,7 +9,7 @@ const SAMPLE_LIMIT = Number(process.argv[2] || 30)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-const weights = await readJson('signal-weights.json', {})
+const weights = await readWeights()
 const markets = (await getMarkets()).slice(0, SAMPLE_LIMIT)
 
 let trades = 0, wins = 0, totalRet = 0

@@ -112,7 +112,7 @@ const server = createServer(async (req, res) => {
     if (p === '/api/verify') {
       const [weekly, weights] = await Promise.all([
         readJson('weekly-analysis.json', { weeks: [] }),
-        readJson('signal-weights.json', {}),
+        readWeights(),
       ])
       return sendJson(res, 200, buildVerify(weekly, weights))
     }
