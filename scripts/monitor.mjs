@@ -1,5 +1,5 @@
 import { getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
-import { confirmedOhlcv, ensureMinConfirmed } from '../lib/ohlcv.mjs'
+import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE, fallingKnifePenalty } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'

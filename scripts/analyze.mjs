@@ -1,4 +1,5 @@
 import { getDayCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
+import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import {
   calcRSI, calcBB, calcMACD, calcStochastic, calcWilliamsR, calcVolRatio, calcEMA,
 } from '../lib/indicators.mjs'
@@ -7,16 +8,16 @@ import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../li
 const market = process.argv[2] || 'KRW-BTC'
 
 const [candles, ticker] = await Promise.all([
-  getDayCandles(market, 200),
+  getDayCandles(market, 201),
   getTicker([market]),
 ])
 if (!candles || !ticker) { console.error('조회 실패:', market); process.exit(1) }
 
-const ohlcv = candlesToOhlcv(candles)
-const closes = ohlcv.map((c) => c.close)
-const highs = ohlcv.map((c) => c.high)
-const lows = ohlcv.map((c) => c.low)
-const volumes = ohlcv.map((c) => c.volume)
+const confirmed = confirmedOhlcv(candlesToOhlcv(candles))
+const closes = confirmed.map((c) => c.close)
+const highs = confirmed.map((c) => c.high)
+const lows = confirmed.map((c) => c.low)
+const volumes = confirmed.map((c) => c.volume)
 const price = ticker[0].trade_price
 const chg = (ticker[0].signed_change_rate * 100).toFixed(2)
 
@@ -36,8 +37,8 @@ console.log('EMA20:', ema20[l].toFixed(4), 'EMA50:', ema50[l].toFixed(4))
 console.log('VolRatio:', volR?.toFixed(2) + 'x')
 console.log('최근 7일 종가:', closes.slice(-7).map((v) => v.toFixed(4)).join(' → '))
 
-const sig = detectSignals(ohlcv, {})
-const pat = detectPatterns(ohlcv)
+const sig = detectSignals(confirmed, {})
+const pat = detectPatterns(confirmed)
 // monitor.mjs와 동일하게 패턴 점수를 buyScore에 더한 뒤 콤보 보정 (점수 일관성 유지)
 let buyScoreWithPatterns = sig.buyScore
 for (const p of pat.buy) buyScoreWithPatterns += PATTERN_SCORE[p] || 0
