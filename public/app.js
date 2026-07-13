@@ -102,7 +102,7 @@ const routes = {
       const plBig = p.plPct == null ? '' : `<span class="pos-pl ${up ? 'up' : 'down'}">${up ? '+' : ''}${p.plPct}%</span>`
       const st = p.hitSL ? '<span class="badge badge-error badge-sm">SL 도달</span>' : p.hitTP ? '<span class="badge badge-success badge-sm">TP 도달</span>' : '<span class="badge badge-ghost badge-sm">보유</span>'
       let gauge
-      if (p.stopLoss != null && p.takeProfit != null && p.takeProfit > p.stopLoss) {
+      if (p.price != null && p.stopLoss != null && p.takeProfit != null && p.takeProfit > p.stopLoss) {
         const span = p.takeProfit - p.stopLoss
         const curPos = clampPct(((p.price - p.stopLoss) / span) * 100)
         const entPos = clampPct(((p.entry - p.stopLoss) / span) * 100)
@@ -218,8 +218,10 @@ const routes = {
       b.onclick = async (e) => {
         e.stopPropagation()
         if (!confirm(`${b.dataset.name} 포지션을 삭제할까요?`)) return
-        await api(`/api/positions?market=${encodeURIComponent(b.dataset.market)}`, { method: 'DELETE' })
-        routes.home()
+        try {
+          await api(`/api/positions?market=${encodeURIComponent(b.dataset.market)}`, { method: 'DELETE' })
+          routes.home()
+        } catch { alert('삭제 실패 — 네트워크를 확인하세요') }
       }
     })
     // 반등 카드 실시간 필터 (종목명·티커). 빈 검색이면 TOP8.
@@ -668,9 +670,11 @@ async function openPosModal(mode, position) {
     if (!entry || Number(entry) <= 0) { $m('posErr').textContent = '진입가를 입력하세요'; return }
     if (sl && tp && Number(tp) <= Number(sl)) { $m('posErr').textContent = '목표가는 손절가보다 커야 합니다'; return }
     const body = { market: picked, korean_name: nameOf[picked] || (position && position.korean_name) || '', entry, stopLoss: sl || null, takeProfit: tp || null }
-    const r = await api('/api/positions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    if (r && r.ok) { dlg.close(); routes.home() }
-    else { $m('posErr').textContent = (r && r.error) || '저장 실패' }
+    try {
+      const r = await api('/api/positions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      if (r && r.ok) { dlg.close(); routes.home() }
+      else { $m('posErr').textContent = (r && r.error) || '저장 실패' }
+    } catch { $m('posErr').textContent = '네트워크 오류 — 다시 시도하세요' }
   }
   dlg.showModal()
 }

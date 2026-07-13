@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises'
 import { existsSync, statSync } from 'node:fs'
 import { dirname, join, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { readJson } from '../lib/store.mjs'
+import { readJson, withLock } from '../lib/store.mjs'
+import { readBody } from '../lib/http-body.mjs'
 import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { getMarkets, getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
@@ -42,22 +43,6 @@ function sendJson(res, code, data) {
   res.end(JSON.stringify(data))
 }
 
-// 요청 본문을 상한(16KB)까지 읽어 JSON 파싱. 초과/깨진 JSON은 예외.
-function readBody(req, limit = 16 * 1024) {
-  return new Promise((resolve, reject) => {
-    let data = ''
-    req.on('data', (c) => {
-      data += c
-      if (data.length > limit) { reject(new Error('본문이 너무 큽니다')); req.destroy() }
-    })
-    req.on('end', () => {
-      if (!data) return resolve({})
-      try { resolve(JSON.parse(data)) } catch { reject(new Error('잘못된 JSON')) }
-    })
-    req.on('error', reject)
-  })
-}
-
 async function serveStatic(res, urlPath) {
   const rel = urlPath === '/' ? '/index.html' : urlPath
   const file = join(PUBLIC, rel)
@@ -94,15 +79,21 @@ const server = createServer(async (req, res) => {
       const markets = await cachedMarkets()
       const v = validatePosition(body, { markets })
       if (!v.ok) return sendJson(res, 400, { error: v.error })
-      const next = upsertPosition(readPositions(), v.position)
-      await writePositions(next)
+      const next = await withLock('positions', async () => {
+        const merged = upsertPosition(readPositions(), v.position)
+        await writePositions(merged)
+        return merged
+      })
       return sendJson(res, 200, { ok: true, positions: next })
     }
     if (p === '/api/positions' && req.method === 'DELETE') {
       const market = url.searchParams.get('market') || ''
       if (!/^KRW-[A-Z0-9]+$/.test(market)) return sendJson(res, 400, { error: '잘못된 마켓' })
-      const next = deletePosition(readPositions(), market)
-      await writePositions(next)
+      const next = await withLock('positions', async () => {
+        const remaining = deletePosition(readPositions(), market)
+        await writePositions(remaining)
+        return remaining
+      })
       return sendJson(res, 200, { ok: true, positions: next })
     }
     if (p === '/api/ticker') {
