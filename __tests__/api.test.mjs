@@ -25,7 +25,7 @@ describe('buildResults', () => {
 
 describe('buildInsights', () => {
   it('최다 신호와 적중률 1위', () => {
-    const weekly = { weeks: [{ signalStats: { 'Stoch 과매도 골든크로스': { count: 4, hitRate: 0.7 } } }] }
+    const weekly = { weeks: [{ signalStats: { 'Stoch 과매도 골든크로스': { count: 8, hitRate: 0.7 } } }] }
     const r = buildInsights(log, weekly)
     expect(r.topSignal.key).toBe('Stoch 과매도 골든크로스')
     expect(r.bestHitRate.key).toBe('Stoch 과매도 골든크로스')
