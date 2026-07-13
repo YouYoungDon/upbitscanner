@@ -4,7 +4,7 @@ import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE, fallingKnifePenalty } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
-import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
+import { readJson, writeJson, rollingAppend, withLock, readWeights } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
@@ -29,7 +29,7 @@ async function check4hStochGC(market) {
 }
 
 async function main() {
-  const weights = await readJson('signal-weights.json', {})
+  const weights = await readWeights()
   const { targets, nameOf, total, tradePrice, warnOf } = await getScanUniverse()
   if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
   console.log(`스캔 대상 ${targets.length}종목 (전체 ${total})`)

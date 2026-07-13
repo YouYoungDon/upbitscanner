@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { existsSync, statSync } from 'node:fs'
 import { dirname, join, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { readJson, withLock } from '../lib/store.mjs'
+import { readJson, withLock, readWeights } from '../lib/store.mjs'
 import { readBody } from '../lib/http-body.mjs'
 import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { getMarkets, getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
@@ -117,7 +117,7 @@ const server = createServer(async (req, res) => {
       return sendJson(res, 200, buildVerify(weekly, weights))
     }
     if (p === '/api/weights') {
-      return sendJson(res, 200, await readJson('signal-weights.json', {}))
+      return sendJson(res, 200, await readWeights())
     }
     if (p === '/api/history') {
       return sendJson(res, 200, buildHistory(await readJson('monitor-log.json', { scans: [] })))
@@ -153,7 +153,7 @@ const server = createServer(async (req, res) => {
       if (!candles || candles.length < 31) return sendJson(res, 400, { error: 'no data' })
       const ohlcv = candlesToOhlcv(candles)
       const confirmed = confirmedOhlcv(ohlcv)
-      const weights = await readJson('signal-weights.json', {})
+      const weights = await readWeights()
       const result = analyzeMarket(confirmed, { weights }) // 지표/신호는 확정봉
       return sendJson(res, 200, { market, tf, ohlcv, ...result }) // 차트용 ohlcv는 전체 유지
     }

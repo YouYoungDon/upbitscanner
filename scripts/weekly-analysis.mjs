@@ -1,5 +1,5 @@
 import { getTicker, getDayCandlesBefore } from '../lib/upbit.mjs'
-import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
+import { readJson, writeJson, rollingAppend, withLock, readWeights } from '../lib/store.mjs'
 import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns, MIN_SAMPLES } from '../lib/weekly.mjs'
 import { readArchive, scansInLastDays } from '../lib/archive.mjs'
 
@@ -83,7 +83,7 @@ for (const k of Object.keys(stats)) stats[k].avgReturn = returns[k] ?? 0
 // 락 안에서 fresh 재읽기 → 갱신 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
 let oldWeights, newWeights
 await withLock('signal-weights', async () => {
-  oldWeights = await readJson('signal-weights.json', {})
+  oldWeights = await readWeights()
   newWeights = updateWeights(oldWeights, stats)
   await writeJson('signal-weights.json', newWeights)
 })

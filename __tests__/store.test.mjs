@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { rollingAppend, clampWeight, ewmTarget, writeJson, readJson, withLock, DATA_DIR, hitComponent, returnComponent, qualityTarget, newWeight } from '../lib/store.mjs'
+import { rollingAppend, clampWeight, ewmTarget, writeJson, readJson, withLock, DATA_DIR, hitComponent, returnComponent, qualityTarget, newWeight, readWeights } from '../lib/store.mjs'
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -88,5 +88,13 @@ describe('학습 컴포넌트 (적중률+수익)', () => {
     expect(newWeight(1.0, 0.7, 25)).toBeCloseTo(1.2625, 3)
     // avgReturn 생략 시 return성분 1.0
     expect(newWeight(1.0, 0.7)).toBeCloseTo(1.0 * 0.7 + 1.5 * 0.3, 3)
+  })
+})
+
+describe('readWeights', () => {
+  it('함수이며 Promise 반환', async () => {
+    expect(typeof readWeights).toBe('function')
+    const w = await readWeights()
+    expect(w && typeof w === 'object').toBe(true)
   })
 })
