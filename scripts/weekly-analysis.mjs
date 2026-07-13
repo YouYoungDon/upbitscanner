@@ -128,6 +128,7 @@ const result = {
   signalStats: stats,
   report,
   momentum,
+  horizonMode: 'current-price-mixed',
 }
 // 락 안에서 fresh 재읽기 → 증가 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
 await withLock('weekly-analysis', async () => {

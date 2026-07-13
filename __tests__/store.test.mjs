@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { rollingAppend, clampWeight, ewmTarget, writeJson, readJson, withLock, DATA_DIR } from '../lib/store.mjs'
+import { rollingAppend, clampWeight, ewmTarget, writeJson, readJson, withLock, DATA_DIR, hitComponent, returnComponent, qualityTarget, newWeight } from '../lib/store.mjs'
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -58,5 +58,35 @@ describe('clampWeight', () => {
     expect(clampWeight(0.8 * 1.4 + 0.2 * 1.5)).toBeCloseTo(1.42, 5)
     expect(clampWeight(5)).toBe(2.0)
     expect(clampWeight(0.1)).toBe(0.5)
+  })
+})
+
+describe('학습 컴포넌트 (적중률+수익)', () => {
+  it('hitComponent 선형 매핑 + 클램프', () => {
+    expect(hitComponent(0.4)).toBeCloseTo(0.7, 5)
+    expect(hitComponent(0.7)).toBeCloseTo(1.5, 5)
+    expect(hitComponent(0.55)).toBeCloseTo(1.1, 5)
+    expect(hitComponent(0.2)).toBeCloseTo(0.7, 5) // <0.4 클램프
+    expect(hitComponent(0.9)).toBeCloseTo(1.5, 5) // >0.7 클램프
+  })
+  it('returnComponent B안: +25% 상한, 하한 0.85, null→1', () => {
+    expect(returnComponent(0)).toBeCloseTo(1.0, 5)
+    expect(returnComponent(25)).toBeCloseTo(1.25, 5)
+    expect(returnComponent(40)).toBeCloseTo(1.25, 5) // 상한
+    expect(returnComponent(10)).toBeCloseTo(1.10, 5)
+    expect(returnComponent(-3)).toBeCloseTo(0.97, 5)
+    expect(returnComponent(-30)).toBeCloseTo(0.85, 5) // 하한
+    expect(returnComponent(null)).toBe(1)
+    expect(returnComponent(NaN)).toBe(1)
+  })
+  it('qualityTarget = hit×return, 검증값', () => {
+    expect(qualityTarget(0.754, 9.79)).toBeCloseTo(1.647, 2)
+    expect(qualityTarget(0.318, -1.96)).toBeCloseTo(0.686, 2)
+  })
+  it('newWeight 0.7/0.3 블렌드, avgReturn 반영', () => {
+    // old 1.0, hit 0.7(→1.5), ret +25(→1.25) → target clamp(1.875)=1.875 → 1*0.7+1.875*0.3=1.2625
+    expect(newWeight(1.0, 0.7, 25)).toBeCloseTo(1.2625, 3)
+    // avgReturn 생략 시 return성분 1.0
+    expect(newWeight(1.0, 0.7)).toBeCloseTo(1.0 * 0.7 + 1.5 * 0.3, 3)
   })
 })

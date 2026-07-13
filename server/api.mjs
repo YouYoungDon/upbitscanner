@@ -125,6 +125,7 @@ export function buildVerify(weekly, weights) {
     weights: weights || {},
     report: latest.report ?? null,
     momentum: latest.momentum ?? null,
+    horizonMode: latest.horizonMode ?? 'current-price-mixed',
     history: (weekly?.weeks || []).map((w) => ({ timestamp: w.timestamp, overallHitRate: w.overallHitRate })),
   }
 }

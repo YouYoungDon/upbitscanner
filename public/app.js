@@ -413,7 +413,7 @@ const routes = {
         ${momCard}
         ${reportCard}
         <div class="card bg-base-200 shadow"><div class="card-body p-4">
-          <h3 class="card-title text-sm">신호별 적중률 / 평균수익 / 가중치</h3>
+          <h3 class="card-title text-sm">신호별 적중률 / 평균수익 / 가중치 ${v.horizonMode ? `<span class="badge badge-ghost badge-xs" title="학습이 current-price 기준 aggregate라 보유기간이 혼재됨(후속: +3일 고정 horizon)">⏱ mixed-horizon</span>` : ''}</h3>
           <div class="overflow-x-auto"><table class="table table-zebra table-sm">
             <thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>평균수익</th><th>가중치</th></tr></thead>
             <tbody>${statsRows || '<tr><td colspan="5" class="opacity-60">데이터 없음 (주간 분석 필요)</td></tr>'}</tbody></table></div>
