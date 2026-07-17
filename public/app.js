@@ -434,6 +434,64 @@ const routes = {
     $('#rSegHistory').onclick = () => { $('#rSegHistory').classList.add('btn-active'); $('#rSegVerify').classList.remove('btn-active'); showHistory() }
     showVerify()
   },
+  async scorecard() {
+    setActiveTab('scorecard')
+    view.innerHTML = '<span class="loading loading-spinner"></span>'
+    let d
+    try {
+      d = await api('/api/scorecard')
+    } catch {
+      view.innerHTML = '<div class="alert alert-error">데이터 조회 실패 — 서버 연결을 확인하세요.</div>'
+      return
+    }
+    const head = '<h2 class="text-2xl font-bold mb-4">🎯 픽 스코어카드</h2>'
+    if (d.empty) {
+      view.innerHTML = `${head}<div class="alert">아직 채점 전 — <code>npm run scorecard</code> 실행 후 표시됩니다.</div>`
+      return
+    }
+    const pctCell = (v) => v == null ? '<span class="opacity-40">—</span>'
+      : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}%</span>`
+    const kpiTile = (label, val, sub) => `<div class="kpi-tile"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div><div class="text-xs opacity-60">${sub}</div></div>`
+    const hTile = (name, h) => kpiTile(name,
+      h.winRate == null ? '—' : `${Math.round(h.winRate * 100)}%`,
+      h.n ? `평균 ${pctCell(h.avgRet)} · MFE ${pctCell(h.avgMfe)} · n=${h.n}` : '표본 없음')
+    const rg = (r) => r.h1.winRate == null ? '—' : `${Math.round(r.h1.winRate * 100)}% (n=${r.h1.n})`
+    const statusBadge = (s) => ({
+      done: '<span class="badge badge-sm badge-success badge-outline">완료</span>',
+      partial: '<span class="badge badge-sm badge-info badge-outline">진행</span>',
+      pending: '<span class="badge badge-sm badge-ghost">대기</span>',
+      'no-data': '<span class="badge badge-sm badge-warning badge-outline">데이터없음</span>',
+    }[s] ?? esc(s))
+    const rows = (list) => list.map((e) => `<tr>
+      <td><b>${esc(e.korean_name)}</b> <span class="text-xs opacity-60">${esc(e.market)}</span>${e.lowLiquidity ? ' <span class="badge badge-xs badge-warning">저유동</span>' : ''}</td>
+      <td class="text-xs">${esc(String(e.entryTs).slice(0, 10))}</td>
+      <td>${fmt(e.entryPrice)}</td>
+      <td>${e.score ?? '-'}</td>
+      <td>${pctCell(e.ret1)}</td><td>${pctCell(e.ret3)}</td><td>${pctCell(e.ret7)}</td>
+      <td>${pctCell(e.mfe7)}</td>
+      <td>${statusBadge(e.status)}</td>
+    </tr>`).join('')
+    view.innerHTML = `${head}
+      <div class="kpi-row mb-4">
+        ${hTile('+1일 승률', d.horizons.h1)}
+        ${hTile('+3일 승률', d.horizons.h3)}
+        ${hTile('+7일 승률', d.horizons.h7)}
+        ${kpiTile('에피소드', d.total, `대기 ${d.pendingCount} · 데이터없음 ${d.noDataCount}`)}
+      </div>
+      <div class="alert mb-4 text-sm">확정봉 체제(7/13~) +1일 승률: 이전 <b>${rg(d.regimes.pre)}</b> → 이후 <b>${rg(d.regimes.post)}</b></div>
+      <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr><th>코인</th><th>진입일</th><th>진입가</th><th>점수</th><th>+1일</th><th>+3일</th><th>+7일</th><th>MFE(7일)</th><th>상태</th></tr></thead>
+          <tbody id="scRows">${rows(d.episodes)}</tbody>
+        </table>
+      </div>
+      <div class="text-xs opacity-50 mt-2">채점: ${esc(String(d.updatedAt ?? '-').replace('T', ' ').slice(0, 16))} UTC · 진입 시점 신규등장 기준 · 확정 종가/고가만 사용</div>`
+    document.getElementById('scNoLowLiq').addEventListener('change', (ev) => {
+      const list = ev.target.checked ? d.episodes.filter((e) => !e.lowLiquidity) : d.episodes
+      document.getElementById('scRows').innerHTML = rows(list)
+    })
+  },
 }
 
 let histOffset = 0

@@ -4,7 +4,7 @@ export function resolveRoute(name) {
     dashboard: 'home', recommend: 'home', momentum: 'home', flow: 'home', positions: 'home',
     verify: 'review', history: 'review',
   }
-  const canonical = ['home', 'analyze', 'review']
+  const canonical = ['home', 'analyze', 'review', 'scorecard']
   const r = alias[name] || name
   return canonical.includes(r) ? r : 'home'
 }

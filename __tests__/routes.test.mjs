@@ -20,4 +20,7 @@ describe('resolveRoute', () => {
     expect(resolveRoute('nonsense')).toBe('home')
     expect(resolveRoute('')).toBe('home')
   })
+  it('scorecard는 정식 라우트', () => {
+    expect(resolveRoute('scorecard')).toBe('scorecard')
+  })
 })
