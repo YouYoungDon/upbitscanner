@@ -129,3 +129,37 @@ export function buildVerify(weekly, weights) {
     history: (weekly?.weeks || []).map((w) => ({ timestamp: w.timestamp, overallHitRate: w.overallHitRate })),
   }
 }
+
+// 픽 성과 스코어카드 집계. sc = { updatedAt, episodes } (data/scorecard.json).
+const SCORECARD_CUTOVER = Date.parse('2026-07-12T15:00:00Z') // 확정봉 체제 KST 2026-07-13 00:00
+
+export function buildScorecard(sc) {
+  const eps = sc?.episodes ?? []
+  if (!eps.length) return { empty: true }
+  const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null)
+  const agg = (list) => {
+    const out = {}
+    for (const n of [1, 3, 7]) {
+      const scored = list.filter((e) => e[`ret${n}`] != null)
+      out[`h${n}`] = {
+        n: scored.length,
+        winRate: scored.length ? scored.filter((e) => e[`ret${n}`] > 0).length / scored.length : null,
+        avgRet: avg(scored.map((e) => e[`ret${n}`])),
+        avgMfe: avg(scored.map((e) => e[`mfe${n}`]).filter((v) => v != null)),
+      }
+    }
+    return out
+  }
+  return {
+    updatedAt: sc.updatedAt ?? null,
+    total: eps.length,
+    pendingCount: eps.filter((e) => e.status === 'pending' || e.status === 'partial').length,
+    noDataCount: eps.filter((e) => e.status === 'no-data').length,
+    horizons: agg(eps),
+    regimes: {
+      pre: agg(eps.filter((e) => Date.parse(e.entryTs) < SCORECARD_CUTOVER)),
+      post: agg(eps.filter((e) => Date.parse(e.entryTs) >= SCORECARD_CUTOVER)),
+    },
+    episodes: [...eps].sort((a, b) => String(b.entryTs).localeCompare(String(a.entryTs))),
+  }
+}

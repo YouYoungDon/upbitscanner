@@ -219,3 +219,54 @@ describe('buildRecommendations 폴백', () => {
     expect(r.weekly).toEqual([])
   })
 })
+
+import { buildScorecard } from '../server/api.mjs'
+
+describe('buildScorecard', () => {
+  const ep = (over) => ({
+    id: 'x', market: 'KRW-X', korean_name: 'X', entryTs: '2026-07-14T00:00:00.000Z',
+    entryPrice: 100, score: 10, signals: [], lowLiquidity: false,
+    ret1: null, ret3: null, ret7: null, mfe1: null, mfe3: null, mfe7: null,
+    status: 'pending', scoredAt: null, ...over,
+  })
+  it('빈 입력 → empty', () => {
+    expect(buildScorecard({ episodes: [] }).empty).toBe(true)
+    expect(buildScorecard(null).empty).toBe(true)
+  })
+  it('지평선별 승률·평균 (null 지평선 제외)', () => {
+    const sc = { updatedAt: 'u', episodes: [
+      ep({ id: 'a', ret1: 0.1, mfe1: 0.2, status: 'partial' }),
+      ep({ id: 'b', ret1: -0.05, mfe1: 0.01, status: 'partial' }),
+      ep({ id: 'c', status: 'pending' }), // 미채점 — h1 집계 제외
+    ] }
+    const r = buildScorecard(sc)
+    expect(r.total).toBe(3)
+    expect(r.pendingCount).toBe(3) // partial 2 + pending 1
+    expect(r.horizons.h1.n).toBe(2)
+    expect(r.horizons.h1.winRate).toBeCloseTo(0.5)
+    expect(r.horizons.h1.avgRet).toBeCloseTo((0.1 - 0.05) / 2)
+    expect(r.horizons.h1.avgMfe).toBeCloseTo((0.2 + 0.01) / 2)
+    expect(r.horizons.h3.n).toBe(0)
+    expect(r.horizons.h3.winRate).toBeNull()
+  })
+  it('확정봉 체제 전/후 분리 (cutover = 2026-07-12T15:00:00Z)', () => {
+    const sc = { episodes: [
+      ep({ id: 'pre1', entryTs: '2026-07-10T00:00:00.000Z', ret1: 0.1 }),
+      ep({ id: 'post1', entryTs: '2026-07-13T00:00:00.000Z', ret1: -0.1 }),
+    ] }
+    const r = buildScorecard(sc)
+    expect(r.regimes.pre.h1.n).toBe(1)
+    expect(r.regimes.pre.h1.winRate).toBe(1)
+    expect(r.regimes.post.h1.n).toBe(1)
+    expect(r.regimes.post.h1.winRate).toBe(0)
+  })
+  it('에피소드 최신순 정렬 + no-data 카운트', () => {
+    const sc = { episodes: [
+      ep({ id: 'old', entryTs: '2026-07-01T00:00:00.000Z', status: 'no-data' }),
+      ep({ id: 'new', entryTs: '2026-07-15T00:00:00.000Z' }),
+    ] }
+    const r = buildScorecard(sc)
+    expect(r.episodes[0].id).toBe('new')
+    expect(r.noDataCount).toBe(1)
+  })
+})
