@@ -36,8 +36,6 @@ describe('extractEpisodes', () => {
   })
 })
 
-import { scoreEpisode, neededCandleCount, mergeEpisodes } from '../lib/scorecard.mjs'
-
 const DAY = 86400
 // entryTs: 2026-07-01T03:00:00Z → D0 = 2026-07-01 (UTC일)
 const ENTRY_MS = Date.parse('2026-07-01T03:00:00Z')
