@@ -58,6 +58,14 @@
 - **가중치 파일 위생**: 라이브 `signal-weights.json` gitignore, `signal-weights.default.json`(완화 baseline)·`backup-preconfirmed.json`·`meta.json`(signalVersion). 확정봉 regime 재학습 시작.
 - 설계·계획: `docs/superpowers/specs|plans/2026-07-13-signal-reliability*.md`.
 
+## 7. 픽 성과 스코어카드 (2026-07-17)
+
+- 스캔 아카이브의 매수 픽 **신규진입 에피소드**를 +1/+3/+7일 확정종가 수익률·MFE로 자동 채점.
+- `lib/scorecard.mjs`(순수 로직) + `scripts/scorecard.mjs`(하루 1회 배치, UpbitScorecard 작업 KST 09:10) + `GET /api/scorecard` + 대시보드 "스코어카드" 탭.
+- 확정봉 체제(7/13) 전/후 +1일 승률 분리 집계 — 새 체제 효과를 상시 검증.
+- `data/scorecard.json`은 gitignore. 손상 시 아카이브에서 전체 재생성 가능.
+- 스펙: `docs/superpowers/specs/2026-07-17-pick-scorecard-design.md`
+
 ## 운영 메모
 
 - **대시보드**: `npm run dashboard` (포트 8787). 새 API 라우트 추가 시 서버 재시작 필요.
