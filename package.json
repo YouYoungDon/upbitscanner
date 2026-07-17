@@ -12,6 +12,7 @@
     "backtest:momentum": "node scripts/backtest-momentum.mjs",
     "analyze": "node scripts/analyze.mjs",
     "flow": "node scripts/flow-scan.mjs",
+    "scorecard": "node scripts/scorecard.mjs",
     "test": "vitest run"
   },
   "devDependencies": {
