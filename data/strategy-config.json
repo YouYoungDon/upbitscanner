@@ -1,0 +1,10 @@
+{
+  "version": "quiet-bottom-v1",
+  "confirmedAt": "2026-07-26T01:25:25.107Z",
+  "rsiMax": 26,
+  "stochMax": 15,
+  "volMax": 1.5,
+  "slPct": 10,
+  "tpPct": 18,
+  "holdMax": 7
+}
