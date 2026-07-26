@@ -581,7 +581,7 @@ function topTable(list = [], n = 10) {
         <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${fmt(x.price)}</td>
-        <td>${signalTags(x.signals)}</td>
+        <td>${signalTags(x.signals)}${x.strategy ? `<div class="text-xs mt-1 opacity-80">🎯 손절 ${fmt(x.strategy.stopLoss)} · 목표 ${fmt(x.strategy.takeProfit)}</div>` : ''}</td>
       </tr>`).join('')}</tbody></table></div>`
 }
 

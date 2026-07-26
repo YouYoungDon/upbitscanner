@@ -3,6 +3,7 @@ import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE, fallingKnifePenalty } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
+import { detectQuietBottom, strategyLevels } from '../lib/strategy.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend, withLock, readWeights } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
@@ -30,6 +31,7 @@ async function check4hStochGC(market) {
 
 async function main() {
   const weights = await readWeights()
+  const strategyConfig = await readJson('strategy-config.json', null) // 없으면 전략 태깅 스킵
   const { targets, nameOf, total, tradePrice, warnOf } = await getScanUniverse()
   if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
   console.log(`스캔 대상 ${targets.length}종목 (전체 ${total})`)
@@ -97,6 +99,20 @@ async function main() {
       const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)
       finalBuyScore += pers.bonus
       if (pers.signals.length) buySignals = [...buySignals, ...pers.signals]
+      // 추격 경고: 거래량 급증 후 진입은 통계적으로 불리 (+3일 승률 30%, 평균 -3.4%)
+      if (sig.volRatio != null && sig.volRatio >= 5) buySignals = [...buySignals, '⚠️추격주의(급등후)']
+      // 조용한 바닥 전략 태깅 (표시 전용 — 점수 불변)
+      let strategyLv = null
+      if (strategyConfig) {
+        const qb = detectQuietBottom(confirmed, strategyConfig)
+        if (qb) {
+          const lv = strategyLevels(sig.price, strategyConfig)
+          if (lv) {
+            strategyLv = { stopLoss: +lv.stopLoss.toFixed(2), takeProfit: +lv.takeProfit.toFixed(2) }
+            buySignals = [...buySignals, '🎯전략(조용한바닥)']
+          }
+        }
+      }
 
       const warn = warnOf[market] // 'warning'(경고) | 'caution'(주의) | undefined
       // 경고(상폐심사급)는 매수후보에서 제외. 주의는 ⚠️배지로 표시만.
@@ -105,6 +121,7 @@ async function main() {
         if (vbottomSL != null) item.vbottomSL = vbottomSL
         if (pumpSL != null) item.pumpSL = pumpSL
         if (lowLiq) item.lowLiquidity = true
+        if (strategyLv) item.strategy = strategyLv
         if (dom.share != null) item.dominance = { share: dom.share, mult: dom.mult }
         const cgE = cg.byMarket[market]
         if (cgE) item.cg = { circRatio: cgE.circRatio, athChangePct: cgE.athChangePct, rank: cgE.rank }
