@@ -108,7 +108,8 @@ async function main() {
         if (qb) {
           const lv = strategyLevels(sig.price, strategyConfig)
           if (lv) {
-            strategyLv = { stopLoss: +lv.stopLoss.toFixed(2), takeProfit: +lv.takeProfit.toFixed(2) }
+            // 풀 정밀도 저장 (vbottomSL과 동일 정책) — 0.0x원대 코인에서 toFixed(2)는 손절=목표로 붕괴
+            strategyLv = { stopLoss: lv.stopLoss, takeProfit: lv.takeProfit }
             buySignals = [...buySignals, '🎯전략(조용한바닥)']
           }
         }
