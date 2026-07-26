@@ -66,6 +66,13 @@
 - `data/scorecard.json`은 gitignore. 손상 시 아카이브에서 전체 재생성 가능.
 - 스펙: `docs/superpowers/specs/2026-07-17-pick-scorecard-design.md`
 
+## 8. 조용한 바닥 전략 (2026-07-26)
+
+- 스코어카드 검증 엣지(조용한 과매도 진입 우위, 추격 열위)를 규칙화 — `lib/strategy.mjs` 순수 함수(판정·레벨·시뮬), 백테스트와 라이브 동일 로직.
+- 그리드 백테스트(`npm run strategy-backtest`, 216조합·룩어헤드 방지·손절 우선)로 파라미터 확정 → `data/strategy-config.json`(git 추적, 주간 학습과 분리). 선정: RSI≤26·K≤15·vol≤1.5·SL10%·TP18%·hold7 (253종목, n=332, 승률 55.1%, 평균 +1.94%/거래).
+- 스캐너: 시그니처 매칭 시 `🎯전략(조용한바닥)` 태그 + 손절·목표가, `volRatio>=5`면 `⚠️추격주의(급등후)` — 점수 불변(표시 전용).
+- 레짐 게이트 없음(깊은 약세 ratio 0~0.2에서 승률 57%로 최고 — 데이터 근거). 스펙: `docs/superpowers/specs/2026-07-25-quiet-bottom-strategy-design.md`
+
 ## 운영 메모
 
 - **대시보드**: `npm run dashboard` (포트 8787). 새 API 라우트 추가 시 서버 재시작 필요.
