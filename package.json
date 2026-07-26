@@ -13,6 +13,7 @@
     "analyze": "node scripts/analyze.mjs",
     "flow": "node scripts/flow-scan.mjs",
     "scorecard": "node scripts/scorecard.mjs",
+    "strategy-backtest": "node scripts/strategy-backtest.mjs",
     "test": "vitest run"
   },
   "devDependencies": {
