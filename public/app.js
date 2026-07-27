@@ -1,6 +1,8 @@
 const view = document.getElementById('view')
 const $ = (sel, el = document) => el.querySelector(sel)
 const fmt = (n) => (n == null ? '-' : Number(n).toLocaleString('ko-KR'))
+// 가격 전용 포맷: 1원 미만은 유효숫자 4자리 — toLocaleString 기본 3자리 반올림이 0.01원 미만 코인에서 손절=목표로 붕괴하는 것 방지
+const fmtPrice = (n) => (n == null ? '-' : Math.abs(Number(n)) >= 1 ? Number(n).toLocaleString('ko-KR') : Number(n).toLocaleString('ko-KR', { maximumSignificantDigits: 4 }))
 // API/외부 문자열을 innerHTML에 넣기 전 이스케이프 (XSS 방지)
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
@@ -52,6 +54,8 @@ function signalTags(signals) {
     if (s.includes('거래량')) return '<span class="badge badge-warning badge-sm">VOL</span>'
     if (s.includes('캔들 강세')) return '<span class="badge badge-success badge-sm">🕯강세</span>'
     if (s.includes('캔들 약세')) return '<span class="badge badge-error badge-sm">🕯약세</span>'
+    if (s.includes('추격주의')) return '<span class="badge badge-error badge-sm" title="거래량 급등 후 추격 진입 — 통계상 +3일 승률 30%, 평균 -3.4%">⚠️추격주의</span>'
+    if (s.includes('🎯전략')) return '<span class="badge badge-primary badge-sm" title="조용한 바닥 전략 시그니처 (RSI≤26·Stoch K≤15·거래량 조용)">🎯전략</span>'
     return ''
   }).join(' ')
 }
@@ -107,11 +111,11 @@ const routes = {
         const curPos = clampPct(((p.price - p.stopLoss) / span) * 100)
         const entPos = clampPct(((p.entry - p.stopLoss) / span) * 100)
         gauge = `<div class="pos-gauge">
-          <div class="pos-track"><div class="pos-entry" style="left:${entPos}%" title="진입 ${fmt(p.entry)}"></div><div class="pos-cur" style="left:${curPos}%" title="현재 ${fmt(p.price)}"></div></div>
-          <div class="pos-scale"><span>SL ${fmt(p.stopLoss)}</span><span>진입 ${fmt(p.entry)}</span><span>TP ${fmt(p.takeProfit)}</span></div>
+          <div class="pos-track"><div class="pos-entry" style="left:${entPos}%" title="진입 ${fmtPrice(p.entry)}"></div><div class="pos-cur" style="left:${curPos}%" title="현재 ${fmtPrice(p.price)}"></div></div>
+          <div class="pos-scale"><span>SL ${fmtPrice(p.stopLoss)}</span><span>진입 ${fmtPrice(p.entry)}</span><span>TP ${fmtPrice(p.takeProfit)}</span></div>
         </div>`
       } else {
-        gauge = `<div class="text-xs opacity-70 mt-1">진입 ${fmt(p.entry)}${p.stopLoss != null ? ' · SL ' + fmt(p.stopLoss) : ''}${p.takeProfit != null ? ' · TP ' + fmt(p.takeProfit) : ''}</div>`
+        gauge = `<div class="text-xs opacity-70 mt-1">진입 ${fmtPrice(p.entry)}${p.stopLoss != null ? ' · SL ' + fmtPrice(p.stopLoss) : ''}${p.takeProfit != null ? ' · TP ' + fmtPrice(p.takeProfit) : ''}</div>`
       }
       const toSL = p.hitSL || p.hitTP ? '' : `<span class="text-xs opacity-70">· SL까지 ${p.toSLPct == null ? '-' : p.toSLPct + '%'}</span>`
       const payload = esc(JSON.stringify({ market: p.market, korean_name: p.korean_name, entry: p.entry, stopLoss: p.stopLoss, takeProfit: p.takeProfit }))
@@ -564,7 +568,7 @@ async function renderCoinView() {
         <tbody>${hist.slice().reverse().map((h) => `<tr>
           <td>${new Date(h.timestamp).toLocaleString('ko-KR')}</td>
           <td>${h.side === 'buy' ? '<span class="badge badge-success badge-sm">매수</span>' : '<span class="badge badge-error badge-sm">매도</span>'}</td>
-          <td>${h.score ?? '-'}</td><td>${signalTags(h.signals)}</td>
+          <td>${h.score ?? '-'}</td><td>${signalTags(h.signals)}${h.strategy ? `<div class="text-xs mt-1 opacity-80">🎯 손절 ${fmtPrice(h.strategy.stopLoss)} · 목표 ${fmtPrice(h.strategy.takeProfit)}</div>` : ''}</td>
         </tr>`).join('')}</tbody></table></div>
     </div></div>`
   }
@@ -580,8 +584,8 @@ function topTable(list = [], n = 10) {
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
         <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
-        <td>${fmt(x.price)}</td>
-        <td>${signalTags(x.signals)}${x.strategy ? `<div class="text-xs mt-1 opacity-80">🎯 손절 ${fmt(x.strategy.stopLoss)} · 목표 ${fmt(x.strategy.takeProfit)}</div>` : ''}</td>
+        <td>${fmtPrice(x.price)}</td>
+        <td>${signalTags(x.signals)}${x.strategy ? `<div class="text-xs mt-1 opacity-80">🎯 손절 ${fmtPrice(x.strategy.stopLoss)} · 목표 ${fmtPrice(x.strategy.takeProfit)}</div>` : ''}</td>
       </tr>`).join('')}</tbody></table></div>`
 }
 

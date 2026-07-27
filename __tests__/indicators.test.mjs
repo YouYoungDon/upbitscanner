@@ -3,6 +3,7 @@ import {
   calcEMA, calcSMA, calcRSI, calcBB, calcMACD,
   calcStochastic, calcWilliamsR, calcVolRatio,
   calcRSISeries, calcOBV, calcBBWidthSeries,
+  calcStochasticKSeries, calcVolRatioSeries,
 } from '../lib/indicators.mjs'
 
 describe('calcBBWidthSeries', () => {
@@ -136,5 +137,45 @@ describe('calcVolRatio', () => {
   })
   it('데이터 부족 시 null', () => {
     expect(calcVolRatio(Array(10).fill(1))).toBeNull()
+  })
+})
+
+describe('calcStochasticKSeries — calcStochastic.k와 프리픽스 동치', () => {
+  const gen = (n) => {
+    const closes = Array.from({ length: n }, (_, i) => 100 + 12 * Math.sin(i / 4) + (i % 5))
+    return { closes, highs: closes.map((c) => c + 2), lows: closes.map((c) => c - 2) }
+  }
+  it('유효 구간 전체에서 점 계산과 일치, 워밍업 미만은 null', () => {
+    const { closes, highs, lows } = gen(60)
+    const s = calcStochasticKSeries(highs, lows, closes)
+    for (let i = 0; i < 60; i++) {
+      const point = calcStochastic(highs.slice(0, i + 1), lows.slice(0, i + 1), closes.slice(0, i + 1))
+      if (point == null) continue // 점 계산이 null인 프리픽스(D 평활 요구 길이 미만)는 비교 대상 아님
+      expect(s[i], `index ${i}`).toBeCloseTo(point.k, 10)
+    }
+    expect(s[0]).toBeNull()
+    expect(s[14]).toBeNull() // 첫 유효 인덱스 = period-1+sk-1 = 15
+    expect(s[15]).not.toBeNull()
+  })
+  it('길이 부족 → 전부 null', () => {
+    const { closes, highs, lows } = gen(10)
+    expect(calcStochasticKSeries(highs, lows, closes).every((v) => v === null)).toBe(true)
+  })
+})
+
+describe('calcVolRatioSeries — calcVolRatio와 프리픽스 동치', () => {
+  it('유효 구간 전체 일치 + 20봉 미만 null', () => {
+    const vols = Array.from({ length: 50 }, (_, i) => 10 + (i % 7) * 3)
+    const s = calcVolRatioSeries(vols)
+    for (let i = 0; i < 50; i++) {
+      const point = calcVolRatio(vols.slice(0, i + 1))
+      if (point == null) expect(s[i], `index ${i}`).toBeNull()
+      else expect(s[i], `index ${i}`).toBeCloseTo(point, 10)
+    }
+  })
+  it('평균 0(무거래 구간) → null', () => {
+    const vols = [...Array(20).fill(0), 5, 3]
+    const s = calcVolRatioSeries(vols)
+    expect(s[20]).toBeNull() // 이전 20봉 평균 0
   })
 })
