@@ -99,8 +99,8 @@ async function main() {
       const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)
       finalBuyScore += pers.bonus
       if (pers.signals.length) buySignals = [...buySignals, ...pers.signals]
-      // 추격 경고: 거래량 급증 후 진입은 통계적으로 불리 (+3일 승률 30%, 평균 -3.4%)
-      if (sig.volRatio != null && sig.volRatio >= 5) buySignals = [...buySignals, '⚠️추격주의(급등후)']
+      // 추격 감점 ×0.8: 급증 후 진입은 통계적으로 불리 (+3일 승률 30%·평균 -3.4%, 라이브 실증 +1일 -8.64%)
+      if (sig.volRatio != null && sig.volRatio >= 5) { finalBuyScore *= 0.8; buySignals = [...buySignals, '⚠️추격주의(급등후)'] }
       // 조용한 바닥 전략 태깅 (표시 전용 — 점수 불변)
       let strategyLv = null
       if (strategyConfig) {

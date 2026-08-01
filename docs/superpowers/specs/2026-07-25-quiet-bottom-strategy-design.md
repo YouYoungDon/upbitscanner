@@ -89,6 +89,9 @@ scoring-config.json과 동일 정책):
 - 매수 후보의 `volRatio >= 5` (signals.mjs가 반환하는 `sig.volRatio` 사용)
   이면 `buySignals`에 `'⚠️추격주의(급등후)'` 태그 추가. 점수 변경 없음.
 - 근거: 급증 후 진입 +3일 승률 30%·평균 -3.4%.
+- **[개정 2026-08-01]** 라이브 첫 주 실증(+1일 평균 -8.64%, n=12)으로
+  표시 전용 → **점수 ×0.8 감점**으로 승격. 상세:
+  2026-08-01-weekly-analysis-improvements-design.md §5.
 
 ## UI (public/app.js 최소 수정)
 
