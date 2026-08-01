@@ -7,6 +7,12 @@ import { DATA_DIR, readJson, writeJson } from '../lib/store.mjs'
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes } from '../lib/scorecard.mjs'
+import { scoreStrategyOutcome } from '../lib/strategy.mjs'
+
+// 🎯전략 태그 에피소드 중 SL/TP 채점이 미확정인 것 (config 없으면 항상 false)
+const needsStrategyScore = (e, config) =>
+  !!config && (e.signals ?? []).some((s) => s.includes('🎯전략')) &&
+  !['sl', 'tp', 'time', 'no-data'].includes(e.strategyOutcome?.reason)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -29,7 +35,9 @@ async function main() {
   let episodes = mergeEpisodes(prev.episodes ?? [], fresh)
 
   const now = Date.now()
-  const pending = episodes.filter((e) => e.status === 'pending' || e.status === 'partial')
+  const strategyConfig = await readJson('strategy-config.json', null)
+  const pending = episodes.filter((e) =>
+    e.status === 'pending' || e.status === 'partial' || needsStrategyScore(e, strategyConfig))
   const byMarket = new Map()
   for (const e of pending) {
     if (!byMarket.has(e.market)) byMarket.set(e.market, [])
@@ -46,6 +54,11 @@ async function main() {
     const confirmed = confirmedOhlcv(candlesToOhlcv(candles))
     for (const e of eps) {
       const s = scoreEpisode(e, confirmed, now)
+      if (needsStrategyScore(e, strategyConfig)) {
+        const out = scoreStrategyOutcome(e, confirmed, strategyConfig, now)
+        if (out.reason !== e.strategyOutcome?.reason) s.scoredAt = new Date(now).toISOString()
+        s.strategyOutcome = out
+      }
       if (s.status !== e.status || s.scoredAt !== e.scoredAt) scored++
       updated.set(s.id, s)
     }

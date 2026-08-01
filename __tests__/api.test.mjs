@@ -260,6 +260,24 @@ describe('buildScorecard', () => {
     expect(r.regimes.post.h1.n).toBe(1)
     expect(r.regimes.post.h1.winRate).toBe(0)
   })
+  it('🎯전략 요약: 확정분(sl/tp/time)만 승률·평균, open은 카운트만', () => {
+    const sc = { episodes: [
+      ep({ id: 's1', strategyOutcome: { reason: 'sl', ret: -0.1, exitDay: 2 } }),
+      ep({ id: 's2', strategyOutcome: { reason: 'tp', ret: 0.18, exitDay: 3 } }),
+      ep({ id: 's3', strategyOutcome: { reason: 'open' } }),
+      ep({ id: 's4' }), // 전략 아님 — 제외
+    ] }
+    const r = buildScorecard(sc)
+    expect(r.strategy.n).toBe(3)
+    expect(r.strategy.sl).toBe(1)
+    expect(r.strategy.tp).toBe(1)
+    expect(r.strategy.open).toBe(1)
+    expect(r.strategy.winRate).toBeCloseTo(0.5)
+    expect(r.strategy.avgRet).toBeCloseTo((0.18 - 0.1) / 2)
+  })
+  it('전략 에피소드 없으면 strategy null', () => {
+    expect(buildScorecard({ episodes: [ep({})] }).strategy).toBeNull()
+  })
   it('에피소드 최신순 정렬 + no-data 카운트', () => {
     const sc = { episodes: [
       ep({ id: 'old', entryTs: '2026-07-01T00:00:00.000Z', status: 'no-data' }),

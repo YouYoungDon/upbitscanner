@@ -151,11 +151,24 @@ export function buildScorecard(sc) {
     }
     return out
   }
+  // 🎯전략(조용한바닥) 픽의 규칙 기준 성적 (SL/TP/시간청산 — scoreStrategyOutcome 채점분)
+  const stratEps = eps.filter((e) => e.strategyOutcome)
+  const resolved = stratEps.filter((e) => ['sl', 'tp', 'time'].includes(e.strategyOutcome.reason))
+  const strategy = stratEps.length ? {
+    n: stratEps.length,
+    sl: stratEps.filter((e) => e.strategyOutcome.reason === 'sl').length,
+    tp: stratEps.filter((e) => e.strategyOutcome.reason === 'tp').length,
+    time: stratEps.filter((e) => e.strategyOutcome.reason === 'time').length,
+    open: stratEps.filter((e) => e.strategyOutcome.reason === 'open').length,
+    winRate: resolved.length ? resolved.filter((e) => e.strategyOutcome.ret > 0).length / resolved.length : null,
+    avgRet: avg(resolved.map((e) => e.strategyOutcome.ret)),
+  } : null
   return {
     updatedAt: sc.updatedAt ?? null,
     total: eps.length,
     pendingCount: eps.filter((e) => e.status === 'pending' || e.status === 'partial').length,
     noDataCount: eps.filter((e) => e.status === 'no-data').length,
+    strategy,
     horizons: agg(eps),
     regimes: {
       pre: agg(eps.filter((e) => Date.parse(e.entryTs) < SCORECARD_CUTOVER)),

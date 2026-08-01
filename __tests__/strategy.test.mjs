@@ -1,5 +1,47 @@
 import { describe, it, expect } from 'vitest'
-import { detectQuietBottom, strategyLevels, simulateTrade, quietBottomSeries } from '../lib/strategy.mjs'
+import { detectQuietBottom, strategyLevels, simulateTrade, quietBottomSeries, scoreStrategyOutcome } from '../lib/strategy.mjs'
+
+describe('scoreStrategyOutcome — 라이브 전략픽 SL/TP 자동 채점', () => {
+  const DAY = 86400
+  const params = { slPct: 10, tpPct: 18, holdMax: 7 }
+  // 진입 D0 = day 100 (스캔가 100). 확정봉은 day-index 기반 생성.
+  const ep = (over = {}) => ({ entryTs: new Date(100 * DAY * 1000).toISOString(), entryPrice: 100, ...over })
+  const candle = (day, { low = 95, high = 105, close = 100 } = {}) => ({ time: day * DAY, open: close, high, low, close, volume: 1 })
+  const nowAt = (day) => day * DAY * 1000
+
+  it('low<=SL이면 손절 청산 (ret = SL 기준)', () => {
+    const r = scoreStrategyOutcome(ep(), [candle(101), candle(102, { low: 89 })], params, nowAt(103))
+    expect(r).toEqual({ reason: 'sl', ret: expect.closeTo(-0.1, 5), exitDay: 2 })
+  })
+  it('high>=TP이면 목표 청산', () => {
+    const r = scoreStrategyOutcome(ep(), [candle(101, { high: 118.5 })], params, nowAt(102))
+    expect(r).toEqual({ reason: 'tp', ret: expect.closeTo(0.18, 5), exitDay: 1 })
+  })
+  it('같은 봉에서 SL·TP 동시 도달 시 손절 우선(보수적)', () => {
+    const r = scoreStrategyOutcome(ep(), [candle(101, { low: 88, high: 120 })], params, nowAt(102))
+    expect(r.reason).toBe('sl')
+  })
+  it('D+holdMax 봉까지 미도달이면 그 봉 종가로 시간 청산', () => {
+    const confirmed = Array.from({ length: 7 }, (_, i) => candle(101 + i, { close: 103 }))
+    const r = scoreStrategyOutcome(ep(), confirmed, params, nowAt(108))
+    expect(r).toEqual({ reason: 'time', ret: expect.closeTo(0.03, 5), exitDay: 7 })
+  })
+  it('캔들 결손일은 건너뛰고 다음 봉에서 판정', () => {
+    const r = scoreStrategyOutcome(ep(), [candle(103, { low: 88 })], params, nowAt(104)) // 101·102 없음
+    expect(r).toEqual({ reason: 'sl', ret: expect.closeTo(-0.1, 5), exitDay: 3 })
+  })
+  it('보유기간 내 미해결 + 데이터 미도래 → open', () => {
+    const r = scoreStrategyOutcome(ep(), [candle(101)], params, nowAt(103))
+    expect(r).toEqual({ reason: 'open' })
+  })
+  it('holdMax+3일 지나도 미해결이면 no-data', () => {
+    const r = scoreStrategyOutcome(ep(), [candle(101)], params, nowAt(111))
+    expect(r).toEqual({ reason: 'no-data' })
+  })
+  it('entryPrice 비정상 → no-data', () => {
+    expect(scoreStrategyOutcome(ep({ entryPrice: 0 }), [candle(101)], params, nowAt(102))).toEqual({ reason: 'no-data' })
+  })
+})
 
 // 합성 확정봉: 완만한 하락 + 조용한 거래량 (지표값은 실계산 결과를 기준으로 경계 검증)
 const mkCandles = (n) => Array.from({ length: n }, (_, i) => {

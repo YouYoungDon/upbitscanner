@@ -471,8 +471,15 @@ const routes = {
       pending: '<span class="badge badge-sm badge-ghost">대기</span>',
       'no-data': '<span class="badge badge-sm badge-warning badge-outline">데이터없음</span>',
     }[s] ?? esc(s))
+    const stratBadge = (o) => !o ? '' : ' ' + ({
+      sl: `<span class="badge badge-xs badge-error" title="전략 손절 청산 (D+${o.exitDay})">🎯SL</span>`,
+      tp: `<span class="badge badge-xs badge-success" title="전략 목표 청산 (D+${o.exitDay})">🎯TP</span>`,
+      time: `<span class="badge badge-xs badge-info" title="전략 시간 청산 ${o.ret >= 0 ? '+' : ''}${(o.ret * 100).toFixed(1)}%">🎯시간</span>`,
+      open: '<span class="badge badge-xs badge-ghost" title="전략 보유 중">🎯보유</span>',
+      'no-data': '<span class="badge badge-xs badge-warning" title="전략 채점 데이터 없음">🎯?</span>',
+    }[o.reason] ?? '')
     const rows = (list) => list.map((e) => `<tr>
-      <td><b>${esc(e.korean_name)}</b> <span class="text-xs opacity-60">${esc(e.market)}</span>${e.lowLiquidity ? ' <span class="badge badge-xs badge-warning">저유동</span>' : ''}</td>
+      <td><b>${esc(e.korean_name)}</b> <span class="text-xs opacity-60">${esc(e.market)}</span>${e.lowLiquidity ? ' <span class="badge badge-xs badge-warning">저유동</span>' : ''}${stratBadge(e.strategyOutcome)}</td>
       <td class="text-xs">${esc(String(e.entryTs).slice(0, 10))}</td>
       <td>${fmt(e.entryPrice)}</td>
       <td>${e.score ?? '-'}</td>
@@ -488,6 +495,14 @@ const routes = {
         ${kpiTile('에피소드', d.total, `대기 ${d.pendingCount} · 데이터없음 ${d.noDataCount}`)}
       </div>
       <div class="alert mb-4 text-sm">확정봉 체제(7/13~) +1일 승률: 이전 <b>${rg(d.regimes.pre)}</b> → 이후 <b>${rg(d.regimes.post)}</b></div>
+      ${d.strategy ? `<div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
+        <h3 class="card-title text-sm">🎯 조용한바닥 전략 (규칙 기준: SL/TP/보유일 청산)</h3>
+        <div class="kpi-row">
+          ${kpiTile('승률(확정)', d.strategy.winRate == null ? '—' : Math.round(d.strategy.winRate * 100) + '%', `평균 ${pctCell(d.strategy.avgRet)}`)}
+          ${kpiTile('청산', `${d.strategy.sl + d.strategy.tp + d.strategy.time}건`, `SL ${d.strategy.sl} · TP ${d.strategy.tp} · 시간 ${d.strategy.time}`)}
+          ${kpiTile('보유 중', `${d.strategy.open}건`, `전체 ${d.strategy.n}건`)}
+        </div>
+      </div></div>` : ''}
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
       <div class="overflow-x-auto">
         <table class="table table-sm">
