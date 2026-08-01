@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns } from '../lib/weekly.mjs'
+import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns, judgeAtHorizon, sideSummary, timedHitRates } from '../lib/weekly.mjs'
 
 describe('aggregateReturns', () => {
   it('신호별 평균 수익률(%) 집계', () => {
@@ -14,6 +14,73 @@ describe('aggregateReturns', () => {
   })
   it('ret 없으면 제외', () => {
     expect(aggregateReturns([{ signals: ['X'] }])).toEqual({})
+  })
+})
+
+describe('judgeAtHorizon — +1일 확정종가 판정', () => {
+  // closeOf: KRW-A는 dayIdx 101 종가 110, KRW-B는 캔들 없음(미확정/실패)
+  const closeOf = (market, dayIdx) => (market === 'KRW-A' && dayIdx === 101 ? 110 : null)
+  const base = { market: 'KRW-A', korean_name: '에이', dayIdx: 100, signals: ['RSI 과매도'] }
+
+  it('매수: D0+1 종가>신호가면 적중, ret은 % 수익률', () => {
+    const [r] = judgeAtHorizon([{ ...base, side: 'buy', signalPrice: 100 }], closeOf)
+    expect(r.hit).toBe(true)
+    expect(r.ret).toBeCloseTo(10, 5)
+    expect(r.side).toBe('buy')
+    expect(r.signals).toEqual(['RSI 과매도'])
+  })
+  it('매도: D0+1 종가<신호가면 적중, ret은 방향 기준 유리 수익률', () => {
+    const [r] = judgeAtHorizon([{ ...base, side: 'sell', signalPrice: 100 }], closeOf)
+    expect(r.hit).toBe(false) // 110 > 100 → 매도 미적중
+    expect(r.ret).toBeCloseTo((100 / 110 - 1) * 100, 2)
+  })
+  it('확정종가 없으면(미확정·fetch 실패) 레코드 제외', () => {
+    const preds = [
+      { ...base, side: 'buy', signalPrice: 100 },
+      { ...base, market: 'KRW-B', side: 'buy', signalPrice: 100 },
+    ]
+    expect(judgeAtHorizon(preds, closeOf)).toHaveLength(1)
+  })
+  it('horizonDays 지정 시 해당 일 종가로 판정', () => {
+    const c3 = (m, d) => (d === 103 ? 90 : null)
+    const [r] = judgeAtHorizon([{ ...base, side: 'buy', signalPrice: 100 }], c3, 3)
+    expect(r.hit).toBe(false)
+    expect(r.ret).toBeCloseTo(-10, 5)
+  })
+})
+
+describe('sideSummary — 매수/매도 분리 요약', () => {
+  it('side별 predictions/hits/hitRate', () => {
+    const records = [
+      { side: 'buy', hit: true }, { side: 'buy', hit: false }, { side: 'buy', hit: false },
+      { side: 'sell', hit: true }, { side: 'sell', hit: true },
+    ]
+    const s = sideSummary(records)
+    expect(s.buy).toEqual({ predictions: 3, hits: 1, hitRate: 0.333 })
+    expect(s.sell).toEqual({ predictions: 2, hits: 2, hitRate: 1 })
+  })
+  it('빈 쪽은 hitRate 0', () => {
+    expect(sideSummary([]).buy).toEqual({ predictions: 0, hits: 0, hitRate: 0 })
+  })
+})
+
+describe('timedHitRates — 확정종가 캐시 기반 +1/+3/+7일', () => {
+  const DAY_MS = 86400000
+  // 스캔 D0 = dayIdx 100. KRW-A: D+1=110(적중), D+3=90(미적중), D+7 캔들 없음
+  const scans = [{ timestamp: new Date(100 * DAY_MS).toISOString(), buy: [{ market: 'KRW-A', price: 100 }] }]
+  const closes = { 101: 110, 103: 90 }
+  const closeOf = (m, d) => (m === 'KRW-A' ? closes[d] ?? null : null)
+
+  it('창별 hit/total 집계, 데이터 없는 창은 null', () => {
+    const t = timedHitRates(scans, (s) => s.buy ?? [], closeOf)
+    expect(t['+1일']).toEqual({ hit: 1, total: 1, hitRate: 1 })
+    expect(t['+3일']).toEqual({ hit: 0, total: 1, hitRate: 0 })
+    expect(t['+7일']).toBeNull()
+  })
+  it('getItems로 모멘텀 픽(s.picks)도 동일 판정', () => {
+    const mom = [{ timestamp: new Date(100 * DAY_MS).toISOString(), picks: [{ market: 'KRW-A', price: 120 }] }]
+    const t = timedHitRates(mom, (s) => s.picks ?? [], closeOf)
+    expect(t['+1일']).toEqual({ hit: 0, total: 1, hitRate: 0 }) // 110 < 120
   })
 })
 

@@ -120,6 +120,7 @@ export function buildVerify(weekly, weights) {
   const latest = weekly?.weeks?.at(-1) || {}
   return {
     overallHitRate: latest.overallHitRate ?? null,
+    sideStats: latest.sideStats ?? null,
     timedHitRates: latest.timedHitRates ?? null,
     signalStats: latest.signalStats ?? {},
     weights: weights || {},

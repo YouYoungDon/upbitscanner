@@ -408,9 +408,14 @@ const routes = {
             <div class="text-error">${sellSpark}</div>
           </div></div>
         </div>`
+      const ss = v.sideStats
+      const headlineStats = ss
+        ? `<div class="stat"><div class="stat-title">매수 적중률</div><div class="stat-value text-success">${Math.round(ss.buy.hitRate * 100)}%</div><div class="stat-desc">${ss.buy.hits}/${ss.buy.predictions}건</div></div>
+           <div class="stat"><div class="stat-title">매도 적중률</div><div class="stat-value text-error">${Math.round(ss.sell.hitRate * 100)}%</div><div class="stat-desc">${ss.sell.hits}/${ss.sell.predictions}건</div></div>`
+        : `<div class="stat"><div class="stat-title">전체 적중률</div><div class="stat-value">${v.overallHitRate != null ? Math.round(v.overallHitRate * 100) + '%' : '-'}</div></div>`
       $('#rBody').innerHTML = `
         <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200 w-full mb-4">
-          <div class="stat"><div class="stat-title">전체 적중률</div><div class="stat-value">${v.overallHitRate != null ? Math.round(v.overallHitRate * 100) + '%' : '-'}</div></div>
+          ${headlineStats}
           <div class="stat"><div class="stat-title">+1일</div><div class="stat-value text-2xl">${timed['+1일'] ? Math.round(timed['+1일'].hitRate * 100) + '%' : '-'}</div></div>
           <div class="stat"><div class="stat-title">+3일</div><div class="stat-value text-2xl">${timed['+3일'] ? Math.round(timed['+3일'].hitRate * 100) + '%' : '-'}</div></div>
           <div class="stat"><div class="stat-title">+7일</div><div class="stat-value text-2xl">${timed['+7일'] ? Math.round(timed['+7일'].hitRate * 100) + '%' : '-'}</div></div>
@@ -419,7 +424,7 @@ const routes = {
         ${momCard}
         ${reportCard}
         <div class="card bg-base-200 shadow"><div class="card-body p-4">
-          <h3 class="card-title text-sm">신호별 적중률 / 평균수익 / 가중치 ${v.horizonMode ? `<span class="badge badge-ghost badge-xs" title="학습이 current-price 기준 aggregate라 보유기간이 혼재됨(후속: +3일 고정 horizon)">⏱ mixed-horizon</span>` : ''}</h3>
+          <h3 class="card-title text-sm">신호별 적중률 / 평균수익 / 가중치 ${v.horizonMode === 'confirmed-1d' ? `<span class="badge badge-ghost badge-xs" title="적중·가중치 학습이 스캔일 +1일 확정 종가 기준">⏱ +1일 확정</span>` : `<span class="badge badge-warning badge-xs" title="학습이 current-price 기준 aggregate라 보유기간이 혼재됨">⏱ mixed-horizon</span>`}</h3>
           <div class="overflow-x-auto"><table class="table table-zebra table-sm">
             <thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>평균수익</th><th>가중치</th></tr></thead>
             <tbody>${statsRows || '<tr><td colspan="5" class="opacity-60">데이터 없음 (주간 분석 필요)</td></tr>'}</tbody></table></div>
