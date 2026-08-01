@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns, judgeAtHorizon, sideSummary, timedHitRates } from '../lib/weekly.mjs'
+import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns, judgeAtHorizon, sideSummary, timedHitRates, statsWithReturns } from '../lib/weekly.mjs'
+
+describe('statsWithReturns — 적중률+평균수익 병합 (표시·학습 공용)', () => {
+  it('aggregateHitRates에 avgReturn 병합', () => {
+    const records = [
+      { signals: ['RSI 과매도'], hit: true, ret: 10 },
+      { signals: ['RSI 과매도'], hit: false, ret: -4 },
+    ]
+    const s = statsWithReturns(records)
+    expect(s['RSI 과매도'].count).toBe(2)
+    expect(s['RSI 과매도'].hitRate).toBeCloseTo(0.5)
+    expect(s['RSI 과매도'].avgReturn).toBe(3)
+  })
+})
 
 describe('aggregateReturns', () => {
   it('신호별 평균 수익률(%) 집계', () => {

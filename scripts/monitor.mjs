@@ -94,13 +94,14 @@ async function main() {
       // 떨어지는 칼 필터: 거래량 없는 과매도 GC + 하락배열이면 매수 감점
       const knife = fallingKnifePenalty(buySignals, sellSignals)
       if (knife.mult < 1) { finalBuyScore *= knife.mult; buySignals = [...buySignals, knife.label] }
+      // 추격 감점 ×0.8: 급증 후 진입은 통계적으로 불리 (+3일 승률 30%·평균 -3.4%, 라이브 실증 +1일 -8.64%).
+      // 다른 배수 감점과 같은 위치(보너스 가산 전). 🚀Pump Start는 급등 진입이 목적인 신호라 면제.
+      if (sig.volRatio != null && sig.volRatio >= 5 && !pump) { finalBuyScore *= 0.8; buySignals = [...buySignals, '⚠️추격주의(급등후)'] }
       // 지속성 보너스 (이력 기반, 마지막 가산)
       const hasVolumeSurge = buySignals.some((s) => s.startsWith('거래량 급증'))
       const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)
       finalBuyScore += pers.bonus
       if (pers.signals.length) buySignals = [...buySignals, ...pers.signals]
-      // 추격 감점 ×0.8: 급증 후 진입은 통계적으로 불리 (+3일 승률 30%·평균 -3.4%, 라이브 실증 +1일 -8.64%)
-      if (sig.volRatio != null && sig.volRatio >= 5) { finalBuyScore *= 0.8; buySignals = [...buySignals, '⚠️추격주의(급등후)'] }
       // 조용한 바닥 전략 태깅 (표시 전용 — 점수 불변)
       let strategyLv = null
       if (strategyConfig) {

@@ -30,6 +30,11 @@ describe('scoreStrategyOutcome — 라이브 전략픽 SL/TP 자동 채점', () 
     const r = scoreStrategyOutcome(ep(), [candle(103, { low: 88 })], params, nowAt(104)) // 101·102 없음
     expect(r).toEqual({ reason: 'sl', ret: expect.closeTo(-0.1, 5), exitDay: 3 })
   })
+  it('D+holdMax 봉 결손(거래정지) 시 유예 3일 내 첫 봉 종가로 시간 청산', () => {
+    const confirmed = [...Array.from({ length: 6 }, (_, i) => candle(101 + i)), candle(109, { close: 95 })]
+    const r = scoreStrategyOutcome(ep(), confirmed, params, nowAt(110))
+    expect(r).toEqual({ reason: 'time', ret: expect.closeTo(-0.05, 5), exitDay: 9 })
+  })
   it('보유기간 내 미해결 + 데이터 미도래 → open', () => {
     const r = scoreStrategyOutcome(ep(), [candle(101)], params, nowAt(103))
     expect(r).toEqual({ reason: 'open' })

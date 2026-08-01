@@ -409,9 +409,9 @@ const routes = {
           </div></div>
         </div>`
       const ss = v.sideStats
+      const sideStat = (title, s, color) => `<div class="stat"><div class="stat-title">${title}</div><div class="stat-value ${color}">${s.predictions ? Math.round(s.hitRate * 100) + '%' : '-'}</div><div class="stat-desc">${s.predictions ? `${s.hits}/${s.predictions}건` : '데이터 없음'}</div></div>`
       const headlineStats = ss
-        ? `<div class="stat"><div class="stat-title">매수 적중률</div><div class="stat-value text-success">${Math.round(ss.buy.hitRate * 100)}%</div><div class="stat-desc">${ss.buy.hits}/${ss.buy.predictions}건</div></div>
-           <div class="stat"><div class="stat-title">매도 적중률</div><div class="stat-value text-error">${Math.round(ss.sell.hitRate * 100)}%</div><div class="stat-desc">${ss.sell.hits}/${ss.sell.predictions}건</div></div>`
+        ? sideStat('매수 적중률', ss.buy, 'text-success') + sideStat('매도 적중률', ss.sell, 'text-error')
         : `<div class="stat"><div class="stat-title">전체 적중률</div><div class="stat-value">${v.overallHitRate != null ? Math.round(v.overallHitRate * 100) + '%' : '-'}</div></div>`
       $('#rBody').innerHTML = `
         <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200 w-full mb-4">
@@ -500,7 +500,7 @@ const routes = {
         <div class="kpi-row">
           ${kpiTile('승률(확정)', d.strategy.winRate == null ? '—' : Math.round(d.strategy.winRate * 100) + '%', `평균 ${pctCell(d.strategy.avgRet)}`)}
           ${kpiTile('청산', `${d.strategy.sl + d.strategy.tp + d.strategy.time}건`, `SL ${d.strategy.sl} · TP ${d.strategy.tp} · 시간 ${d.strategy.time}`)}
-          ${kpiTile('보유 중', `${d.strategy.open}건`, `전체 ${d.strategy.n}건`)}
+          ${kpiTile('보유 중', `${d.strategy.open}건`, `전체 ${d.strategy.n}건${d.strategy.noData ? ` · 데이터없음 ${d.strategy.noData}` : ''}`)}
         </div>
       </div></div>` : ''}
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>

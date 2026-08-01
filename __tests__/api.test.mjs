@@ -260,18 +260,21 @@ describe('buildScorecard', () => {
     expect(r.regimes.post.h1.n).toBe(1)
     expect(r.regimes.post.h1.winRate).toBe(0)
   })
-  it('🎯전략 요약: 확정분(sl/tp/time)만 승률·평균, open은 카운트만', () => {
+  it('🎯전략 요약: 확정분(sl/tp/time)만 승률·평균, open·no-data는 카운트 (합계 = n)', () => {
     const sc = { episodes: [
       ep({ id: 's1', strategyOutcome: { reason: 'sl', ret: -0.1, exitDay: 2 } }),
       ep({ id: 's2', strategyOutcome: { reason: 'tp', ret: 0.18, exitDay: 3 } }),
       ep({ id: 's3', strategyOutcome: { reason: 'open' } }),
+      ep({ id: 's5', strategyOutcome: { reason: 'no-data' } }),
       ep({ id: 's4' }), // 전략 아님 — 제외
     ] }
     const r = buildScorecard(sc)
-    expect(r.strategy.n).toBe(3)
+    expect(r.strategy.n).toBe(4)
     expect(r.strategy.sl).toBe(1)
     expect(r.strategy.tp).toBe(1)
     expect(r.strategy.open).toBe(1)
+    expect(r.strategy.noData).toBe(1)
+    expect(r.strategy.sl + r.strategy.tp + r.strategy.time + r.strategy.open + r.strategy.noData).toBe(r.strategy.n)
     expect(r.strategy.winRate).toBeCloseTo(0.5)
     expect(r.strategy.avgRet).toBeCloseTo((0.18 - 0.1) / 2)
   })

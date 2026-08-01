@@ -127,7 +127,7 @@ export function buildVerify(weekly, weights) {
     report: latest.report ?? null,
     momentum: latest.momentum ?? null,
     horizonMode: latest.horizonMode ?? 'current-price-mixed',
-    history: (weekly?.weeks || []).map((w) => ({ timestamp: w.timestamp, overallHitRate: w.overallHitRate })),
+    history: (weekly?.weeks || []).map((w) => ({ timestamp: w.timestamp, overallHitRate: w.overallHitRate, horizonMode: w.horizonMode ?? 'current-price-mixed' })),
   }
 }
 
@@ -151,17 +151,25 @@ export function buildScorecard(sc) {
     }
     return out
   }
-  // 🎯전략(조용한바닥) 픽의 규칙 기준 성적 (SL/TP/시간청산 — scoreStrategyOutcome 채점분)
-  const stratEps = eps.filter((e) => e.strategyOutcome)
-  const resolved = stratEps.filter((e) => ['sl', 'tp', 'time'].includes(e.strategyOutcome.reason))
-  const strategy = stratEps.length ? {
-    n: stratEps.length,
-    sl: stratEps.filter((e) => e.strategyOutcome.reason === 'sl').length,
-    tp: stratEps.filter((e) => e.strategyOutcome.reason === 'tp').length,
-    time: stratEps.filter((e) => e.strategyOutcome.reason === 'time').length,
-    open: stratEps.filter((e) => e.strategyOutcome.reason === 'open').length,
-    winRate: resolved.length ? resolved.filter((e) => e.strategyOutcome.ret > 0).length / resolved.length : null,
-    avgRet: avg(resolved.map((e) => e.strategyOutcome.ret)),
+  // 🎯전략(조용한바닥) 픽의 규칙 기준 성적 (SL/TP/시간청산 — scoreStrategyOutcome 채점분). 단일 순회 집계.
+  const st = { n: 0, sl: 0, tp: 0, time: 0, open: 0, noData: 0 }
+  let stWins = 0, stRetSum = 0, stResolved = 0
+  for (const e of eps) {
+    const o = e.strategyOutcome
+    if (!o) continue
+    st.n++
+    if (o.reason === 'no-data') st.noData++
+    else if (st[o.reason] != null) st[o.reason]++
+    if (o.reason === 'sl' || o.reason === 'tp' || o.reason === 'time') {
+      stResolved++
+      stRetSum += o.ret
+      if (o.ret > 0) stWins++
+    }
+  }
+  const strategy = st.n ? {
+    ...st,
+    winRate: stResolved ? stWins / stResolved : null,
+    avgRet: stResolved ? stRetSum / stResolved : null,
   } : null
   return {
     updatedAt: sc.updatedAt ?? null,

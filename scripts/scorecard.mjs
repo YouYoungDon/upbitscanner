@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { DATA_DIR, readJson, writeJson } from '../lib/store.mjs'
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
-import { confirmedOhlcv } from '../lib/ohlcv.mjs'
+import { confirmedOhlcvAsOf } from '../lib/ohlcv.mjs'
 import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes } from '../lib/scorecard.mjs'
 import { scoreStrategyOutcome } from '../lib/strategy.mjs'
 
@@ -51,7 +51,8 @@ async function main() {
     const oldest = Math.min(...eps.map((e) => Date.parse(e.entryTs)))
     const candles = await getDayCandles(market, neededCandleCount(oldest, now))
     if (!candles) { failedMarkets++; continue } // 다음 실행 때 재시도
-    const confirmed = confirmedOhlcv(candlesToOhlcv(candles))
+    // 날짜 인지 확정봉: 당일 거래가 없는 저유동 마켓에서 어제 확정봉을 잃지 않는다
+    const confirmed = confirmedOhlcvAsOf(candlesToOhlcv(candles), now)
     for (const e of eps) {
       const s = scoreEpisode(e, confirmed, now)
       if (needsStrategyScore(e, strategyConfig)) {
