@@ -250,7 +250,9 @@ async function notifyTelegram(buyList, ctx = {}) {
     return lines.join('\n')
   })
 
-  const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'short', timeStyle: 'short' })
+  const now = new Date()
+  const datePart = now.toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric', weekday: 'short' })
+  const timePart = now.toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false })
   const r = ctx.regime || {}
   const marketLine = r.ratio != null
     ? `${r.emoji || ''} 시장심리 ${r.ratio} (${r.label || r.trend || '-'}) · 매수 ${ctx.buyCount}/매도 ${ctx.sellCount}`
@@ -260,7 +262,8 @@ async function notifyTelegram(buyList, ctx = {}) {
   const tip = main.some((b) => readableSignals(b.signals).warns.some((w) => w.includes('추격')))
     ? '\n\n💡 ⚠️추격주의는 급등 후 진입 — 통계상 불리(관망 권장)'
     : ''
-  const msg = `🔔 <b>업비트 매수 신호</b>  ${esc(when)}\n${esc(marketLine)}${lowLine}\n\n${blocks.join('\n\n')}${tip}`
+  const header = `🔔 <b>업비트 매수 신호</b>\n🗓 <b>${esc(datePart)}</b>  ⏰ <b>${esc(timePart)}</b>`
+  const msg = `${header}\n━━━━━━━━━━━━━━\n${esc(marketLine)}${lowLine}\n\n${blocks.join('\n\n')}${tip}`
   try {
     await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
