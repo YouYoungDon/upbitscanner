@@ -170,7 +170,7 @@ async function main() {
   console.log(`스캔 #${scanNum} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
 
-  await notifyTelegram(buy)
+  await notifyTelegram(buy, { regime: regimeInfo, buyCount: buy.length, sellCount: sell.length })
   await notifyPositionAlerts()
 }
 
@@ -196,27 +196,75 @@ async function notifyPositionAlerts() {
   } catch { /* 무시 */ }
 }
 
-// Telegram 알림 (환경변수 TELEGRAM_TOKEN, TELEGRAM_CHAT_ID 설정 시 메인 매수 상위 5개 전송)
-async function notifyTelegram(buyList) {
+// 신호 배열 → 사람이 읽기 쉬운 (근거줄, 경고줄) 추출
+function readableSignals(signals) {
+  const s = signals || []
+  const has = (kw) => s.some((x) => x.includes(kw))
+  const grab = (kw) => s.find((x) => x.includes(kw))
+  const num = (kw) => { const m = grab(kw)?.match(/([\d.]+)/); return m ? m[1] : null }
+
+  const reasons = []
+  if (has('골든크로스')) {
+    const parts = []
+    if (has('Stoch 과매도 골든크로스') || has('Stoch 골든크로스')) parts.push('Stoch')
+    if (has('MACD 골든크로스')) parts.push('MACD')
+    reasons.push(`골든크로스${parts.length ? '(' + parts.join('·') + ')' : ''}`)
+  }
+  if (has('과매도') && !has('골든크로스')) reasons.push('과매도 반등')
+  const vol = num('거래량 급증')
+  if (vol) reasons.push(`거래량 ${vol}배`)
+  if (has('V-Bottom')) reasons.push('V바텀')
+  if (has('유동성 스윕')) reasons.push('바닥 스윕')
+  const pers = grab('지속 매수권')
+  if (pers) reasons.push(`🔥지속${(pers.match(/(\d+회)/) || [])[1] ? '(' + pers.match(/(\d+회)/)[1] + '+)' : ''}`)
+  if (has('[MTF]')) reasons.push('📡4h확인')
+
+  const warns = []
+  if (has('추격주의')) warns.push('추격주의(급등후)')
+  if (has('업비트단독')) warns.push('업비트단독펌프')
+  else if (has('업비트비중')) warns.push(`업비트비중 ${num('업비트비중') || ''}%`)
+  if (has('떨어지는') || has('낙하')) warns.push('낙하 중')
+  return { reasons, warns, strategy: has('🎯전략') }
+}
+
+// Telegram 알림 — 매수 상위 5종을 근거·경고와 함께 전송 (HTML)
+async function notifyTelegram(buyList, ctx = {}) {
   const TG_TOKEN = process.env.TELEGRAM_TOKEN
   const TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID
   if (!TG_TOKEN || !TG_CHAT_ID || buyList.length === 0) return
   const main = buyList.filter((b) => !b.lowLiquidity)
-  if (main.length === 0) return // 메인 매수 없으면 빈 알림 발송 안 함(저유동성 후보만 있을 때)
-  const lowN = buyList.length - main.length
-  const lines = main.slice(0, 5).map((b) => {
-    const mtf = b.signals.includes('[MTF] 4시간봉 Stoch GC 확인') ? ' 📡MTF' : ''
-    const stgc = b.signals.some((s) => s.includes('골든크로스')) ? ' 🟢GC' : ''
-    const sl = b.vbottomSL != null ? ` 🎯SL:${b.vbottomSL}` : b.pumpSL != null ? ` 🚀SL:${b.pumpSL}` : ''
-    return `• ${b.korean_name}(${b.market.replace('KRW-', '')}) score ${b.score.toFixed(1)}${stgc}${mtf}${sl}`
+  if (main.length === 0) return // 메인 매수 없으면 빈 알림 발송 안 함(저유동성 후보만)
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const fmt = (n) => (Math.abs(n) >= 1 ? Number(n).toLocaleString('ko-KR') : Number(n).toPrecision(3))
+
+  const blocks = main.slice(0, 5).map((b, i) => {
+    const { reasons, warns, strategy } = readableSignals(b.signals)
+    const tkr = b.market.replace('KRW-', '')
+    const head = `<b>${i + 1}. ${esc(b.korean_name)}</b> (${tkr}) · ${b.score.toFixed(1)}점 · ${fmt(b.price)}원`
+    const lines = [head]
+    if (reasons.length) lines.push(`  📈 ${esc(reasons.join(', '))}`)
+    if (strategy && b.strategy) lines.push(`  🎯 조용한바닥 · 손절 ${fmt(b.strategy.stopLoss)} / 목표 ${fmt(b.strategy.takeProfit)}`)
+    else if (b.vbottomSL != null) lines.push(`  🎯 V바텀 손절 ${fmt(b.vbottomSL)}`)
+    else if (b.pumpSL != null) lines.push(`  🚀 펌프 손절 ${fmt(b.pumpSL)}`)
+    if (warns.length) lines.push(`  ⚠️ ${esc(warns.join(' · '))}`)
+    return lines.join('\n')
   })
-  const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
-  const lowLine = lowN > 0 ? `\n\n⚠️ 저유동성 후보 ${lowN}개(별도)` : ''
-  const msg = `🚨 업비트 스캔 ${when}\n메인 매수 ${main.length}개${lowLine}\n\n${lines.join('\n')}`
+
+  const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'short', timeStyle: 'short' })
+  const r = ctx.regime || {}
+  const marketLine = r.ratio != null
+    ? `${r.emoji || ''} 시장심리 ${r.ratio} (${r.label || r.trend || '-'}) · 매수 ${ctx.buyCount}/매도 ${ctx.sellCount}`
+    : `매수 ${ctx.buyCount ?? main.length}건`
+  const lowN = buyList.length - main.length
+  const lowLine = lowN > 0 ? `\n<i>저유동성 후보 ${lowN}개는 별도(알림 제외)</i>` : ''
+  const tip = main.some((b) => readableSignals(b.signals).warns.some((w) => w.includes('추격')))
+    ? '\n\n💡 ⚠️추격주의는 급등 후 진입 — 통계상 불리(관망 권장)'
+    : ''
+  const msg = `🔔 <b>업비트 매수 신호</b>  ${esc(when)}\n${esc(marketLine)}${lowLine}\n\n${blocks.join('\n\n')}${tip}`
   try {
     await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg }),
+      body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg, parse_mode: 'HTML', disable_web_page_preview: true }),
       signal: AbortSignal.timeout(5_000),
     })
   } catch { /* 네트워크 오류 시 무시 */ }
