@@ -3,11 +3,12 @@
 import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { getMarkets, getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
+import { getMarkets, getDayCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcvAsOf } from '../lib/ohlcv.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
 import { detectQuietBottom } from '../lib/strategy.mjs'
 import { readJson, readWeights } from '../lib/store.mjs'
+import { buildScorecard } from '../server/api.mjs'
 import {
   parseCommand, resolveSymbol,
   formatCoin, formatStatus, formatStrategy, formatPositions, formatScorecard, formatHelp, formatNotFound,
@@ -56,13 +57,17 @@ async function handleCoin(arg) {
   const a = analyzeMarket(confirmed, { weights })
   const cfg = await readJson('strategy-config.json', null)
   const quietBottom = cfg ? detectQuietBottom(confirmed, cfg) : null
+  // 실시간가 조회(확정 종가가 아니라 지금 가격 표시·90일 위치 계산에 사용)
+  const [tk] = await getTicker([res.market]) || []
+  const price = tk?.trade_price ?? a.indicators.price
   const lows = confirmed.map((c) => c.low), highs = confirmed.map((c) => c.high)
   const min = Math.min(...lows.slice(-90)), max = Math.max(...highs.slice(-90))
-  const pos90 = max > min ? ((a.indicators.price - min) / (max - min)) * 100 : 0
+  // 실시간가가 확정 90일 범위를 벗어날 수 있어 0~100으로 클램프(신저점이면 0%)
+  const pos90 = max > min ? Math.max(0, Math.min(100, ((price - min) / (max - min)) * 100)) : 0
   const mk = markets.find((m) => m.market === res.market)
   const cautions = mk?.caution ? ['주의지정'] : []
   return formatCoin({
-    korean_name: res.korean_name, market: res.market,
+    korean_name: res.korean_name, market: res.market, price,
     indicators: a.indicators, quietBottom,
     designation: { warning: !!mk?.warning, cautions }, pos90,
   })
@@ -92,12 +97,16 @@ async function handleStatus() {
   })
 }
 
+// 로컬 API 우선, 실패 시 파일을 buildScorecard로 가공(전략·지평선 계산이 API와 동일하게 나오도록)
+async function scorecardData() {
+  return await localApi('/api/scorecard') || buildScorecard(await readJson('scorecard.json', { episodes: [] }))
+}
+
 async function handleStrategy() {
-  const sc = await localApi('/api/scorecard') || await readJson('scorecard.json', { episodes: [] })
-  const eps = sc.episodes || []
+  const sc = await scorecardData()
   const s = sc.strategy || null
   if (!s) return '🎯 전략 에피소드 없음'
-  const openList = eps.filter((e) => e.strategyOutcome?.reason === 'open').slice(0, 8)
+  const openList = (sc.episodes || []).filter((e) => e.strategyOutcome?.reason === 'open').slice(0, 8)
   return formatStrategy({ ...s, openList })
 }
 
@@ -108,7 +117,7 @@ async function handlePositions() {
 }
 
 async function handleScorecard() {
-  const sc = await localApi('/api/scorecard')
+  const sc = await scorecardData()
   if (!sc || sc.empty) return '📊 스코어카드 데이터 없음'
   return formatScorecard({ ...sc.horizons, total: sc.total, pendingCount: sc.pendingCount })
 }
@@ -141,6 +150,10 @@ async function loop() {
   if (init?.result?.length) offset = init.result.at(-1).update_id + 1
   for (;;) {
     const upd = await tg('getUpdates', { timeout: 25, offset })
+    if (upd?.error_code === 409) { // 다른 봇 인스턴스가 동시에 폴링 중 — 충돌 명시
+      console.error('⚠️ getUpdates 409 충돌 — 다른 봇 인스턴스가 실행 중일 수 있음. 15초 후 재시도')
+      await new Promise((r) => setTimeout(r, 15_000)); continue
+    }
     if (!upd?.ok) { await new Promise((r) => setTimeout(r, 5_000)); continue }
     for (const u of upd.result) {
       offset = u.update_id + 1

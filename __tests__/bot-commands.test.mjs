@@ -75,6 +75,24 @@ describe('formatCoin', () => {
     })
     expect(out).toContain('유의')
   })
+  it('price(실시간가) 있으면 확정 종가 대신 그걸 표시', () => {
+    const out = formatCoin({
+      korean_name: '소폰', market: 'KRW-SOPH', price: 5.55,
+      indicators: { price: 5.02, rsi: 30, stoch: { k: 10 }, macd: { hist: -0.1 }, volRatio: 1, ema20: 6, ema50: 7 },
+      quietBottom: null, designation: { warning: false, cautions: [] }, pos90: 5,
+    })
+    expect(out).toContain('5.55')     // 실시간가
+    expect(out).not.toContain('5.02') // 확정 종가는 헤더에 안 나옴
+  })
+  it('MACD null이면 하락(▼) 대신 "-"', () => {
+    const out = formatCoin({
+      korean_name: '신규', market: 'KRW-NEW',
+      indicators: { price: 10, rsi: null, stoch: null, macd: null, volRatio: null, ema20: 10, ema50: 10 },
+      quietBottom: null, designation: { warning: false, cautions: [] }, pos90: 0,
+    })
+    expect(out).toContain('MACD -')
+    expect(out).not.toContain('▼')
+  })
 })
 
 describe('formatStatus', () => {
