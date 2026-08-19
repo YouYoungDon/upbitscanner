@@ -1,1465 +1,797 @@
 {
   "started": "2026-06-17T11:38:30.091Z",
-  "totalScans": 263,
+  "totalScans": 441,
   "scans": [
     {
-      "timestamp": "2026-07-23T21:05:06.489Z",
+      "timestamp": "2026-08-15T09:02:27.577Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-15T12:02:28.791Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-15T15:03:47.049Z",
       "picks": [
         {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 69.6,
-          "score": 16,
+          "market": "KRW-PLUME",
+          "korean_name": "플룸",
+          "price": 17.7,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.017,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-15T18:04:00.013Z",
+      "picks": [
+        {
+          "market": "KRW-PLUME",
+          "korean_name": "플룸",
+          "price": 17.7,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.018,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-15T21:04:00.206Z",
+      "picks": [
+        {
+          "market": "KRW-PLUME",
+          "korean_name": "플룸",
+          "price": 17.7,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.018,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-16T00:04:02.534Z",
+      "picks": [
+        {
+          "market": "KRW-PLUME",
+          "korean_name": "플룸",
+          "price": 18.2,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.021,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13400,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 3봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.017,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-16T03:02:29.162Z",
+      "picks": [
+        {
+          "market": "KRW-PLUME",
+          "korean_name": "플룸",
+          "price": 18.2,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.021,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13400,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 3봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.015,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-16T06:04:04.120Z",
+      "picks": [
+        {
+          "market": "KRW-PLUME",
+          "korean_name": "플룸",
+          "price": 18.2,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.037,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13400,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 3봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.015,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-16T09:04:03.768Z",
+      "picks": [
+        {
+          "market": "KRW-PLUME",
+          "korean_name": "플룸",
+          "price": 18.2,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.049,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13400,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 3봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.013,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-16T12:04:01.646Z",
+      "picks": [
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13400,
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 3봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.013,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-16T15:05:00.547Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-16T18:05:00.163Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-16T21:05:01.270Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-17T00:05:00.049Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1203,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.389,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-17T03:05:01.256Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1203,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.368,
+            "mult": 1
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-17T06:05:01.055Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-17T09:04:58.936Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-17T12:02:28.521Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-17T15:04:59.128Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-17T18:04:59.714Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-17T21:05:01.563Z",
+      "picks": []
+    },
+    {
+      "timestamp": "2026-08-18T00:04:02.530Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1327,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 6봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.22,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13470,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.009,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ONG",
+          "korean_name": "온톨로지가스",
+          "price": 77.7,
+          "score": 10.8,
+          "signals": [
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️업비트비중 72%"
+          ],
+          "dominance": {
+            "share": 0.724,
+            "mult": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-18T03:05:01.530Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1327,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 6봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.187,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13470,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.009,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ONG",
+          "korean_name": "온톨로지가스",
+          "price": 77.7,
+          "score": 10.8,
+          "signals": [
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️업비트비중 62%"
+          ],
+          "dominance": {
+            "share": 0.624,
+            "mult": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-18T06:05:05.209Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1327,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 6봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.249,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13470,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.01,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ONG",
+          "korean_name": "온톨로지가스",
+          "price": 77.7,
+          "score": 10.8,
+          "signals": [
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️업비트비중 63%"
+          ],
+          "dominance": {
+            "share": 0.631,
+            "mult": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-18T09:05:04.237Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1327,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 6봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.255,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13470,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.01,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ONG",
+          "korean_name": "온톨로지가스",
+          "price": 77.7,
+          "score": 10.8,
+          "signals": [
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️업비트비중 65%"
+          ],
+          "dominance": {
+            "share": 0.646,
+            "mult": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-18T12:05:03.792Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1327,
+          "score": 12,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 6봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.242,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13470,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.01,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ONG",
+          "korean_name": "온톨로지가스",
+          "price": 77.7,
+          "score": 10.8,
+          "signals": [
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️업비트비중 67%"
+          ],
+          "dominance": {
+            "share": 0.667,
+            "mult": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-18T15:02:34.056Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1327,
+          "score": 12,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 6봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.246,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13470,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.009,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ONG",
+          "korean_name": "온톨로지가스",
+          "price": 77.7,
+          "score": 10.8,
+          "signals": [
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️업비트비중 74%"
+          ],
+          "dominance": {
+            "share": 0.741,
+            "mult": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-18T18:04:07.278Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1327,
+          "score": 12,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 6봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.257,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13470,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.009,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ONG",
+          "korean_name": "온톨로지가스",
+          "price": 77.7,
+          "score": 10.8,
+          "signals": [
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️업비트비중 77%"
+          ],
+          "dominance": {
+            "share": 0.765,
+            "mult": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-18T21:05:07.255Z",
+      "picks": [
+        {
+          "market": "KRW-PIEVERSE",
+          "korean_name": "파이버스",
+          "price": 1327,
+          "score": 12,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 6봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.249,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-LINK",
+          "korean_name": "체인링크",
+          "price": 13470,
+          "score": 10.8,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.009,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ONG",
+          "korean_name": "온톨로지가스",
+          "price": 77.7,
+          "score": 10.8,
+          "signals": [
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️업비트비중 75%"
+          ],
+          "dominance": {
+            "share": 0.752,
+            "mult": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-19T00:02:32.890Z",
+      "picks": [
+        {
+          "market": "KRW-PUMP",
+          "korean_name": "펌프펀",
+          "price": 4.35,
+          "score": 12.6,
           "signals": [
             "EMA 완전정배열 (20>50>200)",
-            "연속양봉 4봉",
+            "EMA20 상승기울기",
             "200봉 신고가 갱신",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.153,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 603,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.125,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ETH",
-          "korean_name": "이더리움",
-          "price": 2826000,
-          "score": 10,
-          "signals": [
-            "연속양봉 5봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.003,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-24T00:02:32.973Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.157,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.156,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-JTO",
-          "korean_name": "지토",
-          "price": 921,
-          "score": 10.8,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
+            "RSI 골디락스 (50~75)",
             "OBV 추세확인",
             "⚠️유동성 ×0.9"
           ],
           "dominance": {
-            "share": 0.045,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-24T03:04:06.468Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.161,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.137,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-JTO",
-          "korean_name": "지토",
-          "price": 921,
-          "score": 10.8,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.047,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-24T06:05:04.087Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.185,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.155,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-JTO",
-          "korean_name": "지토",
-          "price": 921,
-          "score": 10.8,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.042,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-24T09:04:59.106Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.143,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.139,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-24T12:02:33.433Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.129,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.143,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-JTO",
-          "korean_name": "지토",
-          "price": 921,
-          "score": 10.8,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.051,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-24T15:05:08.830Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.12,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.131,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-24T18:04:06.441Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.108,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.129,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-24T21:05:09.401Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.108,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.129,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-25T00:04:07.446Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78.3,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 6봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.106,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1158,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.172,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 563,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.123,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-25T03:02:32.080Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78.3,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 6봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.116,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1158,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.153,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 563,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.142,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-25T06:02:31.766Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78.3,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 6봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.157,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1158,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.156,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 563,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.117,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-25T09:02:32.110Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78.3,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 6봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.231,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1158,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.131,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 563,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.121,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-25T12:04:01.896Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78.3,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 6봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.294,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1158,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.143,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 563,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.103,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-25T15:02:30.979Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78.3,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 6봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.293,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1158,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.194,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 563,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.108,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-25T18:05:09.413Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 78.3,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 6봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.263,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1158,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.2,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 563,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.109,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-25T21:04:48.328Z",
-      "picks": []
-    },
-    {
-      "timestamp": "2026-07-26T00:04:48.178Z",
-      "picks": []
-    },
-    {
-      "timestamp": "2026-07-26T03:02:30.686Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 81.2,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 7봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.28,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1180,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 4봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.427,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 554,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.114,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-26T06:04:04.484Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 81.2,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 7봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.259,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1180,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 4봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.287,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 554,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.115,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-26T09:05:02.875Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 81.2,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 7봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.191,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1180,
-          "score": 12,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 4봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.278,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 554,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.12,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-26T12:05:06.769Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 81.2,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 7봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.195,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1180,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 4봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.269,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 554,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.117,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-26T15:03:45.829Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 81.2,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 7봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.202,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ENSO",
-          "korean_name": "엔소",
-          "price": 1180,
-          "score": 10.8,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 4봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.9"
-          ],
-          "dominance": {
-            "share": 0.206,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 109,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.296,
-            "mult": 1
-          },
-          "warn": "caution"
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 554,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.118,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-26T18:04:47.605Z",
-      "picks": [
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 109,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.262,
-            "mult": 1
-          },
-          "warn": "caution"
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-26T21:04:59.240Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 81.2,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 7봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.184,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 109,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.212,
-            "mult": 1
-          },
-          "warn": "caution"
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 554,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ],
-          "dominance": {
-            "share": 0.114,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-27T00:04:48.202Z",
-      "picks": [
-        {
-          "market": "KRW-VVV",
-          "korean_name": "베니스토큰",
-          "price": 20070,
-          "score": 10,
-          "signals": [
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.176,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 160,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "EMA20 상승기울기",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.219,
-            "mult": 1
-          },
-          "warn": "caution"
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-27T03:04:48.904Z",
-      "picks": [
-        {
-          "market": "KRW-VVV",
-          "korean_name": "베니스토큰",
-          "price": 20070,
-          "score": 10,
-          "signals": [
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.135,
-            "mult": 1
-          },
-          "warn": "caution"
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 160,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "EMA20 상승기울기",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.311,
-            "mult": 1
-          },
-          "warn": "caution"
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-27T06:05:09.347Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 85,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 8봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.152,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-VVV",
-          "korean_name": "베니스토큰",
-          "price": 20070,
-          "score": 10,
-          "signals": [
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.175,
-            "mult": 1
-          },
-          "warn": "caution"
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 160,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "EMA20 상승기울기",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.226,
-            "mult": 1
-          },
-          "warn": "caution"
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 매집 (선행)"
-          ],
-          "dominance": {
-            "share": 0.144,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-27T09:05:01.151Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 85,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 8봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.164,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 160,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "EMA20 상승기울기",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.263,
-            "mult": 1
-          },
-          "warn": "caution"
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 매집 (선행)"
-          ],
-          "dominance": {
-            "share": 0.147,
-            "mult": 1
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-07-27T12:05:08.942Z",
-      "picks": [
-        {
-          "market": "KRW-ZAMA",
-          "korean_name": "자마",
-          "price": 85,
-          "score": 14,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 8봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.147,
-            "mult": 1
-          }
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 160,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "EMA20 상승기울기",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산"
-          ],
-          "dominance": {
-            "share": 0.259,
-            "mult": 1
-          },
-          "warn": "caution"
-        },
-        {
-          "market": "KRW-ONDO",
-          "korean_name": "온도파이낸스",
-          "price": 588,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 매집 (선행)"
-          ],
-          "dominance": {
-            "share": 0.157,
+            "share": 0.022,
             "mult": 1
           }
         }
