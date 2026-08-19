@@ -16,7 +16,7 @@ import {
 
 const TOKEN = process.env.TELEGRAM_TOKEN
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID
-const API = `https://api.telegram.org/bot${TOKEN}`
+const API = `${process.env.TG_API_BASE || 'https://api.telegram.org'}/bot${TOKEN}` // 베이스는 테스트용 오버라이드 가능
 const LOCAL = 'http://127.0.0.1:8787'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
