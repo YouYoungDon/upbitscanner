@@ -14,6 +14,7 @@
     "flow": "node scripts/flow-scan.mjs",
     "scorecard": "node scripts/scorecard.mjs",
     "strategy-backtest": "node scripts/strategy-backtest.mjs",
+    "bot": "node scripts/telegram-bot.mjs",
     "test": "vitest run"
   },
   "devDependencies": {
