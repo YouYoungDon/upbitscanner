@@ -77,3 +77,13 @@
 
 REFUTED 2건(기각): 실패 경로 sleep 생략(→ get() 내부 백오프가 이미 더
 느리게 페이싱), 마이그레이션 이중학습(→ 저널에 문서화된 1회성 교정).
+
+## 3. 텔레그램 명령형 봇 (2026-08-19)
+
+설계·플랜: `docs/superpowers/{specs,plans}/2026-08-19-telegram-command-bot*`.
+
+- 조회 전용 상주 봇(`scripts/telegram-bot.mjs`, getUpdates 롱폴링). chat_id 화이트리스트.
+- 명령 6종 + help: `/scan`(수동 스캔 트리거), `/코인 <심볼>`(지표·90일위치·유의지정·조용한바닥 시그니처), `/status`(시장심리·레짐·상위매수), `/전략`, `/포지션`, `/스코어카드`.
+- 순수 로직 분리: `lib/bot-commands.mjs`(파서·심볼해석·포맷터 6종), `lib/signal-format.mjs`(monitor와 공유하는 신호→근거 변환, monitor.mjs에서 승격).
+- 데이터: 로컬 8787 API 우선, 실패 시 파일 폴백. /scan·/코인은 업비트 직접.
+- 작업 스케줄러 AtLogOn 상주 등록(RestartCount로 자동 재기동). 테스트 +23개(signal-format 5, bot-commands 18).

@@ -63,4 +63,12 @@ $wTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '22:00'
 Register-ScheduledTask -TaskName 'UpbitWeekly_Sun' -Action $wAction -Trigger $wTrigger -Settings $settings -Force | Out-Null
 Write-Host "registered: UpbitWeekly_Sun @ Sun 22:00"
 
+# 상주 텔레그램 봇 — 로그인 시 시작(조회 명령 응답). 스캔 태스크와 독립.
+$botScript = Join-Path $projectRoot 'scripts\telegram-bot.mjs'
+$botAction = New-LoggingAction $botScript 'UpbitTelegramBot'
+$botTrigger = New-ScheduledTaskTrigger -AtLogOn
+$botSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartInterval (New-TimeSpan -Minutes 1) -RestartCount 999
+Register-ScheduledTask -TaskName 'UpbitTelegramBot' -Action $botAction -Trigger $botTrigger -Settings $botSettings -Force | Out-Null
+Write-Host "registered: UpbitTelegramBot (AtLogOn, always-on)"
+
 Write-Host "`nverify: Get-ScheduledTask -TaskName 'Upbit*'"
