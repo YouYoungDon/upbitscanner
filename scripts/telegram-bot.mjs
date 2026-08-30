@@ -107,7 +107,7 @@ async function handleStrategy() {
   const s = sc.strategy || null
   if (!s) return '🎯 전략 에피소드 없음'
   const openList = (sc.episodes || []).filter((e) => e.strategyOutcome?.reason === 'open').slice(0, 8)
-  return formatStrategy({ ...s, openList })
+  return formatStrategy({ ...s, openList, risk: sc.risk?.strategy })
 }
 
 async function handlePositions() {
@@ -119,7 +119,7 @@ async function handlePositions() {
 async function handleScorecard() {
   const sc = await scorecardData()
   if (!sc || sc.empty) return '📊 스코어카드 데이터 없음'
-  return formatScorecard({ ...sc.horizons, total: sc.total, pendingCount: sc.pendingCount })
+  return formatScorecard({ ...sc.horizons, total: sc.total, pendingCount: sc.pendingCount, risk: sc.risk?.scorecard })
 }
 
 function handleScan() {

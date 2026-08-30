@@ -111,6 +111,16 @@ describe('formatStrategy', () => {
     expect(out).toContain('14%')
     expect(out).toContain('칠리즈')
   })
+  it('risk 있으면 MDD·샤프 줄', () => {
+    const out = formatStrategy({ n: 3, sl: 1, tp: 1, time: 1, open: 0, noData: 0, winRate: 0.667, avgRet: 0.037, risk: { mdd: -0.1, sharpe: 0.26, n: 3 } })
+    expect(out).toContain('MDD')
+    expect(out).toContain('-10.0%')
+    expect(out).toContain('0.26')
+  })
+  it('risk 없으면 MDD 줄 없음', () => {
+    const out = formatStrategy({ n: 3, sl: 1, tp: 1, time: 1, open: 0, noData: 0, winRate: 0.667, avgRet: 0.037 })
+    expect(out).not.toContain('MDD')
+  })
 })
 
 describe('formatPositions', () => {
@@ -126,9 +136,15 @@ describe('formatPositions', () => {
 
 describe('formatScorecard', () => {
   it('지평선별 승률', () => {
-    const out = formatScorecard({ h1: { winRate: 0.42, avgRet: 0.01, n: 401 }, h3: { winRate: 0.26, avgRet: -0.01, n: 300 }, h7: { winRate: 0.16, avgRet: -0.02, n: 200 }, total: 936, pendingCount: 20 })
+    const out = formatScorecard({ h1: { winRate: 0.42, avgRet: 0.01, sharpe: 0.33, n: 401 }, h3: { winRate: 0.26, avgRet: -0.01, sharpe: null, n: 300 }, h7: { winRate: 0.16, avgRet: -0.02, sharpe: null, n: 200 }, total: 936, pendingCount: 20 })
     expect(out).toContain('42%')
     expect(out).toContain('936')
+    expect(out).toContain('0.33') // h1 샤프
+  })
+  it('risk 있으면 MDD·샤프 줄', () => {
+    const out = formatScorecard({ h1: { winRate: 0.42, avgRet: 0.01, sharpe: 0.33, n: 401 }, h3: { n: 0 }, h7: { n: 0 }, total: 936, pendingCount: 20, risk: { mdd: -0.03, sharpe: 0.33, n: 42 } })
+    expect(out).toContain('MDD')
+    expect(out).toContain('-3.0%')
   })
 })
 

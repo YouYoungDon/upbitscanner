@@ -461,9 +461,10 @@ const routes = {
     const pctCell = (v) => v == null ? '<span class="opacity-40">—</span>'
       : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}%</span>`
     const kpiTile = (label, val, sub) => `<div class="kpi-tile"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div><div class="text-xs opacity-60">${sub}</div></div>`
+    const sh = (v) => v == null ? '—' : Number(v).toFixed(2) // 샤프(per-trade, 연율화 없음)
     const hTile = (name, h) => kpiTile(name,
       h.winRate == null ? '—' : `${Math.round(h.winRate * 100)}%`,
-      h.n ? `평균 ${pctCell(h.avgRet)} · MFE ${pctCell(h.avgMfe)} · n=${h.n}` : '표본 없음')
+      h.n ? `평균 ${pctCell(h.avgRet)} · MFE ${pctCell(h.avgMfe)} · 샤프 ${sh(h.sharpe)} · n=${h.n}` : '표본 없음')
     const rg = (r) => r.h1.winRate == null ? '—' : `${Math.round(r.h1.winRate * 100)}% (n=${r.h1.n})`
     const statusBadge = (s) => ({
       done: '<span class="badge badge-sm badge-success badge-outline">완료</span>',
@@ -495,12 +496,14 @@ const routes = {
         ${kpiTile('에피소드', d.total, `대기 ${d.pendingCount} · 데이터없음 ${d.noDataCount}`)}
       </div>
       <div class="alert mb-4 text-sm">확정봉 체제(7/13~) +1일 승률: 이전 <b>${rg(d.regimes.pre)}</b> → 이후 <b>${rg(d.regimes.post)}</b></div>
+      ${d.risk?.scorecard?.n >= 2 ? `<div class="alert mb-4 text-sm">📉 리스크(+1일 일별포트폴리오): MDD ${pctCell(d.risk.scorecard.mdd)} · 샤프 ${sh(d.risk.scorecard.sharpe)} <span class="opacity-60">(per-trade, n=${d.risk.scorecard.n})</span></div>` : ''}
       ${d.strategy ? `<div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
         <h3 class="card-title text-sm">🎯 조용한바닥 전략 (규칙 기준: SL/TP/보유일 청산)</h3>
         <div class="kpi-row">
           ${kpiTile('승률(확정)', d.strategy.winRate == null ? '—' : Math.round(d.strategy.winRate * 100) + '%', `평균 ${pctCell(d.strategy.avgRet)}`)}
           ${kpiTile('청산', `${d.strategy.sl + d.strategy.tp + d.strategy.time}건`, `SL ${d.strategy.sl} · TP ${d.strategy.tp} · 시간 ${d.strategy.time}`)}
           ${kpiTile('보유 중', `${d.strategy.open}건`, `전체 ${d.strategy.n}건${d.strategy.noData ? ` · 데이터없음 ${d.strategy.noData}` : ''}`)}
+          ${d.risk?.strategy?.n >= 2 ? kpiTile('리스크(실현)', `MDD ${pctCell(d.risk.strategy.mdd)}`, `샤프 ${sh(d.risk.strategy.sharpe)} · n=${d.risk.strategy.n}`) : ''}
         </div>
       </div></div>` : ''}
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
