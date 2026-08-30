@@ -87,3 +87,31 @@ REFUTED 2건(기각): 실패 경로 sleep 생략(→ get() 내부 백오프가 �
 - 순수 로직 분리: `lib/bot-commands.mjs`(파서·심볼해석·포맷터 6종), `lib/signal-format.mjs`(monitor와 공유하는 신호→근거 변환, monitor.mjs에서 승격).
 - 데이터: 로컬 8787 API 우선, 실패 시 파일 폴백. /scan·/코인은 업비트 직접.
 - 작업 스케줄러 AtLogOn 상주 등록(RestartCount로 자동 재기동). 테스트 +23개(signal-format 5, bot-commands 18).
+
+## 4. 스코어카드 리스크 지표 — MDD + 샤프 (2026-08-31)
+
+설계: `docs/superpowers/specs/2026-08-30-scorecard-risk-metrics-design.md`.
+gs-quant(Apache-2.0) `econometrics.max_drawdown`·`sharpe_ratio` 수식 참조 — 라이브러리
+의존이 아니라 표준 수식을 Node.js로 이식. 테스트 397→456(신설 20: perf-metrics 14,
+api risk 3, bot risk 3).
+
+**배경 — gs-quant 참조 3종 중 실제 공백은 하나뿐**
+- 볼린저(요청 ②): `signals.mjs`(하단지지/상단돌파)+`momentum.mjs`(스퀴즈→발산)+신규엔진
+  `volCompression.mjs`로 이미 구현됨 → 재작업 제외.
+- winsorize(요청 ③): 신규 엔진 피처가 percentileVsUniverse/fixedCurve/vsOwnHistory
+  정규화 사용(백분위=강한 이상치 방어) + volComboMult 버킷 상한 → 구조적으로 이미 처리 → 제외.
+- MDD·샤프(요청 ①): buildScorecard가 승률·평균수익·MFE만 계산 → **실제 공백** → 이번 대상.
+
+**신규 순수 모듈 `lib/perf-metrics.mjs`**
+- `equityCurve`/`maxDrawdown`(러닝피크 대비)/`sharpe`(per-trade, 표본std, n<2·std0 가드)/
+  `strategyReturns`(청산 SL/TP/시간 실현수익 진입일순)/`dailyPortfolioReturns`(진입일별 평균)/
+  `riskMetrics`(→{mdd,sharpe,n}).
+
+**배선·표면**
+- `buildScorecard`: 지평선 블록에 per-trade 분포 샤프 + 최상위 `risk{scorecard,strategy}`.
+  scorecard=+1일 비중첩 일별포트폴리오 곡선, strategy=실현 SL/TP 곡선.
+- 봇 `/스코어카드`·`/전략`에 MDD·샤프 줄, 대시보드 스코어카드 카드에 표기(n≥2 가드).
+
+**정직성**: 샤프 연율화 안 함(라벨 명시), MDD는 실현 곡선만, +7일 곡선은 중첩이라
+MDD 제외(분포 샤프만), n<2·std0은 `-`. 라이브 실측(에피소드 979): 스코어카드 MDD
+-56%·샤프 -0.31(n67), 전략 MDD -41%·샤프 -0.14(n15) — 약세장 반영한 정직한 수치.
