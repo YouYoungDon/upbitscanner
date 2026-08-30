@@ -1,6 +1,7 @@
 import { topSignalsOfScan, bestHitRateSignal } from '../lib/insights.mjs'
 import { summarizeScans } from '../lib/archive.mjs'
 import { aggregateRecommendations } from '../lib/recommend.mjs'
+import { sharpe, riskMetrics, strategyReturns, dailyPortfolioReturns } from '../lib/perf-metrics.mjs'
 
 // 일간(24h)/주간(7일) 누적 추천 — 아카이브 전체를 윈도우로 집계 (최신 스캔 아님).
 // 어떤 집계 실패에도 빈 배열 폴백 — 대시보드 무중단.
@@ -147,6 +148,7 @@ export function buildScorecard(sc) {
         winRate: scored.length ? scored.filter((e) => e[`ret${n}`] > 0).length / scored.length : null,
         avgRet: avg(scored.map((e) => e[`ret${n}`])),
         avgMfe: avg(scored.map((e) => e[`mfe${n}`]).filter((v) => v != null)),
+        sharpe: sharpe(scored.map((e) => e[`ret${n}`])), // per-trade 분포 샤프
       }
     }
     return out
@@ -171,12 +173,18 @@ export function buildScorecard(sc) {
     winRate: stResolved ? stWins / stResolved : null,
     avgRet: stResolved ? stRetSum / stResolved : null,
   } : null
+  // 리스크 곡선: 전략=실현 SL/TP/시간청산, 스코어카드=+1일 비중첩 일별포트폴리오. MDD·샤프.
+  const risk = {
+    scorecard: riskMetrics(dailyPortfolioReturns(eps, 1)),
+    strategy: riskMetrics(strategyReturns(eps)),
+  }
   return {
     updatedAt: sc.updatedAt ?? null,
     total: eps.length,
     pendingCount: eps.filter((e) => e.status === 'pending' || e.status === 'partial').length,
     noDataCount: eps.filter((e) => e.status === 'no-data').length,
     strategy,
+    risk,
     horizons: agg(eps),
     regimes: {
       pre: agg(eps.filter((e) => Date.parse(e.entryTs) < SCORECARD_CUTOVER)),

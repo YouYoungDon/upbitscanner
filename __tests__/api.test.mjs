@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildResults, buildInsights, buildVerify, comboDistribution, candleSummary, buildHistory, buildMomentum } from '../server/api.mjs'
+import { buildResults, buildInsights, buildVerify, comboDistribution, candleSummary, buildHistory, buildMomentum, buildScorecard } from '../server/api.mjs'
 
 const log = {
   totalScans: 5,
@@ -9,6 +9,38 @@ const log = {
     sell: [{ market: 'KRW-B', korean_name: '비', price: 20, score: 4, signals: ['MACD 하락'] }],
   }],
 }
+
+describe('buildScorecard risk (MDD·샤프)', () => {
+  const ep = (id, ts, ret1, so) => ({
+    id, market: id, korean_name: id, entryTs: ts, entryPrice: 10,
+    ret1, ret3: null, ret7: null, mfe1: null, status: 'done', strategyOutcome: so,
+  })
+  const sc = {
+    updatedAt: '2026-08-04T00:00:00Z',
+    episodes: [
+      ep('KRW-A', '2026-08-01T00:00:00Z', 0.05, { reason: 'tp', ret: 0.18 }),
+      ep('KRW-B', '2026-08-02T00:00:00Z', -0.03, { reason: 'sl', ret: -0.10 }),
+      ep('KRW-C', '2026-08-03T00:00:00Z', 0.02, { reason: 'time', ret: 0.03 }),
+    ],
+  }
+  const r = buildScorecard(sc)
+
+  it('전략 실현곡선 MDD·샤프', () => {
+    expect(r.risk.strategy.n).toBe(3)
+    expect(r.risk.strategy.mdd).toBeCloseTo(-0.1, 6) // 1.062/1.18 - 1
+    expect(r.risk.strategy.sharpe).toBeCloseTo(0.26168, 4)
+  })
+  it('스코어카드 +1일 일별포트폴리오 MDD·샤프', () => {
+    expect(r.risk.scorecard.n).toBe(3)
+    expect(r.risk.scorecard.mdd).toBeCloseTo(-0.03, 6)
+    expect(r.risk.scorecard.sharpe).toBeCloseTo(0.32991, 4)
+  })
+  it('지평선 블록에 per-trade 샤프', () => {
+    expect(r.horizons.h1.sharpe).toBeCloseTo(0.32991, 4)
+    expect(r.horizons.h3.n).toBe(0)
+    expect(r.horizons.h3.sharpe).toBeNull() // 채점 0건
+  })
+})
 
 describe('buildResults', () => {
   it('최신 스캔의 매수/매도 + KPI', () => {
