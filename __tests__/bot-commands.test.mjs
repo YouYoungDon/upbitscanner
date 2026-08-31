@@ -121,6 +121,10 @@ describe('formatStrategy', () => {
     const out = formatStrategy({ n: 3, sl: 1, tp: 1, time: 1, open: 0, noData: 0, winRate: 0.667, avgRet: 0.037 })
     expect(out).not.toContain('MDD')
   })
+  it('risk n<2면 MDD 줄 숨김 (UI와 일치)', () => {
+    const out = formatStrategy({ n: 1, sl: 1, tp: 0, time: 0, open: 0, noData: 0, winRate: 1, avgRet: 0.1, risk: { mdd: null, sharpe: null, n: 1 } })
+    expect(out).not.toContain('MDD')
+  })
 })
 
 describe('formatPositions', () => {
@@ -145,6 +149,10 @@ describe('formatScorecard', () => {
     const out = formatScorecard({ h1: { winRate: 0.42, avgRet: 0.01, sharpe: 0.33, n: 401 }, h3: { n: 0 }, h7: { n: 0 }, total: 936, pendingCount: 20, risk: { mdd: -0.03, sharpe: 0.33, n: 42 } })
     expect(out).toContain('MDD')
     expect(out).toContain('-3.0%')
+  })
+  it('risk n<2면 MDD 줄 숨김 (UI와 일치)', () => {
+    const out = formatScorecard({ h1: { winRate: 0.42, avgRet: 0.01, sharpe: 0.33, n: 401 }, h3: { n: 0 }, h7: { n: 0 }, total: 936, pendingCount: 20, risk: { mdd: null, sharpe: null, n: 1 } })
+    expect(out).not.toContain('MDD')
   })
 })
 
