@@ -48,6 +48,11 @@ describe('sharpe', () => {
   it('표준편차 0 → null', () => {
     expect(sharpe([0.03, 0.03, 0.03])).toBeNull()
   })
+  it('비유한값(NaN/Infinity) 제외 후 계산', () => {
+    expect(sharpe([0.1, NaN, 0.05])).toBeCloseTo(sharpe([0.1, 0.05]), 10)
+    expect(sharpe([0.1, Infinity, 0.05])).toBeCloseTo(sharpe([0.1, 0.05]), 10)
+    expect(sharpe([0.1, NaN])).toBeNull() // 정제 후 n<2
+  })
 })
 
 describe('strategyReturns', () => {
@@ -66,6 +71,13 @@ describe('strategyReturns', () => {
   it('빈 입력 → 빈 배열', () => {
     expect(strategyReturns([])).toEqual([])
   })
+  it('비유한 ret(NaN) 제외', () => {
+    const eps = [
+      ep('2026-08-01T00:00:00Z', 'sl', -0.1),
+      ep('2026-08-02T00:00:00Z', 'tp', NaN),
+    ]
+    expect(strategyReturns(eps)).toEqual([-0.1])
+  })
 })
 
 describe('dailyPortfolioReturns', () => {
@@ -82,6 +94,10 @@ describe('dailyPortfolioReturns', () => {
   it('채점 안 된(ret null) 픽 제외', () => {
     const eps = [ep('2026-08-01T00:00:00Z', null), ep('2026-08-01T00:00:00Z', 0.05)]
     expect(dailyPortfolioReturns(eps, 1)).toEqual([0.05])
+  })
+  it('비유한 ret(NaN) 픽 제외 — 일평균 오염 방지', () => {
+    const eps = [ep('2026-08-01T00:00:00Z', NaN), ep('2026-08-01T00:00:00Z', 0.05)]
+    expect(dailyPortfolioReturns(eps, 1)).toEqual([0.05]) // NaN 제외 후 평균
   })
   it('빈 입력 → 빈 배열', () => {
     expect(dailyPortfolioReturns([], 1)).toEqual([])
