@@ -1,3 +1,4 @@
+import '../lib/env.mjs' // .env 로드(스케줄러 환경 캐시 미스 대비) — Telegram 알림 토큰 확보
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcv, ensureMinConfirmed } from '../lib/ohlcv.mjs'
 import { scoreMomentum, MIN_MOMENTUM_SCORE } from '../lib/momentum.mjs'
