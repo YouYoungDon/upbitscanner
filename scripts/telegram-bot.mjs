@@ -1,6 +1,7 @@
 // 텔레그램 명령형 봇 — getUpdates 롱폴링. 조회 전용. chat_id 화이트리스트.
 // 실행: npm run bot (또는 작업 스케줄러 로그인 시 시작)
 import { spawn } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { getMarkets, getDayCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
@@ -14,11 +15,27 @@ import {
   formatCoin, formatStatus, formatStrategy, formatPositions, formatScorecard, formatHelp, formatNotFound,
 } from '../lib/bot-commands.mjs'
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// .env 로드 — 작업 스케줄러가 캐시한 환경에 User 환경변수가 없을 때 대비.
+// 빈 값은 건너뛰고, 이미 설정된 process.env는 덮지 않는다(환경변수 우선).
+function loadDotenv() {
+  try {
+    const txt = readFileSync(join(__dirname, '..', '.env'), 'utf8')
+    for (const line of txt.split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/)
+      if (!m) continue
+      const [, k, v] = m
+      if (v && !process.env[k]) process.env[k] = v
+    }
+  } catch { /* .env 없으면 무시 */ }
+}
+loadDotenv()
+
 const TOKEN = process.env.TELEGRAM_TOKEN
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID
 const API = `${process.env.TG_API_BASE || 'https://api.telegram.org'}/bot${TOKEN}` // 베이스는 테스트용 오버라이드 가능
 const LOCAL = 'http://127.0.0.1:8787'
-const __dirname = dirname(fileURLToPath(import.meta.url))
 
 if (!TOKEN || !CHAT_ID) { console.error('TELEGRAM_TOKEN/CHAT_ID 미설정 — 봇 종료'); process.exit(0) }
 
