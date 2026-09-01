@@ -35,7 +35,9 @@ try {
   Write-Host "wake timers enabled (AC/DC)"
 } catch { Write-Host "wake timer step skipped: $_" }
 
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd
+# ExecutionTimeLimit 15min: default is 72H, which lets a phantom 'Running' zombie
+# block all subsequent runs (IgnoreNew) for days. 15min lets a hang self-clear fast.
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
 
 # capture stdout/stderr per task -> data\task-logs\<Name>.log (so intermittent failures leave evidence)
 $logDir = Join-Path $projectRoot 'data\task-logs'
