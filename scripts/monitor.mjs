@@ -13,6 +13,7 @@ import { ensureCgData } from '../lib/cg-data.mjs'
 import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
+import { ensureKimchi, premiumBand, coinFlag } from '../lib/kimchi.mjs'
 import { readableSignals } from '../lib/signal-format.mjs'
 import scoringRegistry from '../lib/scoring/features/index.mjs'
 import { loadScoringConfig } from '../lib/scoring/config.mjs'
@@ -144,12 +145,24 @@ async function main() {
   buy.sort((a, b) => b.score - a.score)
   sell.sort((a, b) => b.score - a.score)
 
+  // 김치 프리미엄 (라이브 업비트 vs 바이낸스). 표시·경고 전용 — 점수 미개입.
+  const kimchi = await ensureKimchi([...new Set(['KRW-BTC', ...buy.map((b) => b.market)])])
+  for (const b of buy) {
+    const p = kimchi.byMarket[b.market]?.premium
+    if (p == null) continue
+    b.kimchi = { premium: p }
+    const flag = coinFlag(p, kimchi.btcPremium)
+    if (flag) b.kimchi.flag = flag
+  }
+
   const ratio = +(buy.length / Math.max(sell.length, 1)).toFixed(2)
   const regimeInfo = { trend: regime.trend, ratio, ...regimeLabel(ratio, regime.trend) }
   const entry = { timestamp: new Date().toISOString(), buy, sell, regime: regimeInfo }
   entry.cgCoverage = cg.coverage
   if (cg.fetchedAt) entry.cgFetchedAt = cg.fetchedAt
   if (cg.reason) entry.cgReason = cg.reason
+  entry.kimchi = { btcPremium: kimchi.btcPremium, band: premiumBand(kimchi.btcPremium), usdtKrw: kimchi.usdtKrw, coverage: kimchi.coverage }
+  if (kimchi.reason) entry.kimchi.reason = kimchi.reason
   // 쉐도우 스코어링(신규 API 0, 실패해도 기존 스캔 불변). 기존 buy/sell/regime는 손대지 않는다.
   const tickerMap = Object.fromEntries(Object.keys(candleMap).map((m) => [m, { acc_trade_price_24h: tradePrice[m] }]))
   const buyMarkets = buy.map((b) => b.market)
@@ -172,7 +185,7 @@ async function main() {
   console.log(`스캔 #${scanNum} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
 
-  await notifyTelegram(buy, { regime: regimeInfo, buyCount: buy.length, sellCount: sell.length })
+  await notifyTelegram(buy, { regime: regimeInfo, buyCount: buy.length, sellCount: sell.length, kimchi: entry.kimchi })
   await notifyPositionAlerts()
 }
 
@@ -218,6 +231,8 @@ async function notifyTelegram(buyList, ctx = {}) {
     else if (b.vbottomSL != null) lines.push(`  🎯 V바텀 손절 ${fmt(b.vbottomSL)}`)
     else if (b.pumpSL != null) lines.push(`  🚀 펌프 손절 ${fmt(b.pumpSL)}`)
     if (warns.length) lines.push(`  ⚠️ ${esc(warns.join(' · '))}`)
+    if (b.kimchi?.flag === 'overheat') lines.push(`  🇰🇷 국내 과열(추격 위험) · 김치프 ${(b.kimchi.premium * 100).toFixed(1)}%`)
+    else if (b.kimchi?.flag === 'discount') lines.push(`  💧 국내 디스카운트 · 김치프 ${(b.kimchi.premium * 100).toFixed(1)}%`)
     return lines.join('\n')
   })
 
@@ -228,13 +243,18 @@ async function notifyTelegram(buyList, ctx = {}) {
   const marketLine = r.ratio != null
     ? `${r.emoji || ''} 시장심리 ${r.ratio} (${r.label || r.trend || '-'}) · 매수 ${ctx.buyCount}/매도 ${ctx.sellCount}`
     : `매수 ${ctx.buyCount ?? main.length}건`
+  const k = ctx.kimchi
+  const kBand = { overheat: '과열🔴', discount: '디스카운트🔵', normal: '보통🟡' }[k?.band] || ''
+  const kimchiLine = k && k.btcPremium != null
+    ? `\n🇰🇷 김치프리미엄 ${k.btcPremium >= 0 ? '+' : ''}${(k.btcPremium * 100).toFixed(2)}% ${kBand}`
+    : ''
   const lowN = buyList.length - main.length
   const lowLine = lowN > 0 ? `\n<i>저유동성 후보 ${lowN}개는 별도(알림 제외)</i>` : ''
   const tip = main.some((b) => readableSignals(b.signals).warns.some((w) => w.includes('추격')))
     ? '\n\n💡 ⚠️추격주의는 급등 후 진입 — 통계상 불리(관망 권장)'
     : ''
   const header = `🔔 <b>업비트 매수 신호</b>\n🗓 <b>${esc(datePart)}</b>  ⏰ <b>${esc(timePart)}</b>`
-  const msg = `${header}\n━━━━━━━━━━━━━━\n${esc(marketLine)}${lowLine}\n\n${blocks.join('\n\n')}${tip}`
+  const msg = `${header}\n━━━━━━━━━━━━━━\n${esc(marketLine)}${kimchiLine}${lowLine}\n\n${blocks.join('\n\n')}${tip}`
   try {
     await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

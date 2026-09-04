@@ -42,6 +42,24 @@ function cgBadge(x) {
   return `<span class="badge ${cls} badge-xs gap-0.5" title="${tip}">${label}</span>`
 }
 
+// 김치 프리미엄 게이지(BTC 기준, 시장 전체)
+function kimchiGauge(k) {
+  if (!k || k.btcPremium == null) return '<span class="opacity-40">—</span>'
+  const pct = (k.btcPremium * 100).toFixed(2)
+  const map = { overheat: ['badge-error', '과열'], discount: ['badge-info', '디스카운트'], normal: ['badge-ghost', '보통'] }
+  const [cls, label] = map[k.band] || ['badge-ghost', '']
+  return `<span class="badge badge-sm ${cls}" title="BTC 기준 업비트 vs 바이낸스(USDT) 괴리 · 환율=KRW-USDT">${k.btcPremium >= 0 ? '+' : ''}${pct}% ${label}</span>`
+}
+
+// 코인별 김치 프리미엄 배지 (BTC 대비 상대 플래그 있을 때만)
+function kimchiBadge(x) {
+  const k = x.kimchi
+  if (!k || k.premium == null || !k.flag) return ''
+  const pct = (k.premium * 100).toFixed(1)
+  if (k.flag === 'overheat') return `<span class="badge badge-error badge-xs" title="국내(업비트) 과열 — BTC 대비 프리미엄 높음, 추격 위험">🇰🇷+${pct}%</span>`
+  return `<span class="badge badge-info badge-xs" title="국내 디스카운트 — BTC 대비 저평가">🇰🇷${pct}%</span>`
+}
+
 function signalTags(signals) {
   return (signals || []).map((s) => {
     if (s.includes('업비트단독')) return `<span class="badge badge-error badge-sm" title="글로벌 대비 업비트 거래 비중 — 국내 단독 점화 의심, 점수 ×0.8">${esc(s.replace('⚠️', ''))}</span>`
@@ -92,6 +110,7 @@ const routes = {
       ${kpiTile('누적 스캔', fmt(kpi.totalScans ?? 0))}
       ${cov ? kpiTile('🌐 커버리지', cov + (res.cgReason ? ' <span class="badge badge-warning badge-xs">' + esc(res.cgReason) + '</span>' : '')) : (res.cgReason ? kpiTile('🌐 글로벌', '<span class="text-base font-semibold">' + esc(res.cgReason) + '</span>') : '')}
       ${kpiTile('레짐', regimeBadge)}
+      ${res.kimchi ? kpiTile('🇰🇷 김치프', kimchiGauge(res.kimchi)) : ''}
       ${stale ? kpiTile('상태', '<span class="badge badge-warning badge-sm">⏰ 지연</span>') : ''}
     </div>`
     const insLine = [
@@ -144,7 +163,7 @@ const routes = {
 
     const momRows = (mom.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)}</td>
+        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} ${kimchiBadge(x)}</td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${signalTags(x.signals)}</td>
       </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'

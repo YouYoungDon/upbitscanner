@@ -102,6 +102,16 @@ describe('formatStatus', () => {
     expect(out).toContain('8')
     expect(out).toContain('엘프')
   })
+  it('kimchi 있으면 김치프 줄 (부호·밴드)', () => {
+    const out = formatStatus({ ratio: 0.5, trend: 'neutral', buyCount: 10, sellCount: 20, topBuy: [], kimchi: { btcPremium: 0.042, band: 'overheat' } })
+    expect(out).toContain('김치프')
+    expect(out).toContain('+4.20%')
+    expect(out).toContain('과열')
+  })
+  it('kimchi 없으면 김치프 줄 없음', () => {
+    const out = formatStatus({ ratio: 0.5, trend: 'neutral', buyCount: 10, sellCount: 20, topBuy: [] })
+    expect(out).not.toContain('김치프')
+  })
 })
 
 describe('formatStrategy', () => {
