@@ -13,6 +13,12 @@ describe('readableSignals', () => {
     expect(r.warns).toContain('추격주의(급등후)')
     expect(r.warns.some((x) => x.includes('업비트비중'))).toBe(true)
   })
+  it('펀딩 과열은 경고, 스퀴즈연료는 근거', () => {
+    const over = readableSignals(['⚡펀딩 과열'])
+    expect(over.warns.some((x) => x.includes('펀딩 과열'))).toBe(true)
+    const fuel = readableSignals(['과매도 반등', '⚡펀딩 스퀴즈연료(강)'])
+    expect(fuel.reasons.some((x) => x.includes('스퀴즈연료'))).toBe(true)
+  })
   it('과매도만 있고 골든크로스 없으면 "과매도 반등"', () => {
     expect(readableSignals(['RSI 과매도 (29)']).reasons).toContain('과매도 반등')
   })

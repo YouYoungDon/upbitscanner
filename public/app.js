@@ -60,6 +60,23 @@ function kimchiBadge(x) {
   return `<span class="badge badge-info badge-xs" title="국내 디스카운트 — BTC 대비 저평가">🇰🇷${pct}%</span>`
 }
 
+// 시장 펀딩 게이지(중앙값)
+function fundingGauge(f) {
+  if (!f || f.medianRate == null) return '<span class="opacity-40">—</span>'
+  const pct = (f.medianRate * 100).toFixed(4)
+  const cls = f.medianRate >= 0.0005 ? 'badge-error' : f.medianRate <= -0.0005 ? 'badge-success' : 'badge-ghost'
+  return `<span class="badge badge-sm ${cls}" title="바이낸스 무기한 펀딩비 중앙값(8h) · (+)롱과밀 (−)숏과밀">${f.medianRate >= 0 ? '+' : ''}${pct}%</span>`
+}
+
+// 코인별 펀딩 배지 (점수 개입했을 때만)
+function fundingBadge(x) {
+  const f = x.funding
+  if (!f || f.rate == null || f.mult === 1) return ''
+  const pct = (f.rate * 100).toFixed(3)
+  if (f.mult < 1) return `<span class="badge badge-error badge-xs" title="바이낸스 펀딩 과열(롱 과밀) → 점수 ×${f.mult}">⚡+${pct}%</span>`
+  return `<span class="badge badge-success badge-xs" title="바이낸스 펀딩 음수(숏 과밀=스퀴즈 연료) → 점수 ×${f.mult}">⚡${pct}%</span>`
+}
+
 function signalTags(signals) {
   return (signals || []).map((s) => {
     if (s.includes('업비트단독')) return `<span class="badge badge-error badge-sm" title="글로벌 대비 업비트 거래 비중 — 국내 단독 점화 의심, 점수 ×0.8">${esc(s.replace('⚠️', ''))}</span>`
@@ -111,6 +128,7 @@ const routes = {
       ${cov ? kpiTile('🌐 커버리지', cov + (res.cgReason ? ' <span class="badge badge-warning badge-xs">' + esc(res.cgReason) + '</span>' : '')) : (res.cgReason ? kpiTile('🌐 글로벌', '<span class="text-base font-semibold">' + esc(res.cgReason) + '</span>') : '')}
       ${kpiTile('레짐', regimeBadge)}
       ${res.kimchi ? kpiTile('🇰🇷 김치프', kimchiGauge(res.kimchi)) : ''}
+      ${res.funding ? kpiTile('⚡ 펀딩', fundingGauge(res.funding)) : ''}
       ${stale ? kpiTile('상태', '<span class="badge badge-warning badge-sm">⏰ 지연</span>') : ''}
     </div>`
     const insLine = [
@@ -163,7 +181,7 @@ const routes = {
 
     const momRows = (mom.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} ${kimchiBadge(x)}</td>
+        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} ${kimchiBadge(x)} ${fundingBadge(x)}</td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${signalTags(x.signals)}</td>
       </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'

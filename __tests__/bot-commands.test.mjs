@@ -112,6 +112,11 @@ describe('formatStatus', () => {
     const out = formatStatus({ ratio: 0.5, trend: 'neutral', buyCount: 10, sellCount: 20, topBuy: [] })
     expect(out).not.toContain('김치프')
   })
+  it('funding 있으면 시장 펀딩 줄', () => {
+    const out = formatStatus({ ratio: 0.5, trend: 'neutral', buyCount: 10, sellCount: 20, topBuy: [], funding: { medianRate: 0.0003 } })
+    expect(out).toContain('시장 펀딩')
+    expect(out).toContain('+0.0300%')
+  })
 })
 
 describe('formatStrategy', () => {

@@ -83,7 +83,7 @@ async function handleStatus() {
       ratio: regime.ratio ?? null, trend: regime.trend ?? 'neutral',
       buyCount: api.kpi?.buyCount ?? (api.buy || []).length,
       sellCount: api.kpi?.sellCount ?? (api.sell || []).length,
-      topBuy: api.buy || [], kimchi: api.kimchi ?? null,
+      topBuy: api.buy || [], kimchi: api.kimchi ?? null, funding: api.funding ?? null,
     })
   }
   // 파일 폴백: 아카이브 최신 스캔
@@ -95,7 +95,7 @@ async function handleStatus() {
   return formatStatus({
     ratio: regime.ratio ?? null, trend: regime.trend ?? 'neutral',
     buyCount: (scan.buy || []).length, sellCount: (scan.sell || []).length,
-    topBuy: buy, kimchi: scan.kimchi ?? null,
+    topBuy: buy, kimchi: scan.kimchi ?? null, funding: scan.funding ?? null,
   })
 }
 

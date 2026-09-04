@@ -74,6 +74,7 @@ export function buildResults(log) {
     candleSummary: candleSummary(scan),
     regime: scan.regime || null,
     kimchi: scan.kimchi ?? null,
+    funding: scan.funding ?? null,
     cgCoverage: scan.cgCoverage ?? null,
     cgReason: scan.cgReason ?? null,
     cgFetchedAt: scan.cgFetchedAt ?? null,

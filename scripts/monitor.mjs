@@ -14,6 +14,7 @@ import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import { ensureKimchi, premiumBand, coinFlag } from '../lib/kimchi.mjs'
+import { ensureFunding, fundingScoreMult, fundingSignal } from '../lib/funding.mjs'
 import { readableSignals } from '../lib/signal-format.mjs'
 import scoringRegistry from '../lib/scoring/features/index.mjs'
 import { loadScoringConfig } from '../lib/scoring/config.mjs'
@@ -42,6 +43,10 @@ async function main() {
   // 코인게코 글로벌 데이터 (사이클 첫 스캐너가 갱신, 실패 시 중립 — 스캔 불사침)
   const cg = await ensureCgData(targets, { allowFetch: true })
   console.log(`코인게코 커버리지: ${(cg.coverage * 100).toFixed(0)}%${cg.reason ? ` (${cg.reason})` : ''}`)
+
+  // 펀딩비 (바이낸스 무기한, 점수 개입 — 루프 전에 조회). 실패 시 중립(mult 1) — 스캔 불사침.
+  const funding = await ensureFunding(targets, {})
+  console.log(`펀딩 커버리지: ${(funding.coverage * 100).toFixed(0)}%${funding.reason ? ` (${funding.reason})` : ''}`)
 
   // 시장 레짐: BTC 일봉 추세 (약세면 반등 매수 감점)
   const btcCandles = await getDayCandles('KRW-BTC', 201)
@@ -100,6 +105,10 @@ async function main() {
       // 추격 감점 ×0.8: 급증 후 진입은 통계적으로 불리 (+3일 승률 30%·평균 -3.4%, 라이브 실증 +1일 -8.64%).
       // 다른 배수 감점과 같은 위치(보너스 가산 전). 🚀Pump Start는 급등 진입이 목적인 신호라 면제.
       if (sig.volRatio != null && sig.volRatio >= 5 && !pump) { finalBuyScore *= 0.8; buySignals = [...buySignals, '⚠️추격주의(급등후)'] }
+      // 펀딩비 점수 개입 (바이낸스 무기한): (+)과밀 감점·(−)스퀴즈 가산. 배수군 위치(보너스 가산 전).
+      const fundRate = funding.byMarket[market]?.rate
+      const fundMult = fundingScoreMult(fundRate)
+      if (fundMult !== 1) { finalBuyScore *= fundMult; buySignals = [...buySignals, fundingSignal(fundRate)] }
       // 지속성 보너스 (이력 기반, 마지막 가산)
       const hasVolumeSurge = buySignals.some((s) => s.startsWith('거래량 급증'))
       const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)
@@ -128,6 +137,7 @@ async function main() {
         if (lowLiq) item.lowLiquidity = true
         if (strategyLv) item.strategy = strategyLv
         if (dom.share != null) item.dominance = { share: dom.share, mult: dom.mult }
+        if (fundRate != null) item.funding = { rate: fundRate, mult: fundMult }
         const cgE = cg.byMarket[market]
         if (cgE) item.cg = { circRatio: cgE.circRatio, athChangePct: cgE.athChangePct, rank: cgE.rank }
         if (warn) item.warn = warn
@@ -163,6 +173,8 @@ async function main() {
   if (cg.reason) entry.cgReason = cg.reason
   entry.kimchi = { btcPremium: kimchi.btcPremium, band: premiumBand(kimchi.btcPremium), usdtKrw: kimchi.usdtKrw, coverage: kimchi.coverage }
   if (kimchi.reason) entry.kimchi.reason = kimchi.reason
+  entry.funding = { medianRate: funding.medianRate, coverage: funding.coverage }
+  if (funding.reason) entry.funding.reason = funding.reason
   // 쉐도우 스코어링(신규 API 0, 실패해도 기존 스캔 불변). 기존 buy/sell/regime는 손대지 않는다.
   const tickerMap = Object.fromEntries(Object.keys(candleMap).map((m) => [m, { acc_trade_price_24h: tradePrice[m] }]))
   const buyMarkets = buy.map((b) => b.market)
@@ -185,7 +197,7 @@ async function main() {
   console.log(`스캔 #${scanNum} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
 
-  await notifyTelegram(buy, { regime: regimeInfo, buyCount: buy.length, sellCount: sell.length, kimchi: entry.kimchi })
+  await notifyTelegram(buy, { regime: regimeInfo, buyCount: buy.length, sellCount: sell.length, kimchi: entry.kimchi, funding: entry.funding })
   await notifyPositionAlerts()
 }
 
@@ -248,13 +260,17 @@ async function notifyTelegram(buyList, ctx = {}) {
   const kimchiLine = k && k.btcPremium != null
     ? `\n🇰🇷 김치프리미엄 ${k.btcPremium >= 0 ? '+' : ''}${(k.btcPremium * 100).toFixed(2)}% ${kBand}`
     : ''
+  const f = ctx.funding
+  const fundingLine = f && f.medianRate != null
+    ? `\n⚡ 시장 펀딩 ${f.medianRate >= 0 ? '+' : ''}${(f.medianRate * 100).toFixed(4)}% (중앙값)`
+    : ''
   const lowN = buyList.length - main.length
   const lowLine = lowN > 0 ? `\n<i>저유동성 후보 ${lowN}개는 별도(알림 제외)</i>` : ''
   const tip = main.some((b) => readableSignals(b.signals).warns.some((w) => w.includes('추격')))
     ? '\n\n💡 ⚠️추격주의는 급등 후 진입 — 통계상 불리(관망 권장)'
     : ''
   const header = `🔔 <b>업비트 매수 신호</b>\n🗓 <b>${esc(datePart)}</b>  ⏰ <b>${esc(timePart)}</b>`
-  const msg = `${header}\n━━━━━━━━━━━━━━\n${esc(marketLine)}${kimchiLine}${lowLine}\n\n${blocks.join('\n\n')}${tip}`
+  const msg = `${header}\n━━━━━━━━━━━━━━\n${esc(marketLine)}${kimchiLine}${fundingLine}${lowLine}\n\n${blocks.join('\n\n')}${tip}`
   try {
     await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
