@@ -15,6 +15,7 @@ import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import { ensureKimchi, premiumBand, coinFlag } from '../lib/kimchi.mjs'
 import { ensureFunding, fundingScoreMult, fundingSignal } from '../lib/funding.mjs'
+import { structuralRisk } from '../lib/structural-risk.mjs'
 import { readableSignals } from '../lib/signal-format.mjs'
 import scoringRegistry from '../lib/scoring/features/index.mjs'
 import { loadScoringConfig } from '../lib/scoring/config.mjs'
@@ -109,6 +110,10 @@ async function main() {
       const fundRate = funding.byMarket[market]?.rate
       const fundMult = fundingScoreMult(fundRate)
       if (fundMult !== 1) { finalBuyScore *= fundMult; buySignals = [...buySignals, fundingSignal(fundRate)] }
+      // 구조 리스크 감점 (언락 오버행·거래소 주의 — 기존 cg 데이터, 소폰 재발 방지)
+      const cgSr = cg.byMarket[market]
+      const sr = structuralRisk({ circRatio: cgSr?.circRatio, athChangePct: cgSr?.athChangePct, rank: cgSr?.rank, caution: warnOf[market] === 'caution' })
+      if (sr.mult < 1) { finalBuyScore *= sr.mult; buySignals = [...buySignals, `⚠️구조리스크(${sr.flags.join('·')})`] }
       // 지속성 보너스 (이력 기반, 마지막 가산)
       const hasVolumeSurge = buySignals.some((s) => s.startsWith('거래량 급증'))
       const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)
@@ -138,6 +143,7 @@ async function main() {
         if (strategyLv) item.strategy = strategyLv
         if (dom.share != null) item.dominance = { share: dom.share, mult: dom.mult }
         if (fundRate != null) item.funding = { rate: fundRate, mult: fundMult }
+        if (sr.flags.length) item.structuralRisk = { mult: sr.mult, flags: sr.flags, level: sr.level }
         const cgE = cg.byMarket[market]
         if (cgE) item.cg = { circRatio: cgE.circRatio, athChangePct: cgE.athChangePct, rank: cgE.rank }
         if (warn) item.warn = warn

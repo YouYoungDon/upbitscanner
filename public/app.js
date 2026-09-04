@@ -77,6 +77,15 @@ function fundingBadge(x) {
   return `<span class="badge badge-success badge-xs" title="바이낸스 펀딩 음수(숏 과밀=스퀴즈 연료) → 점수 ×${f.mult}">⚡${pct}%</span>`
 }
 
+// 구조 리스크 배지 (언락 오버행·거래소 주의 등)
+function structRiskBadge(x) {
+  const s = x.structuralRisk
+  if (!s || !s.flags?.length) return ''
+  const cls = s.level === 'high' ? 'badge-error' : s.level === 'mid' ? 'badge-warning' : s.level === 'low' ? 'badge-warning' : 'badge-ghost'
+  const multTip = s.mult < 1 ? ` → 점수 ×${s.mult}` : ' (표시만)'
+  return `<span class="badge ${cls} badge-xs" title="구조 리스크: ${esc(s.flags.join(' · '))}${multTip}">🏗️리스크</span>`
+}
+
 function signalTags(signals) {
   return (signals || []).map((s) => {
     if (s.includes('업비트단독')) return `<span class="badge badge-error badge-sm" title="글로벌 대비 업비트 거래 비중 — 국내 단독 점화 의심, 점수 ×0.8">${esc(s.replace('⚠️', ''))}</span>`
@@ -181,7 +190,7 @@ const routes = {
 
     const momRows = (mom.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} ${kimchiBadge(x)} ${fundingBadge(x)}</td>
+        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} ${kimchiBadge(x)} ${fundingBadge(x)} ${structRiskBadge(x)}</td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${signalTags(x.signals)}</td>
       </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'
