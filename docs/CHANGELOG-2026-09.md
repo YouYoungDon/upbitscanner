@@ -25,3 +25,23 @@
 
 **정직성**: 김치프는 심리/포지셔닝 게이지지 타이밍 신호가 아님 — 과열이 오래 지속될
 수 있음. 표시·경고용, 자동매매·점수 개입 금지.
+
+## 2. 펀딩비 점수 신호 (2026-09-04)
+
+설계: `docs/superpowers/specs/2026-09-04-funding-rate-design.md`. 코인 네이티브 신호 #2.
+
+바이낸스 무기한선물 펀딩비를 **매수 점수에 개입**(#1 김치프는 표시 전용, #2는 점수 개입).
+매수 스캐너 기준 **(+)펀딩=롱 과밀→감점, (−)펀딩=숏 과밀 스퀴즈연료→가산**.
+
+- `lib/binance.mjs::fetchFundingRates` — `/fapi/v1/premiumIndex` 1콜 전체 심볼 lastFundingRate.
+- `lib/funding.mjs`: fundingScoreMult(**비대칭 — 감점 세게 ×0.82, 가산 약하게 ≤×1.06**),
+  fundingSignal, ensureFunding(mapToBinance 재사용, neutral 폴백).
+- 배수: `≥+0.10%→×0.82 / +0.05~0.10%→×0.92 / ±0.05%→×1.0 / −0.05~−0.10%→×1.04 / ≤−0.10%→×1.06`.
+  방어(크롱된 롱 반전 회피)>공격(스퀴즈 베팅) — 소폰 회복 도구 철학.
+- 통합: monitor 루프 전 `ensureFunding(targets)` → 배수군에서 finalBuyScore 조정 + 시그널.
+  item.funding/entry.funding. signal-format 분류(과열→경고, 스퀴즈연료→근거).
+  API·봇 /status·대시보드 게이지·배지·알림 라인. OI는 #2b로 연기.
+- 점수 신호라 **스코어카드가 효과 자동 추적** → 향후 배수 재보정 가능.
+- **라이브 검증**: 스캔 #586 커버리지 84%, 음수 펀딩 5픽(바운드리스·사인 −0.12% 등)
+  스퀴즈연료 가산(×1.04~1.06) — 과매도 반등 후보가 숏 과밀이라 가산되는 의도된 엣지 발동.
+- 실패 전부 neutral(mult 1) — 스캔 불사침. 테스트 488→500(funding 10·signal-format 1·봇 1).
