@@ -190,7 +190,7 @@ const routes = {
 
     const momRows = (mom.picks || []).slice(0, 8).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} ${kimchiBadge(x)} ${fundingBadge(x)} ${structRiskBadge(x)}</td>
+        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)}</td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${signalTags(x.signals)}</td>
       </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'
@@ -651,7 +651,7 @@ function topTable(list = [], n = 10) {
     <thead><tr><th>종목</th><th>점수</th><th>현재가</th><th>신호</th></tr></thead>
     <tbody>${list.slice(0, n).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
+        <td><span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${cgBadge(x)} ${kimchiBadge(x)} ${fundingBadge(x)} ${structRiskBadge(x)} <span class="opacity-50 text-xs">${esc(x.market.replace('KRW-', ''))}</span></td>
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td>${fmtPrice(x.price)}</td>
         <td>${signalTags(x.signals)}${x.strategy ? `<div class="text-xs mt-1 opacity-80">🎯 손절 ${fmtPrice(x.strategy.stopLoss)} · 목표 ${fmtPrice(x.strategy.takeProfit)}</div>` : ''}</td>

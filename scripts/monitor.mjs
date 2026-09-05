@@ -239,8 +239,9 @@ async function notifyTelegram(buyList, ctx = {}) {
   const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const fmt = (n) => (Math.abs(n) >= 1 ? Number(n).toLocaleString('ko-KR') : Number(n).toPrecision(3))
 
+  const readable = main.map((b) => readableSignals(b.signals)) // 픽당 1회만 파싱(블록·tip 공용)
   const blocks = main.slice(0, 5).map((b, i) => {
-    const { reasons, warns, strategy } = readableSignals(b.signals)
+    const { reasons, warns, strategy } = readable[i]
     const tkr = b.market.replace('KRW-', '')
     const head = `<b>${i + 1}. ${esc(b.korean_name)}</b> (${tkr}) · ${b.score.toFixed(1)}점 · ${fmt(b.price)}원`
     const lines = [head]
@@ -272,7 +273,7 @@ async function notifyTelegram(buyList, ctx = {}) {
     : ''
   const lowN = buyList.length - main.length
   const lowLine = lowN > 0 ? `\n<i>저유동성 후보 ${lowN}개는 별도(알림 제외)</i>` : ''
-  const tip = main.some((b) => readableSignals(b.signals).warns.some((w) => w.includes('추격')))
+  const tip = readable.some((r) => r.warns.some((w) => w.includes('추격')))
     ? '\n\n💡 ⚠️추격주의는 급등 후 진입 — 통계상 불리(관망 권장)'
     : ''
   const header = `🔔 <b>업비트 매수 신호</b>\n🗓 <b>${esc(datePart)}</b>  ⏰ <b>${esc(timePart)}</b>`

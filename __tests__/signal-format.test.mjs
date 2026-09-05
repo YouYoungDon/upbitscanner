@@ -19,6 +19,12 @@ describe('readableSignals', () => {
     const fuel = readableSignals(['과매도 반등', '⚡펀딩 스퀴즈연료(강)'])
     expect(fuel.reasons.some((x) => x.includes('스퀴즈연료'))).toBe(true)
   })
+  it('스퀴즈연료 강/약 티어 구분 보존', () => {
+    expect(readableSignals(['⚡펀딩 스퀴즈연료(강)']).reasons).toContain('⚡펀딩 스퀴즈연료(강)')
+    expect(readableSignals(['⚡펀딩 스퀴즈연료']).reasons).toContain('⚡펀딩 스퀴즈연료')
+    // 약 티어에 (강)이 섞여들어가지 않음
+    expect(readableSignals(['⚡펀딩 스퀴즈연료']).reasons).not.toContain('⚡펀딩 스퀴즈연료(강)')
+  })
   it('구조리스크는 경고로(플래그 상세 포함)', () => {
     const r = readableSignals(['⚠️구조리스크(언락오버행(유통 41%)·거래소 주의)'])
     expect(r.warns.some((x) => x.includes('구조리스크'))).toBe(true)
