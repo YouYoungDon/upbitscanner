@@ -50,15 +50,22 @@ describe('coinFlag (BTC 대비 상대)', () => {
 })
 
 describe('ensureKimchi', () => {
-  // monitor가 스캔 중 확보한 KRW 시세를 넘겨받음. 바이낸스는 매 스캔 신선 조회(캐시 없음).
-  const krwPrices = { 'KRW-BTC': 1e8, 'KRW-XRP': 2900, 'KRW-NOTONBINANCE': 5 }
+  // 마켓 리스트를 받아 라이브 업비트 시세(getTicker)를 직접 조회 — 확정 종가 아닌 현재가로 정확 산출.
+  // 바이낸스도 매 스캔 신선 조회(캐시 없음).
+  const markets = ['KRW-BTC', 'KRW-XRP', 'KRW-NOTONBINANCE']
+  const upbitRows = [
+    { market: 'KRW-BTC', trade_price: 1e8 },
+    { market: 'KRW-XRP', trade_price: 2900 },
+    { market: 'KRW-NOTONBINANCE', trade_price: 5 },
+    { market: 'KRW-USDT', trade_price: 1400 },
+  ]
   const mkDeps = (over = {}) => ({
     fetchBinancePrices: vi.fn(async () => new Map([['BTCUSDT', 70000], ['XRPUSDT', 2.0]])),
-    getTicker: vi.fn(async () => [{ market: 'KRW-USDT', trade_price: 1400 }]),
+    getTicker: vi.fn(async () => upbitRows),
     ...over,
   })
   it('프리미엄 계산 + coverage + btcPremium + 환율', async () => {
-    const r = await ensureKimchi(krwPrices, { now: 1_000_000, deps: mkDeps() })
+    const r = await ensureKimchi(markets, { now: 1_000_000, deps: mkDeps() })
     expect(r.usdtKrw).toBe(1400)
     expect(r.byMarket['KRW-BTC'].premium).toBeCloseTo(1e8 / (70000 * 1400) - 1, 6)
     expect(r.byMarket['KRW-XRP'].premium).toBeCloseTo(2900 / (2.0 * 1400) - 1, 6)
@@ -66,20 +73,29 @@ describe('ensureKimchi', () => {
     expect(r.byMarket['KRW-NOTONBINANCE']).toBeUndefined() // 바이낸스 미존재
     expect(r.coverage).toBeCloseTo(2 / 3, 5)
   })
+  it('getTicker에 KRW-USDT를 포함해 1콜로 조회', async () => {
+    const deps = mkDeps()
+    await ensureKimchi(markets, { now: 1, deps })
+    const asked = deps.getTicker.mock.calls[0][0]
+    expect(asked).toContain('KRW-USDT')
+    expect(asked).toContain('KRW-BTC')
+    expect(deps.getTicker).toHaveBeenCalledTimes(1)
+  })
   it('KRW-USDT 환율 조회 실패 → 전부 null, 게이지 null', async () => {
-    const r = await ensureKimchi(krwPrices, { now: 1_000_000, deps: mkDeps({ getTicker: vi.fn(async () => []) }) })
+    const rows = upbitRows.filter((r) => r.market !== 'KRW-USDT')
+    const r = await ensureKimchi(markets, { now: 1_000_000, deps: mkDeps({ getTicker: vi.fn(async () => rows) }) })
     expect(r.coverage).toBe(0)
     expect(r.btcPremium).toBeNull()
     expect(r.byMarket).toEqual({})
   })
   it('바이낸스 실패 → coverage 0, 스캔 무중단(neutral)', async () => {
-    const r = await ensureKimchi(krwPrices, { now: 1_000_000, deps: mkDeps({ fetchBinancePrices: vi.fn(async () => null) }) })
+    const r = await ensureKimchi(markets, { now: 1_000_000, deps: mkDeps({ fetchBinancePrices: vi.fn(async () => null) }) })
     expect(r.coverage).toBe(0)
     expect(r.byMarket).toEqual({})
     expect(r.reason).toBeTruthy()
   })
   it('빈 입력 → neutral', async () => {
-    const r = await ensureKimchi({}, { now: 1_000_000, deps: mkDeps() })
+    const r = await ensureKimchi([], { now: 1_000_000, deps: mkDeps() })
     expect(r.coverage).toBe(0)
   })
 })
