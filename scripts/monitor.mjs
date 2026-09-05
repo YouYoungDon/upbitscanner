@@ -2,20 +2,20 @@ import '../lib/env.mjs' // .env 로드(스케줄러 환경 캐시 미스 대비)
 import { getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { readPositions, evalPositions } from '../lib/positions.mjs'
-import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE, fallingKnifePenalty } from '../lib/signals.mjs'
+import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
 import { detectQuietBottom, strategyLevels } from '../lib/strategy.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend, withLock, readWeights } from '../lib/store.mjs'
 import { appendScan } from '../lib/archive.mjs'
-import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
+import { getScanUniverse, BATCH, DELAY, sleep } from '../lib/scan-universe.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
 import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import { ensureKimchi, premiumBand, coinFlag } from '../lib/kimchi.mjs'
-import { ensureFunding, fundingScoreMult, fundingSignal } from '../lib/funding.mjs'
-import { structuralRisk } from '../lib/structural-risk.mjs'
+import { ensureFunding } from '../lib/funding.mjs'
+import { applyBuyModifiers } from '../lib/buy-modifiers.mjs'
 import { readableSignals } from '../lib/signal-format.mjs'
 import scoringRegistry from '../lib/scoring/features/index.mjs'
 import { loadScoringConfig } from '../lib/scoring/config.mjs'
@@ -92,28 +92,20 @@ async function main() {
       if (sweep.side === 'sell') { sellScore += sweep.score; sellSignals = [...sellSignals, `유동성 스윕 고점 (깊이 ${sweep.depthPct}%)`] }
       if (vbottom) { finalBuyScore += vbottom.score; buySignals = [...buySignals, `🎯V-Bottom (RSI${vbottom.rsi9}·꼬리${vbottom.wickRatio}%)`]; vbottomSL = vbottom.stopLoss }
       if (pump) { finalBuyScore += pump.score; buySignals = [...buySignals, `🚀Pump Start (vol ${pump.volRatio}x)`]; pumpSL = pump.stopLoss1 }
-      // 레짐 게이트: BTC 약세장에선 반등 매수 신뢰도 하향
-      if (regime.trend === 'bear') { finalBuyScore *= 0.85; buySignals = [...buySignals, '[레짐] BTC 약세 감점'] }
-      // 유동성 차등 감점 (구간별 배수, 두 스캐너 공용 헬퍼)
-      const { liqMult, lowLiq, label: liqLabel } = liquidityPenalty(tradePrice[market])
-      if (liqMult < 1) { finalBuyScore *= liqMult; buySignals = [...buySignals, liqLabel] }
-      // 업비트 단독 펌프 감점 (코인게코 글로벌 거래대금 대비 비중)
-      const dom = upbitDominancePenalty(tradePrice[market], cg.byMarket[market]?.globalVolKrw)
-      if (dom.mult < 1) { finalBuyScore *= dom.mult; buySignals = [...buySignals, dom.label] }
-      // 떨어지는 칼 필터: 거래량 없는 과매도 GC + 하락배열이면 매수 감점
-      const knife = fallingKnifePenalty(buySignals, sellSignals)
-      if (knife.mult < 1) { finalBuyScore *= knife.mult; buySignals = [...buySignals, knife.label] }
-      // 추격 감점 ×0.8: 급증 후 진입은 통계적으로 불리 (+3일 승률 30%·평균 -3.4%, 라이브 실증 +1일 -8.64%).
-      // 다른 배수 감점과 같은 위치(보너스 가산 전). 🚀Pump Start는 급등 진입이 목적인 신호라 면제.
-      if (sig.volRatio != null && sig.volRatio >= 5 && !pump) { finalBuyScore *= 0.8; buySignals = [...buySignals, '⚠️추격주의(급등후)'] }
-      // 펀딩비 점수 개입 (바이낸스 무기한): (+)과밀 감점·(−)스퀴즈 가산. 배수군 위치(보너스 가산 전).
-      const fundRate = funding.byMarket[market]?.rate
-      const fundMult = fundingScoreMult(fundRate)
-      if (fundMult !== 1) { finalBuyScore *= fundMult; buySignals = [...buySignals, fundingSignal(fundRate)] }
-      // 구조 리스크 감점 (언락 오버행·거래소 주의 — 기존 cg 데이터, 소폰 재발 방지)
-      const cgSr = cg.byMarket[market]
-      const sr = structuralRisk({ circRatio: cgSr?.circRatio, athChangePct: cgSr?.athChangePct, rank: cgSr?.rank, caution: warnOf[market] === 'caution' })
-      if (sr.mult < 1) { finalBuyScore *= sr.mult; buySignals = [...buySignals, `⚠️구조리스크(${sr.flags.join('·')})`] }
+      // 배수군 일괄 적용 (레짐·유동성·dominance·낙하칼·추격·펀딩·구조리스크) — lib/buy-modifiers, 순서·배수 동일.
+      const cgE0 = cg.byMarket[market]
+      const mods = applyBuyModifiers(finalBuyScore, buySignals, {
+        regimeTrend: regime.trend, tradePrice24h: tradePrice[market], globalVolKrw: cgE0?.globalVolKrw,
+        sellSignals, volRatio: sig.volRatio, pump: !!pump,
+        fundingRate: funding.byMarket[market]?.rate,
+        circRatio: cgE0?.circRatio, athChangePct: cgE0?.athChangePct, rank: cgE0?.rank,
+        caution: warnOf[market] === 'caution',
+      })
+      finalBuyScore = mods.score
+      buySignals = mods.signals
+      const { lowLiq, dom } = mods
+      const fundRate = mods.funding.rate, fundMult = mods.funding.mult
+      const sr = mods.structuralRisk
       // 지속성 보너스 (이력 기반, 마지막 가산)
       const hasVolumeSurge = buySignals.some((s) => s.startsWith('거래량 급증'))
       const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)
