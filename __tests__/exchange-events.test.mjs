@@ -140,6 +140,22 @@ describe('ensureEvents', () => {
     expect(r.reason).toBeTruthy()
   })
 
+  it('둘 다 실패해도 저장된 활성 이벤트로 계속 방어(소실 방지) — 만료 전엔 유지, 만료 후엔 청소', async () => {
+    const deps = mkDeps() // 1차: 업비트 halt 저장
+    await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    deps.fetchUpbitAnnouncements = vi.fn(async () => null)
+    deps.fetchBinanceAnnouncements = vi.fn(async () => null)
+    // 2차: 둘 다 실패, 만료 전(14일 이내) → 저장된 방어가 사라지면 안 됨
+    const r = await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    expect(r.byMarket['KRW-SOPH'].mult).toBe(0.7)
+    expect(r.reason).toBe('fetch-fail')
+    expect(r.newEvents).toHaveLength(0)
+    // 3차: 둘 다 실패, 만료 후(15일 이상) → 이제는 청소되어야 함
+    const r2 = await ensureEvents(markets, { now: 1_000_000_000_000 + 15 * 86400000, deps })
+    expect(r2.byMarket['KRW-SOPH']).toBeUndefined()
+    expect(r2.reason).toBe('fetch-fail')
+  })
+
   it('유니버스 밖 종목 이벤트는 무시, 보유 포지션은 포함', async () => {
     const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => [{ id: 'upbit:7000', title: '도지코인(DOGE) 입출금 중단 안내', ts: '2026-09-07T00:00:00+09:00' }]) })
     const r1 = await ensureEvents(['KRW-SOPH'], { now: 1_000_000_000_000, deps })
