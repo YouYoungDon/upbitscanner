@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
-  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult,
+  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult, ensureEvents,
 } from '../lib/exchange-events.mjs'
 
 describe('classifyAnnouncement', () => {
@@ -69,5 +69,83 @@ describe('eventRiskMult', () => {
   })
   it('상폐(0)가 최우선', () => {
     expect(eventRiskMult([{ type: 'halt', exchange: 'upbit', mult: 0.7 }, { type: 'delist', exchange: 'upbit', mult: 0 }]).mult).toBe(0)
+  })
+})
+
+// 인메모리 상태 저장소 스텁 (store.mjs 대체)
+function memStore(init = { seenIds: {}, active: {} }) {
+  let data = JSON.parse(JSON.stringify(init))
+  return {
+    readJson: vi.fn(async () => JSON.parse(JSON.stringify(data))),
+    writeJson: vi.fn(async (_n, obj) => { data = JSON.parse(JSON.stringify(obj)) }),
+    withLock: vi.fn(async (_n, fn) => fn()),
+    _get: () => data,
+  }
+}
+
+describe('ensureEvents', () => {
+  const markets = ['KRW-SOPH', 'KRW-BTC']
+  const sophHalt = [{ id: 'upbit:6548', title: '네트워크 전환에 따른 소폰(SOPH) 입출금 중단 안내', ts: '2026-09-07T12:20:00+09:00' }]
+
+  const mkDeps = (over = {}) => ({
+    ...memStore(),
+    fetchUpbitAnnouncements: vi.fn(async () => sophHalt),
+    fetchBinanceAnnouncements: vi.fn(async () => null),
+    ...over,
+  })
+
+  it('업비트 halt → byMarket 감점 + newEvents', async () => {
+    const r = await ensureEvents(markets, { now: 1_000_000_000_000, deps: mkDeps() })
+    expect(r.byMarket['KRW-SOPH'].mult).toBe(0.7)
+    expect(r.byMarket['KRW-SOPH'].label).toContain('입출금중단')
+    expect(r.newEvents).toHaveLength(1)
+    expect(r.newEvents[0].markets).toEqual(['KRW-SOPH'])
+  })
+
+  it('dedup: 같은 상태 재조회 → newEvents 비어야 함', async () => {
+    const deps = mkDeps()
+    await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    const r2 = await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    expect(r2.newEvents).toHaveLength(0)
+    expect(r2.byMarket['KRW-SOPH'].mult).toBe(0.7) // 활성은 유지
+  })
+
+  it('resume가 활성 이벤트 상쇄', async () => {
+    const deps = mkDeps()
+    await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    deps.fetchUpbitAnnouncements = vi.fn(async () => [{ id: 'upbit:6600', title: '소폰(SOPH) 입출금 재개 안내', ts: '2026-09-20T10:00:00+09:00' }])
+    const r = await ensureEvents(markets, { now: 1_000_100_000_000, deps })
+    expect(r.byMarket['KRW-SOPH']).toBeUndefined() // 재개로 제거
+  })
+
+  it('만료된 활성 이벤트 청소', async () => {
+    // 14일 지난 halt는 자동 제거
+    const deps = mkDeps()
+    await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    deps.fetchUpbitAnnouncements = vi.fn(async () => []) // 신규 없음
+    const r = await ensureEvents(markets, { now: 1_000_000_000_000 + 15 * 86400000, deps })
+    expect(r.byMarket['KRW-SOPH']).toBeUndefined()
+  })
+
+  it('바이낸스 실패·업비트 성공 → 정상 동작(degrade)', async () => {
+    const r = await ensureEvents(markets, { now: 1_000_000_000_000, deps: mkDeps({ fetchBinanceAnnouncements: vi.fn(async () => null) }) })
+    expect(r.byMarket['KRW-SOPH'].mult).toBe(0.7)
+  })
+
+  it('둘 다 실패 → neutral(스캔 무중단)', async () => {
+    const r = await ensureEvents(markets, {
+      now: 1, deps: mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => null), fetchBinanceAnnouncements: vi.fn(async () => null) }),
+    })
+    expect(r.byMarket).toEqual({})
+    expect(r.reason).toBeTruthy()
+  })
+
+  it('유니버스 밖 종목 이벤트는 무시, 보유 포지션은 포함', async () => {
+    const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => [{ id: 'upbit:7000', title: '도지코인(DOGE) 입출금 중단 안내', ts: '2026-09-07T00:00:00+09:00' }]) })
+    const r1 = await ensureEvents(['KRW-SOPH'], { now: 1_000_000_000_000, deps })
+    expect(r1.byMarket['KRW-DOGE']).toBeUndefined() // 유니버스 밖
+    const deps2 = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => [{ id: 'upbit:7000', title: '도지코인(DOGE) 입출금 중단 안내', ts: '2026-09-07T00:00:00+09:00' }]) })
+    const r2 = await ensureEvents(['KRW-SOPH'], { now: 1_000_000_000_000, positions: [{ market: 'KRW-DOGE' }], deps: deps2 })
+    expect(r2.byMarket['KRW-DOGE'].mult).toBe(0.7) // 보유 포지션이면 포함
   })
 })
