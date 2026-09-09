@@ -11,4 +11,5 @@ data/flow-alert-state.json
 data/coingecko-key.json
 data/signal-weights.json
 data/scorecard.json
+data/event-log.json
 .worktrees/
