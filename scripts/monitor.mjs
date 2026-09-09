@@ -15,6 +15,7 @@ import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import { ensureKimchi, premiumBand, coinFlag } from '../lib/kimchi.mjs'
 import { ensureFunding } from '../lib/funding.mjs'
+import { ensureEvents } from '../lib/exchange-events.mjs'
 import { applyBuyModifiers } from '../lib/buy-modifiers.mjs'
 import { readableSignals } from '../lib/signal-format.mjs'
 import scoringRegistry from '../lib/scoring/features/index.mjs'
@@ -48,6 +49,10 @@ async function main() {
   // 펀딩비 (바이낸스 무기한, 점수 개입 — 루프 전에 조회). 실패 시 중립(mult 1) — 스캔 불사침.
   const funding = await ensureFunding(targets, {})
   console.log(`펀딩 커버리지: ${(funding.coverage * 100).toFixed(0)}%${funding.reason ? ` (${funding.reason})` : ''}`)
+
+  // 거래소 이벤트 방어 (업비트+바이낸스 공지 — 상폐·유의·입출금중단·마이그레이션). 실패 시 중립 — 스캔 불사침.
+  const events = await ensureEvents(targets, { positions: readPositions() })
+  console.log(`거래소이벤트: ${Object.keys(events.byMarket).length}종목${events.reason ? ` (${events.reason})` : ''}`)
 
   // 시장 레짐: BTC 일봉 추세 (약세면 반등 매수 감점)
   const btcCandles = await getDayCandles('KRW-BTC', 201)
@@ -100,6 +105,7 @@ async function main() {
         fundingRate: funding.byMarket[market]?.rate,
         circRatio: cgE0?.circRatio, athChangePct: cgE0?.athChangePct, rank: cgE0?.rank,
         caution: warnOf[market] === 'caution',
+        eventRisk: events.byMarket[market],
       })
       finalBuyScore = mods.score
       buySignals = mods.signals
@@ -136,6 +142,8 @@ async function main() {
         if (dom.share != null) item.dominance = { share: dom.share, mult: dom.mult }
         if (fundRate != null) item.funding = { rate: fundRate, mult: fundMult }
         if (sr.flags.length) item.structuralRisk = { mult: sr.mult, flags: sr.flags, level: sr.level }
+        const ev = events.byMarket[market]
+        if (ev) item.event = { mult: ev.mult, label: ev.label, types: ev.events.map((e) => ({ type: e.type, exchange: e.exchange })) }
         const cgE = cg.byMarket[market]
         if (cgE) item.cg = { circRatio: cgE.circRatio, athChangePct: cgE.athChangePct, rank: cgE.rank }
         if (warn) item.warn = warn
@@ -196,7 +204,21 @@ async function main() {
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
 
   await notifyTelegram(buy, { regime: regimeInfo, buyCount: buy.length, sellCount: sell.length, kimchi: entry.kimchi, funding: entry.funding })
+  await notifyEventAlerts(events)
   await notifyPositionAlerts()
+}
+
+// 이번 스캔에서 처음 감지된 거래소 이벤트 → 콘솔 + Telegram 즉시 경보
+async function notifyEventAlerts(events) {
+  const list = events?.newEvents || []
+  if (!list.length) return
+  const TYPE_KO = { delist: '상장폐지', caution: '유의지정', halt: '입출금중단', resume: '재개/해제' }
+  const EX_KO = { upbit: '업비트', binance: '바이낸스' }
+  const lines = list.map((e) => `🚨 ${e.markets.map((m) => m.replace('KRW-', '')).join(',')} — ${TYPE_KO[e.type] || e.type}(${EX_KO[e.exchange] || e.exchange})\n   ${e.title}`)
+  const msg = `🚨 [거래소 이벤트] ${list.length}건\n${lines.join('\n')}`
+  console.log(msg)
+  const TG_TOKEN = process.env.TELEGRAM_TOKEN, TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID
+  if (TG_TOKEN && TG_CHAT_ID) await sendTelegram(msg)
 }
 
 // 보유 포지션(data/positions.json) 중 손절선 도달 종목 경고 (콘솔 + Telegram)
