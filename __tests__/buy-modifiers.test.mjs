@@ -60,4 +60,19 @@ describe('applyBuyModifiers', () => {
     expect(r).toHaveProperty('structuralRisk')
     expect(r).toHaveProperty('lowLiq')
   })
+  it('거래소이벤트 감점(halt ×0.7) + 라벨', () => {
+    const r = applyBuyModifiers(10, [], { ...base(), eventRisk: { mult: 0.7, label: '⚠️거래소이벤트(입출금중단·업비트)' } })
+    expect(r.score).toBeCloseTo(7, 6)
+    expect(r.signals.some((s) => s.includes('거래소이벤트'))).toBe(true)
+    expect(r.eventRisk.mult).toBe(0.7)
+  })
+  it('상폐(mult 0) → 점수 0(제외 유도)', () => {
+    const r = applyBuyModifiers(10, [], { ...base(), eventRisk: { mult: 0, label: '⚠️거래소이벤트(상폐·업비트)' } })
+    expect(r.score).toBe(0)
+  })
+  it('eventRisk 없으면 무변화', () => {
+    const r = applyBuyModifiers(10, ['RSI 과매도'], base())
+    expect(r.score).toBe(10)
+    expect(r.eventRisk).toEqual({ mult: 1, label: null })
+  })
 })
