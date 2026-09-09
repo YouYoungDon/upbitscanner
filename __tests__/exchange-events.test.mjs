@@ -118,6 +118,20 @@ describe('ensureEvents', () => {
     expect(r.byMarket['KRW-SOPH']).toBeUndefined() // 재개로 제거
   })
 
+  it('단계적 마이그레이션: 오래된 resume가 같은 스캔의 새 halt를 지우지 않음(ts 방어)', async () => {
+    // 소폰류 단계적 마이그레이션 시나리오: 오래된 "입출금 재개"(T1)가 여전히 fetch 윈도우 안에
+    // 남아있는 상태에서 새 "입출금 중단"(T2>T1)이 발생 — resume가 시점 무관하게 active를
+    // 통째로 지우면 매 스캔 halt가 사라진다(final-review Important 결함).
+    const oldResume = { id: 'upbit:6500', title: '소폰(SOPH) 입출금 재개 안내', ts: '2026-09-01T00:00:00+09:00' } // T1
+    const newHalt = { id: 'upbit:6548', title: '네트워크 전환에 따른 소폰(SOPH) 입출금 중단 안내', ts: '2026-09-07T12:20:00+09:00' } // T2 > T1
+    const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => [oldResume, newHalt]) })
+    const r = await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    expect(r.byMarket['KRW-SOPH'].mult).toBe(0.7) // 새 halt가 살아남아야 함
+    // 2차 재조회(둘 다 여전히 in-window)에도 halt 유지
+    const r2 = await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    expect(r2.byMarket['KRW-SOPH'].mult).toBe(0.7)
+  })
+
   it('만료된 활성 이벤트 청소', async () => {
     // 14일 지난 halt는 자동 제거
     const deps = mkDeps()
