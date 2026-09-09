@@ -124,7 +124,9 @@ describe('ensureEvents', () => {
     // 통째로 지우면 매 스캔 halt가 사라진다(final-review Important 결함).
     const oldResume = { id: 'upbit:6500', title: '소폰(SOPH) 입출금 재개 안내', ts: '2026-09-01T00:00:00+09:00' } // T1
     const newHalt = { id: 'upbit:6548', title: '네트워크 전환에 따른 소폰(SOPH) 입출금 중단 안내', ts: '2026-09-07T12:20:00+09:00' } // T2 > T1
-    const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => [oldResume, newHalt]) })
+    // 실제 공지 피드는 역시간순(최신 우선)이라 halt가 먼저 온다 — 이 순서여야 정렬/게이트 로직이
+    // 실제로 검증됨(resume가 먼저 오면 무조건삭제 버그도 "우연히" 통과해버리는 가짜 가드가 된다).
+    const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => [newHalt, oldResume]) })
     const r = await ensureEvents(markets, { now: 1_000_000_000_000, deps })
     expect(r.byMarket['KRW-SOPH'].mult).toBe(0.7) // 새 halt가 살아남아야 함
     // 2차 재조회(둘 다 여전히 in-window)에도 halt 유지
