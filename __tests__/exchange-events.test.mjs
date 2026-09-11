@@ -230,6 +230,19 @@ describe('ensureEvents', () => {
     expect(r2.reason).toBe('fetch-fail')
   })
 
+  it('alerting:false(모멘텀/플로우)는 seenIds/newEvents 소비 안 함 — monitor 알림 보존', async () => {
+    // #4 이음새 버그: 비알림 스캐너가 먼저 돌면 신규 플래그를 소비해 monitor 알림이 억제되던 결함 방지.
+    const deps = mkDeps() // 업비트 SOPH halt
+    // 모멘텀(alerting:false)이 먼저: 방어는 적용, 알림 플래그는 안 건드림
+    const rMom = await ensureEvents(markets, { now: 1_000_000_000_000, deps, alerting: false })
+    expect(rMom.byMarket['KRW-SOPH'].mult).toBe(0.7) // 방어 적용됨
+    expect(rMom.newEvents).toHaveLength(0)           // 알림 안 청구
+    // monitor(alerting 기본 true)가 나중: 여전히 신규로 잡아 알림 (억제되지 않음)
+    const rMon = await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    expect(rMon.newEvents).toHaveLength(1)
+    expect(rMon.newEvents[0].markets).toEqual(['KRW-SOPH'])
+  })
+
   it('유니버스 밖 종목 이벤트는 무시, 보유 포지션은 포함', async () => {
     const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => [{ id: 'upbit:7000', title: '도지코인(DOGE) 입출금 중단 안내', ts: '2026-09-07T00:00:00+09:00' }]) })
     const r1 = await ensureEvents(['KRW-SOPH'], { now: 1_000_000_000_000, deps })

@@ -92,7 +92,7 @@ async function main() {
   }
 
   // 거래소 이벤트 방어 — 상폐 제외·입출금중단/유의 감점+⚠️. 이벤트 알림은 monitor 전담(중복 방지).
-  const events = await ensureEvents(targets, { positions: readPositions() })
+  const events = await ensureEvents(targets, { positions: readPositions(), alerting: false }) // 알림은 monitor 전담
   const beforeDef = picks.length
   picks = applyEventDefense(picks, events.byMarket)
   console.log(`거래소이벤트 방어: 감시 ${Object.keys(events.byMarket).length}종목${events.reason ? ` (${events.reason})` : ''}, 제외 ${beforeDef - picks.length}건`)
