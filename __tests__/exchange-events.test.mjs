@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
-  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult, ensureEvents,
+  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult, ensureEvents, applyEventDefense,
 } from '../lib/exchange-events.mjs'
 
 describe('classifyAnnouncement', () => {
@@ -74,6 +74,37 @@ describe('eventRiskMult', () => {
   })
   it('상폐(0)가 최우선', () => {
     expect(eventRiskMult([{ type: 'halt', exchange: 'upbit', mult: 0.7 }, { type: 'delist', exchange: 'upbit', mult: 0 }]).mult).toBe(0)
+  })
+})
+
+describe('applyEventDefense (픽 기반 스캐너용)', () => {
+  const byMarket = {
+    'KRW-DEAD': { mult: 0, label: '⚠️거래소이벤트(상폐·업비트)', events: [] },
+    'KRW-HALT': { mult: 0.7, label: '⚠️거래소이벤트(입출금중단·업비트)', events: [] },
+  }
+  it('상폐(mult 0)는 픽에서 제외', () => {
+    const r = applyEventDefense([{ market: 'KRW-DEAD', score: 20 }, { market: 'KRW-OK', score: 10 }], byMarket)
+    expect(r.map((p) => p.market)).toEqual(['KRW-OK'])
+  })
+  it('halt/caution은 score 감점 + event 부착', () => {
+    const r = applyEventDefense([{ market: 'KRW-HALT', score: 20 }], byMarket)
+    expect(r[0].score).toBeCloseTo(14, 5) // 20 × 0.7
+    expect(r[0].event).toEqual({ mult: 0.7, label: '⚠️거래소이벤트(입출금중단·업비트)' })
+  })
+  it('이벤트 없는 픽은 그대로(불변)', () => {
+    const p = { market: 'KRW-OK', score: 10 }
+    const r = applyEventDefense([p], byMarket)
+    expect(r[0]).toBe(p) // 동일 참조 — 미변경
+    expect(r[0].event).toBeUndefined()
+  })
+  it('원본 배열 불변', () => {
+    const picks = [{ market: 'KRW-HALT', score: 20 }]
+    applyEventDefense(picks, byMarket)
+    expect(picks[0].score).toBe(20) // 원본 미변경
+  })
+  it('빈 입력·빈 byMarket 안전', () => {
+    expect(applyEventDefense([], byMarket)).toEqual([])
+    expect(applyEventDefense([{ market: 'KRW-OK', score: 5 }])).toEqual([{ market: 'KRW-OK', score: 5 }])
   })
 })
 

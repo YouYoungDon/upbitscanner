@@ -4,6 +4,8 @@ import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import { shouldAlert, updateAlertState } from '../lib/flow-alert.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
+import { ensureEvents, applyEventDefense } from '../lib/exchange-events.mjs'
+import { readPositions } from '../lib/positions.mjs'
 import {
   CONFIG, tradingValues, moneyRatio, moneyAcceleration, pctChange,
   isPumped, isEarlyZone, breakout20, near24hHigh, isConsolidationBreakout,
@@ -35,7 +37,7 @@ async function main() {
   const high24hOf = Object.fromEntries(tickers.map((t) => [t.market, t.high_price]))
   const ch24hOf = Object.fromEntries(tickers.map((t) => [t.market, (t.signed_change_rate ?? 0) * 100]))
 
-  const picks = []
+  let picks = []
   for (let i = 0; i < targets.length; i += BATCH) {
     const chunk = targets.slice(i, i + BATCH)
     await Promise.all(chunk.map(async (market) => {
@@ -89,6 +91,11 @@ async function main() {
     await sleep(DELAY)
   }
 
+  // 거래소 이벤트 방어 — 상폐 제외·입출금중단/유의 감점+⚠️. 이벤트 알림은 monitor 전담(중복 방지).
+  const events = await ensureEvents(targets, { positions: readPositions() })
+  const beforeDef = picks.length
+  picks = applyEventDefense(picks, events.byMarket)
+  console.log(`거래소이벤트 방어: 감시 ${Object.keys(events.byMarket).length}종목${events.reason ? ` (${events.reason})` : ''}, 제외 ${beforeDef - picks.length}건`)
   picks.sort((a, b) => b.score - a.score || (b.ratio ?? 0) - (a.ratio ?? 0) || (b.breakout ? 1 : 0) - (a.breakout ? 1 : 0))
 
   const entry = { timestamp: new Date().toISOString(), btc: { ret: btc5mRet, favorable: btcFavorable, bad: btcBad }, picks }
@@ -118,7 +125,7 @@ async function notifyFlow(picks) {
     const state = await readJson('flow-alert-state.json', {})
     const fire = picks.filter((p) => (p.level === 'strong' || p.level === 'attention') && shouldAlert({ market: p.market, score: p.score, now }, state, CONFIG))
     if (!fire.length) return
-    const lines = fire.map((p) => `${LEVEL_EMOJI[p.level]} ${p.korean_name}(${p.market.replace('KRW-', '')}) ${p.score}점 · 머니 ${p.ratio}x${p.accel ? ` ·가속 ${p.accel}x` : ''}${p.breakout ? ' ·돌파' : ''}${p.domLabel ? ' ' + p.domLabel : ''}`)
+    const lines = fire.map((p) => `${LEVEL_EMOJI[p.level]} ${p.korean_name}(${p.market.replace('KRW-', '')}) ${p.score}점 · 머니 ${p.ratio}x${p.accel ? ` ·가속 ${p.accel}x` : ''}${p.breakout ? ' ·돌파' : ''}${p.domLabel ? ' ' + p.domLabel : ''}${p.event ? ' ' + p.event.label : ''}`)
     const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
     const sent = await sendTelegram(`💸 자금유입 ${when}\n\n${lines.join('\n')}`)
     if (!sent) return

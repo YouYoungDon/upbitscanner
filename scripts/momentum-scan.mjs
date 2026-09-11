@@ -6,6 +6,8 @@ import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
+import { ensureEvents, applyEventDefense } from '../lib/exchange-events.mjs'
+import { readPositions } from '../lib/positions.mjs'
 
 const MAX_SCANS = 30
 
@@ -16,7 +18,7 @@ async function main() {
 
   const cg = await ensureCgData(targets, { allowFetch: false }) // 캐시만 읽기 (monitor가 갱신 주체)
 
-  const picks = []
+  let picks = []
   for (let i = 0; i < targets.length; i += BATCH) {
     const chunk = targets.slice(i, i + BATCH)
     await Promise.all(chunk.map(async (market) => {
@@ -43,6 +45,11 @@ async function main() {
     await sleep(DELAY)
   }
 
+  // 거래소 이벤트 방어 — 상폐 코인 제외·입출금중단/유의 감점+⚠️태그. 이벤트 알림은 monitor 전담(중복 방지).
+  const events = await ensureEvents(targets, { positions: readPositions() })
+  const beforeDef = picks.length
+  picks = applyEventDefense(picks, events.byMarket)
+  console.log(`거래소이벤트 방어: 감시 ${Object.keys(events.byMarket).length}종목${events.reason ? ` (${events.reason})` : ''}, 제외 ${beforeDef - picks.length}건`)
   picks.sort((a, b) => b.score - a.score)
 
   // 락 안에서 fresh 재읽기 → 증가 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
@@ -66,7 +73,7 @@ async function notifyTelegram(picks) {
   const TG_TOKEN = process.env.TELEGRAM_TOKEN
   const TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID
   if (!TG_TOKEN || !TG_CHAT_ID || picks.length === 0) return
-  const lines = picks.slice(0, 5).map((p) => `• ${p.korean_name}(${p.market.replace('KRW-', '')}) score ${p.score}`)
+  const lines = picks.slice(0, 5).map((p) => `• ${p.korean_name}(${p.market.replace('KRW-', '')}) score ${p.score}${p.event ? ' ' + p.event.label : ''}`)
   const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
   const msg = `🚀 모멘텀 스캔 ${when}\n추세지속 ${picks.length}개\n\n${lines.join('\n')}`
   try {
