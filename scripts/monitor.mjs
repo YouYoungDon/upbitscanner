@@ -99,13 +99,18 @@ async function main() {
       if (pump) { finalBuyScore += pump.score; buySignals = [...buySignals, `🚀Pump Start (vol ${pump.volRatio}x)`]; pumpSL = pump.stopLoss1 }
       // 배수군 일괄 적용 (레짐·유동성·dominance·낙하칼·추격·펀딩·구조리스크) — lib/buy-modifiers, 순서·배수 동일.
       const cgE0 = cg.byMarket[market]
+      const evE = events.byMarket[market]
+      // 업비트 유의지정은 warnOf(구조리스크 ×0.90)과 유의 공지(eventRisk ×0.5) 두 경로로 들어와
+      // 같은 사건을 중복 감점(×0.45)한다. 이벤트 caution이 활성이면 더 구체적·강한 그쪽이 소유하고
+      // 구조리스크 caution은 억제(이벤트 만료 후엔 warnOf가 다시 담당).
+      const hasEventCaution = evE?.events?.some((e) => e.type === 'caution')
       const mods = applyBuyModifiers(finalBuyScore, buySignals, {
         regimeTrend: regime.trend, tradePrice24h: tradePrice[market], globalVolKrw: cgE0?.globalVolKrw,
         sellSignals, volRatio: sig.volRatio, pump: !!pump,
         fundingRate: funding.byMarket[market]?.rate,
         circRatio: cgE0?.circRatio, athChangePct: cgE0?.athChangePct, rank: cgE0?.rank,
-        caution: warnOf[market] === 'caution',
-        eventRisk: events.byMarket[market],
+        caution: warnOf[market] === 'caution' && !hasEventCaution,
+        eventRisk: evE,
       })
       finalBuyScore = mods.score
       buySignals = mods.signals
@@ -142,8 +147,7 @@ async function main() {
         if (dom.share != null) item.dominance = { share: dom.share, mult: dom.mult }
         if (fundRate != null) item.funding = { rate: fundRate, mult: fundMult }
         if (sr.flags.length) item.structuralRisk = { mult: sr.mult, flags: sr.flags, level: sr.level }
-        const ev = events.byMarket[market]
-        if (ev) item.event = { mult: ev.mult, label: ev.label, types: ev.events.map((e) => ({ type: e.type, exchange: e.exchange })) }
+        if (evE) item.event = { mult: evE.mult, label: evE.label, types: evE.events.map((e) => ({ type: e.type, exchange: e.exchange })) }
         const cgE = cg.byMarket[market]
         if (cgE) item.cg = { circRatio: cgE.circRatio, athChangePct: cgE.athChangePct, rank: cgE.rank }
         if (warn) item.warn = warn

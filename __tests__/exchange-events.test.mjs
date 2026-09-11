@@ -37,6 +37,11 @@ describe('parseTickers', () => {
     // "(KRW, BTC, USDT 마켓)"은 단일 대문자 토큰이 아니라 매칭 안 됨
     expect(parseTickers('클러스터프로토콜(CP) 신규 거래지원 안내 (KRW, BTC, USDT 마켓)')).toEqual(['CP'])
   })
+  it('단독 기준통화 괄호 (BTC)/(KRW)/(USDT)는 티커로 안 잡음(오탐 방지)', () => {
+    expect(parseTickers('OO 거래지원 종료 (BTC)')).toEqual([])       // BTC=마켓 기준통화, 감점 대상 아님
+    expect(parseTickers('테더(USDT) 입출금 중단 안내')).toEqual([])   // USDT 제외
+    expect(parseTickers('리플(XRP) 거래 유의 종목 지정 (KRW)')).toEqual(['XRP']) // KRW 제외, XRP만
+  })
   it('티커 없음 → 빈 배열', () => {
     expect(parseTickers('Binance Futures Will Launch USDs-Margined XYZ')).toEqual([])
     expect(parseTickers(null)).toEqual([])
@@ -132,6 +137,28 @@ describe('ensureEvents', () => {
     // 2차 재조회(둘 다 여전히 in-window)에도 halt 유지
     const r2 = await ensureEvents(markets, { now: 1_000_000_000_000, deps })
     expect(r2.byMarket['KRW-SOPH'].mult).toBe(0.7)
+  })
+
+  it('재개는 무관한 종류(유의지정)를 지우지 않음 — 종류별 해제', async () => {
+    // 입출금 재개(halt 해제)가 같은 종목의 유의지정(caution)까지 ts만 보고 삭제하던 결함 방지.
+    const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => [{ id: 'upbit:8000', title: '소폰(SOPH) 거래 유의 종목 지정 안내', ts: '2026-09-01T00:00:00+09:00' }]) })
+    await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    deps.fetchUpbitAnnouncements = vi.fn(async () => [{ id: 'upbit:8001', title: '소폰(SOPH) 입출금 재개 안내', ts: '2026-09-20T00:00:00+09:00' }])
+    const r = await ensureEvents(markets, { now: 1_000_100_000_000, deps })
+    expect(r.byMarket['KRW-SOPH'].mult).toBe(0.5) // 유의지정은 입출금 재개와 무관 → 유지
+  })
+
+  it('ts 불명(null, 바이낸스) 활성 이벤트는 재개로 안 지워짐 — 만료로만 정리', async () => {
+    // finite-ts 재개가 순서 판단 불가한 null-ts halt를 오삭제하던 결함 방지(방어 우선).
+    const deps = mkDeps({
+      fetchUpbitAnnouncements: vi.fn(async () => null),
+      fetchBinanceAnnouncements: vi.fn(async () => [{ id: 'binance:900', title: 'Sophon (SOPH) Network Migration', ts: null }]),
+    })
+    await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    deps.fetchUpbitAnnouncements = vi.fn(async () => [{ id: 'upbit:901', title: '소폰(SOPH) 입출금 재개 안내', ts: '2026-09-20T00:00:00+09:00' }])
+    deps.fetchBinanceAnnouncements = vi.fn(async () => null)
+    const r = await ensureEvents(markets, { now: 1_000_100_000_000, deps })
+    expect(r.byMarket['KRW-SOPH'].mult).toBe(0.7) // null-ts halt 보존
   })
 
   it('만료된 활성 이벤트 청소', async () => {
