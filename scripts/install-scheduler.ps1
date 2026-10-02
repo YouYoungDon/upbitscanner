@@ -1,5 +1,6 @@
 # Upbit scanner Task Scheduler registration -- 3-hour full pipeline (KST)
 # Every 3h (00 03 06 09 12 15 18 21): monitor xx:00 -> momentum xx:02 -> flow xx:05 -> trend xx:17
+# Daily scorecard batch 09:10 (scores matured pick episodes +1/+3/+7d).
 # Weekly analysis Sun 22:00. WakeToRun + powercfg wake timer wakes PC from sleep (full shutdown still cannot run).
 # Usage:
 #   install:   powershell -ExecutionPolicy Bypass -File scripts\install-scheduler.ps1
@@ -64,6 +65,13 @@ $wAction = New-LoggingAction $weekly 'UpbitWeekly_Sun'
 $wTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '22:00'
 Register-ScheduledTask -TaskName 'UpbitWeekly_Sun' -Action $wAction -Trigger $wTrigger -Settings $settings -Force | Out-Null
 Write-Host "registered: UpbitWeekly_Sun @ Sun 22:00"
+
+# daily scorecard batch: 09:10 (after the 09:00-09:05 morning scan matures, scores +1/+3/+7d pick episodes)
+$scorecard = Join-Path $projectRoot 'scripts\scorecard.mjs'
+$scAction = New-LoggingAction $scorecard 'UpbitScorecard'
+$scTrigger = New-ScheduledTaskTrigger -Daily -At '09:10'
+Register-ScheduledTask -TaskName 'UpbitScorecard' -Action $scAction -Trigger $scTrigger -Settings $settings -Force | Out-Null
+Write-Host "registered: UpbitScorecard @ daily 09:10"
 
 # 상주 텔레그램 봇 — 로그인 시 시작(조회 명령 응답). 스캔 태스크와 독립.
 $botScript = Join-Path $projectRoot 'scripts\telegram-bot.mjs'
