@@ -146,7 +146,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   - `summarizeTrades(trades: {ret:number, reason:string}[]) => {n, winRate, meanRet, medianRet, reasons}` — `ret`는 **분수**
   - `cellKey(params: {slPct,tpPct,holdMax}) => string`
   - `neighborsOf(params, axes: {slPct:number[],tpPct:number[],holdMax:number[]}) => params[]`
-  - `pickBest(cells: {params, summary}[], axes, {minTrades, baseline:{meanRet, medianRet}}) => {chosen, best, stability:{ratio, nbrMedian, stable}, passesGate, reason}`
+  - `pickBest(cells: {params, summary}[], axes, {minTrades, baseline:{meanRet, medianRet}}) => {chosen, best, stability, bestStability, passesGate, reason}` — `stability`/`bestStability`는 각각 `{ratio, nbrMedian, stable}`. **`stability`는 항상 `chosen`을 서술하고**, `bestStability`는 (교체된 경우) 거부된 봉우리를 서술한다. 교체가 없으면 두 값이 같다.
   - `overextensionTable(rows: {runUpPct:number, fwd7:number}[], thresholds:number[]) => {threshold,n,winRate,medianRet}[]` — `fwd7`은 **분수**
   - `applyPreRegisteredRule(table, {tier1MedMax, tier1MinN, tier2MedMax, tier2MinN}) => {monotonic, tier1Pct, tier2Pct}` — `tier*MedMax`는 **분수**(-0.01 = -1%)
 
@@ -233,8 +233,10 @@ describe('pickBest', () => {
     ]
     const r = pickBest(cells, axes, { minTrades: 200, baseline })
     expect(r.best.params).toEqual({ slPct: 7, tpPct: 8, holdMax: 3 })
-    expect(r.stability.stable).toBe(false)
+    // stability는 chosen을 서술한다. 거부된 봉우리의 불안정은 bestStability로 노출된다.
+    expect(r.bestStability.stable).toBe(false)
     expect(r.chosen.params).not.toEqual({ slPct: 7, tpPct: 8, holdMax: 3 })
+    expect(r.stability.stable).toBe(true) // 교체된 셀은 안정해야 교체할 이유가 있다
   })
   it('기준선을 못 이기면 passesGate=false', () => {
     const cells = [cell(7, 8, 3, 0.01), cell(5, 8, 3, 0.009), cell(10, 8, 3, 0.009), cell(7, 12, 3, 0.009), cell(7, 8, 5, 0.009)]
@@ -346,10 +348,11 @@ const STABILITY_MIN_RATIO = 0.5 // 이웃 중앙값이 최적값의 50% 미만�
 
 // 선정: minTrades 통과 셀 중 평균수익 최대(동률 시 승률) → 이웃 안정성 검사 → 채택.
 // 불안정하면 기준선 이상인 셀 중 안정성 비율이 가장 높은 셀로 교체한다(스펙 §3.3.4).
+// stability는 항상 chosen을 서술한다. 거부된 봉우리는 bestStability로 따로 노출한다.
 export function pickBest(cells, axes, { minTrades, baseline }) {
   const eligible = (cells ?? []).filter((c) => c.summary.n >= minTrades)
   if (!eligible.length) {
-    return { chosen: null, best: null, stability: null, passesGate: false, reason: 'no-eligible-cells' }
+    return { chosen: null, best: null, stability: null, bestStability: null, passesGate: false, reason: 'no-eligible-cells' }
   }
   const byKey = new Map((cells ?? []).map((c) => [cellKey(c.params), c]))
   const stabilityOf = (c) => {
@@ -361,9 +364,10 @@ export function pickBest(cells, axes, { minTrades, baseline }) {
   }
   const best = [...eligible].sort((a, b) =>
     b.summary.meanRet - a.summary.meanRet || b.summary.winRate - a.summary.winRate)[0]
+  const bestStability = stabilityOf(best)
   let chosen = best
-  let stability = stabilityOf(best)
-  if (!stability.stable) {
+  let stability = bestStability
+  if (!bestStability.stable) {
     const cand = eligible
       .filter((c) => c.summary.meanRet >= baseline.meanRet)
       .map((c) => ({ c, s: stabilityOf(c) }))
@@ -372,7 +376,7 @@ export function pickBest(cells, axes, { minTrades, baseline }) {
     if (cand.length) { chosen = cand[0].c; stability = cand[0].s }
   }
   const passesGate = chosen.summary.meanRet >= baseline.meanRet && chosen.summary.medianRet >= baseline.medianRet
-  return { chosen, best, stability, passesGate, reason: passesGate ? 'ok' : 'below-baseline' }
+  return { chosen, best, stability, bestStability, passesGate, reason: passesGate ? 'ok' : 'below-baseline' }
 }
 
 // 과열 임계별 집계. rows: [{ runUpPct(퍼센트), fwd7(분수) }]
@@ -499,6 +503,26 @@ async function main() {
   const holdBase = baselineOf(holdout)
   console.log(`\n[기준선 7일보유] 학습 n=${trainBase.n} 승률 ${pct(trainBase.winRate)} 평균 ${pct(trainBase.meanRet)} 중앙 ${pct(trainBase.medianRet)}`)
 
+  // ── 과열 분석을 청산 선정보다 먼저 수행한다 ──
+  // 스펙 §7: 과열 필터는 청산 레벨 게이트와 독립 진행 가능해야 한다.
+  // 선정 뒤에 두면 게이트 조기종료 시 이 산출물이 비어 Task 4가 막힌다(순서 의존 없음).
+  // 에피소드 참조를 함께 들고 간다 — 인덱스로 짝짓지 않는다(필터로 길이가 어긋난다).
+  const rows = []
+  for (const e of train) {
+    const arr = candles[e.market]
+    const d0 = Math.floor(Date.parse(e.entryTs) / 1000 / 86400)
+    const upto = arr.filter((c) => Math.floor(c.time / 86400) < d0)
+    const runUpPct = calcRunUpPct(upto.map((c) => c.close), RUNUP_LOOKBACK)
+    if (runUpPct != null) rows.push({ runUpPct, fwd7: e.ret7, ep: e })
+  }
+  const table = overextensionTable(rows, RUNUP_THRESHOLDS)
+  const rule = applyPreRegisteredRule(table, RULE)
+  console.log('\n[과열 사전등록 규칙 — 학습 구간]')
+  for (const r of table) console.log(`  >${r.threshold}%: n=${r.n} 승률 ${pct(r.winRate)} 중앙 ${pct(r.medianRet)}`)
+  console.log(`  단조성 ${rule.monotonic ? '성립' : '❌ 불성립 — 과열 필터 보류'}`)
+  console.log(`  ⇒ RUNUP_TIER1_PCT = ${rule.tier1Pct}, RUNUP_TIER2_PCT = ${rule.tier2Pct}`)
+  const overext = { table, rule }
+
   const runGrid = (set) => {
     const cells = []
     for (const slPct of AXES.slPct) for (const tpPct of AXES.tpPct) for (const holdMax of AXES.holdMax) {
@@ -521,11 +545,15 @@ async function main() {
     console.log(`  ${cellKey(c.params)}  n=${c.summary.n} 승률 ${pct(c.summary.winRate)} 평균 ${pct(c.summary.meanRet)} 중앙 ${pct(c.summary.medianRet)} ${JSON.stringify(c.summary.reasons)}`)
   }
 
-  if (!sel.chosen) { console.log(`\n❌ 게이트 실패: ${sel.reason}`); await writeReport({ sel, trainBase, holdBase, trainCells, holdoutSummary: null, overext: null, regime: null }); process.exit(0) }
+  // 게이트 실패로 조기종료해도 overext는 채워서 쓴다 — Task 4(과열 필터)가 여기에 의존한다.
+  if (!sel.chosen) { console.log(`\n❌ 게이트 실패: ${sel.reason}`); await writeReport({ sel, trainBase, holdBase, trainCells, holdoutSummary: null, overext, regime: null }); process.exit(0) }
 
   console.log(`\n[선정] ${cellKey(sel.chosen.params)}  평균 ${pct(sel.chosen.summary.meanRet)} 중앙 ${pct(sel.chosen.summary.medianRet)}`)
-  console.log(`[이웃안정성] 비율 ${sel.stability.ratio == null ? 'n/a' : sel.stability.ratio.toFixed(2)} (이웃중앙 ${pct(sel.stability.nbrMedian)}) → ${sel.stability.stable ? '안정' : '불안정(교체됨)'}`)
-  if (cellKey(sel.best.params) !== cellKey(sel.chosen.params)) console.log(`  ⚠️ 최적 셀 ${cellKey(sel.best.params)}은 봉우리로 판정되어 교체됨`)
+  // stability는 chosen을 서술한다(Ruling F1). 거부된 봉우리는 bestStability.
+  console.log(`[이웃안정성] 채택셀 비율 ${sel.stability.ratio == null ? 'n/a' : sel.stability.ratio.toFixed(2)} (이웃중앙 ${pct(sel.stability.nbrMedian)}) → ${sel.stability.stable ? '안정' : '판정불가'}`)
+  if (cellKey(sel.best.params) !== cellKey(sel.chosen.params)) {
+    console.log(`  ⚠️ 최적 셀 ${cellKey(sel.best.params)}은 봉우리(이웃비율 ${sel.bestStability.ratio == null ? 'n/a' : sel.bestStability.ratio.toFixed(2)})로 판정되어 교체됨`)
+  }
 
   // 홀드아웃은 확인용 1회만 — 보고 재선정하지 않는다.
   const holdTrades = holdout.map((e) => {
@@ -541,24 +569,7 @@ async function main() {
   console.log(`\n[레짐 구성비] 학습 ${JSON.stringify(regime.train)} / 홀드아웃 ${JSON.stringify(regime.holdout)}`)
   console.log('  ⚠️ 홀드아웃이 강세 구간에 몰리면 수치가 부풀어 보인다. 숫자만으로 결론 금지.')
 
-  // 과열 민감도 — 학습 구간에서 사전등록 규칙 적용
-  // 에피소드 참조를 함께 들고 간다 — 인덱스로 짝짓지 않는다(필터로 길이가 어긋난다).
-  const rows = []
-  for (const e of train) {
-    const arr = candles[e.market]
-    const d0 = Math.floor(Date.parse(e.entryTs) / 1000 / 86400)
-    const upto = arr.filter((c) => Math.floor(c.time / 86400) < d0)
-    const runUpPct = calcRunUpPct(upto.map((c) => c.close), RUNUP_LOOKBACK)
-    if (runUpPct != null) rows.push({ runUpPct, fwd7: e.ret7, ep: e })
-  }
-  const table = overextensionTable(rows, RUNUP_THRESHOLDS)
-  const rule = applyPreRegisteredRule(table, RULE)
-  console.log('\n[과열 사전등록 규칙 — 학습 구간]')
-  for (const r of table) console.log(`  >${r.threshold}%: n=${r.n} 승률 ${pct(r.winRate)} 중앙 ${pct(r.medianRet)}`)
-  console.log(`  단조성 ${rule.monotonic ? '성립' : '❌ 불성립 — 과열 필터 보류'}`)
-  console.log(`  ⇒ RUNUP_TIER1_PCT = ${rule.tier1Pct}, RUNUP_TIER2_PCT = ${rule.tier2Pct}`)
-
-  // 과열 제외 부분집합 민감도 (스펙 §3.3.6)
+  // 과열 제외 부분집합 민감도 (스펙 §3.3.6) — table/rule은 위에서 이미 계산됨
   // 과열 에피소드를 id로 식별해 제외한다(인덱스 짝짓기 금지).
   const hotIds = new Set(
     rows.filter((r) => rule.tier2Pct != null && r.runUpPct > rule.tier2Pct).map((r) => r.ep.id),
@@ -573,7 +584,7 @@ async function main() {
   console.log(`\n[과열 제외 민감도] n=${exSummary.n} 평균 ${pct(exSummary.meanRet)} vs 기준선 ${pct(exBase.meanRet)} → ${exSummary.meanRet >= exBase.meanRet ? '통과' : '⚠️ 미달'}`)
 
   console.log(`\n${sel.passesGate ? '✅ 게이트 통과' : '❌ 게이트 실패(기준선 미달)'} — ${sel.reason}`)
-  await writeReport({ sel, trainBase, holdBase, trainCells, holdoutSummary, overext: { table, rule }, regime })
+  await writeReport({ sel, trainBase, holdBase, trainCells, holdoutSummary, overext, regime })
 
   if (sel.passesGate) {
     await writeJson('exit-config.json', {
