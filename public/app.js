@@ -525,6 +525,29 @@ const routes = {
       open: '<span class="badge badge-xs badge-ghost" title="전략 보유 중">🎯보유</span>',
       'no-data': '<span class="badge badge-xs badge-warning" title="전략 채점 데이터 없음">🎯?</span>',
     }[o.reason] ?? '')
+    // 청산 성과(exit rule) — live/backfill 절대 미합산. backfill은 규칙 도입 전 픽에 현재
+    // 설정값을 소급 적용한 참고치일 뿐 실현 성과가 아니므로 행을 분리하고 주석을 명시한다.
+    const exitRow = (label, s, note) => !s ? '' : `<tr>
+      <td><b>${label}</b>${note ? ` <span class="text-xs opacity-60">${note}</span>` : ''}</td>
+      <td>${s.n}</td>
+      <td>${s.winRate == null ? '—' : Math.round(s.winRate * 100) + '%'}</td>
+      <td>${pctCell(s.meanRet)}</td>
+      <td>${pctCell(s.medianRet)}</td>
+      <td class="text-xs opacity-70">${s.n ? `TP ${s.reasons.tp ?? 0} · SL ${s.reasons.sl ?? 0} · 시간 ${s.reasons.time ?? 0}` : '표본 없음'}</td>
+    </tr>`
+    const exitStatsCard = (es) => !es || (!es.live?.n && !es.backfill?.n) ? '' : `<div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
+      <h3 class="card-title text-sm">🚪 청산 성과 (SL 12% · TP 12% · 최대 7일 보유)</h3>
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr><th>구분</th><th>n</th><th>승률</th><th>평균</th><th>중앙값</th><th>청산 사유</th></tr></thead>
+          <tbody>
+            ${exitRow('라이브', es.live)}
+            ${exitRow('소급 계산', es.backfill, '(규칙 도입 전 픽에 현 설정 소급 적용 — 실현 성과 아님)')}
+          </tbody>
+        </table>
+      </div>
+      <div class="text-xs opacity-60 mt-2">⚠️ 이 수치는 97.8% 하락장 구간에서 선택된 파라미터입니다. 해당 구간에서는 7일 고정청산보다 평균·중앙값·승률 모두 우위였으나, 상승장 비중이 높은 홀드아웃에서는 평균수익률이 3.31%p 밀렸습니다(중앙값은 TP 12%에 정확히 도달해 개선). 참고용 기준값이며 모든 장세에 보편적으로 최적인 값은 아닙니다.</div>
+    </div></div>`
     const rows = (list) => list.map((e) => `<tr>
       <td><b>${esc(e.korean_name)}</b> <span class="text-xs opacity-60">${esc(e.market)}</span>${e.lowLiquidity ? ' <span class="badge badge-xs badge-warning">저유동</span>' : ''}${stratBadge(e.strategyOutcome)}</td>
       <td class="text-xs">${esc(String(e.entryTs).slice(0, 10))}</td>
@@ -552,6 +575,7 @@ const routes = {
           ${d.risk?.strategy?.n >= 2 ? kpiTile('리스크(실현)', `MDD ${pctCell(d.risk.strategy.mdd)}`, `샤프 ${sh(d.risk.strategy.sharpe)} · n=${d.risk.strategy.n}`) : ''}
         </div>
       </div></div>` : ''}
+      ${exitStatsCard(d.exitStats)}
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
       <div class="overflow-x-auto">
         <table class="table table-sm">

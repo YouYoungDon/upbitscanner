@@ -322,4 +322,16 @@ describe('buildScorecard', () => {
     expect(r.episodes[0].id).toBe('new')
     expect(r.noDataCount).toBe(1)
   })
+  it('청산 성과를 live/backfill로 분리 집계', () => {
+    const sc = { updatedAt: 'x', episodes: [
+      { id: 'a', status: 'done', ret7: 0.01, exit: { reason: 'tp', ret: 0.18, cfgSource: 'live' } },
+      { id: 'b', status: 'done', ret7: -0.02, exit: { reason: 'sl', ret: -0.10, cfgSource: 'live' } },
+      { id: 'c', status: 'done', ret7: 0.00, exit: { reason: 'time', ret: 0.02, cfgSource: 'backfill' } },
+      { id: 'd', status: 'done', ret7: 0.00, exit: { reason: 'open', ret: null, cfgSource: 'live' } },
+    ] }
+    const out = buildScorecard(sc)
+    expect(out.exitStats.live.n).toBe(2)       // open은 제외
+    expect(out.exitStats.live.winRate).toBeCloseTo(0.5)
+    expect(out.exitStats.backfill.n).toBe(1)
+  })
 })

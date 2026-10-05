@@ -2,6 +2,7 @@ import { topSignalsOfScan, bestHitRateSignal } from '../lib/insights.mjs'
 import { summarizeScans } from '../lib/archive.mjs'
 import { aggregateRecommendations } from '../lib/recommend.mjs'
 import { sharpe, riskMetrics, strategyReturns, dailyPortfolioReturns } from '../lib/perf-metrics.mjs'
+import { summarizeTrades } from '../lib/exit-select.mjs'
 
 // 일간(24h)/주간(7일) 누적 추천 — 아카이브 전체를 윈도우로 집계 (최신 스캔 아님).
 // 어떤 집계 실패에도 빈 배열 폴백 — 대시보드 무중단.
@@ -137,6 +138,17 @@ export function buildVerify(weekly, weights) {
 // 픽 성과 스코어카드 집계. sc = { updatedAt, episodes } (data/scorecard.json).
 const SCORECARD_CUTOVER = Date.parse('2026-07-12T15:00:00Z') // 확정봉 체제 KST 2026-07-13 00:00
 
+// 청산 성과(ep.exit) — 소급(backfill)과 라이브 확정(live)을 절대 합산하지 않는다.
+// backfill은 규칙 도입 전 픽에 현재 설정값을 소급 적용해 계산한 참고치일 뿐, 실현 성과가 아니다.
+// 'open'·'no-data'는 미확정이므로 summarizeTrades가 ret 비유한수(non-finite)로 걸러낸다.
+function exitStatsOf(eps) {
+  const pick = (src) => summarizeTrades(
+    eps.filter((e) => e.exit?.cfgSource === src)
+       .map((e) => ({ ret: e.exit.ret, reason: e.exit.reason })),
+  )
+  return { live: pick('live'), backfill: pick('backfill') }
+}
+
 export function buildScorecard(sc) {
   const eps = sc?.episodes ?? []
   if (!eps.length) return { empty: true }
@@ -187,6 +199,7 @@ export function buildScorecard(sc) {
     noDataCount: eps.filter((e) => e.status === 'no-data').length,
     strategy,
     risk,
+    exitStats: exitStatsOf(eps),
     horizons: agg(eps),
     regimes: {
       pre: agg(eps.filter((e) => Date.parse(e.entryTs) < SCORECARD_CUTOVER)),
