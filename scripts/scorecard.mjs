@@ -6,13 +6,19 @@ import { join } from 'node:path'
 import { DATA_DIR, readJson, writeJson } from '../lib/store.mjs'
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcvAsOf } from '../lib/ohlcv.mjs'
-import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes } from '../lib/scorecard.mjs'
+import { extractEpisodes, scoreEpisode, scoreEpisodeExit, neededCandleCount, mergeEpisodes } from '../lib/scorecard.mjs'
 import { scoreStrategyOutcome } from '../lib/strategy.mjs'
 
 // 🎯전략 태그 에피소드 중 SL/TP 채점이 미확정인 것 (config 없으면 항상 false)
 const needsStrategyScore = (e, config) =>
   !!config && (e.signals ?? []).some((s) => s.includes('🎯전략')) &&
   !['sl', 'tp', 'time', 'no-data'].includes(e.strategyOutcome?.reason)
+
+// 일반 청산 규칙(exit-config.json) 채점이 미확정인 에피소드 (config 없으면 항상 false).
+// cfgVersion 소급 재작성을 막기 위해 이미 확정된 사유는 재채점하지 않는다.
+const needsExitScore = (e, config) =>
+  !!config &&
+  !['sl', 'tp', 'time', 'no-data'].includes(e.exit?.reason)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -36,8 +42,10 @@ async function main() {
 
   const now = Date.now()
   const strategyConfig = await readJson('strategy-config.json', null)
+  const exitConfig = await readJson('exit-config.json', null) // 없으면 청산 채점 생략
   const pending = episodes.filter((e) =>
-    e.status === 'pending' || e.status === 'partial' || needsStrategyScore(e, strategyConfig))
+    e.status === 'pending' || e.status === 'partial' ||
+    needsStrategyScore(e, strategyConfig) || needsExitScore(e, exitConfig))
   const byMarket = new Map()
   for (const e of pending) {
     if (!byMarket.has(e.market)) byMarket.set(e.market, [])
@@ -55,13 +63,18 @@ async function main() {
     const confirmed = confirmedOhlcvAsOf(candlesToOhlcv(candles), now)
     for (const e of eps) {
       const s = scoreEpisode(e, confirmed, now)
+      let withExit = s
+      if (needsExitScore(e, exitConfig)) {
+        withExit = scoreEpisodeExit(s, confirmed, exitConfig, now)
+        if (withExit.exit?.reason !== e.exit?.reason) withExit.scoredAt = new Date(now).toISOString()
+      }
       if (needsStrategyScore(e, strategyConfig)) {
         const out = scoreStrategyOutcome(e, confirmed, strategyConfig, now)
-        if (out.reason !== e.strategyOutcome?.reason) s.scoredAt = new Date(now).toISOString()
-        s.strategyOutcome = out
+        if (out.reason !== e.strategyOutcome?.reason) withExit.scoredAt = new Date(now).toISOString()
+        withExit.strategyOutcome = out
       }
-      if (s.status !== e.status || s.scoredAt !== e.scoredAt) scored++
-      updated.set(s.id, s)
+      if (withExit.status !== e.status || withExit.scoredAt !== e.scoredAt) scored++
+      updated.set(withExit.id, withExit)
     }
     await sleep(120) // 업비트 rate limit 여유
   }
@@ -70,6 +83,9 @@ async function main() {
   await writeJson('scorecard.json', { updatedAt: new Date(now).toISOString(), episodes })
   const remain = episodes.filter((e) => e.status === 'pending' || e.status === 'partial').length
   console.log(`스코어카드: 에피소드 ${episodes.length} (신규 ${episodes.length - prevCount}) / 이번 채점 ${scored} / 남은 미채점 ${remain} / 실패 마켓 ${failedMarkets}`)
+  const live = episodes.filter((e) => e.exit?.cfgSource === 'live').length
+  const back = episodes.filter((e) => e.exit?.cfgSource === 'backfill').length
+  console.log(`청산 채점: live ${live} / backfill ${back}`)
 }
 
 main()
