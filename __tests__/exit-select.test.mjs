@@ -42,8 +42,8 @@ describe('neighborsOf', () => {
 
 describe('pickBest', () => {
   const axes = { slPct: [5, 7, 10], tpPct: [8, 12], holdMax: [3, 5] }
-  const cell = (slPct, tpPct, holdMax, meanRet, winRate = 0.5, n = 500) =>
-    ({ params: { slPct, tpPct, holdMax }, summary: { n, winRate, meanRet, medianRet: meanRet } })
+  const cell = (slPct, tpPct, holdMax, meanRet, winRate = 0.5, n = 500, medianRet = meanRet) =>
+    ({ params: { slPct, tpPct, holdMax }, summary: { n, winRate, meanRet, medianRet } })
   const baseline = { meanRet: 0.024, medianRet: 0.0 }
 
   it('minTrades 미달 셀은 후보에서 제외', () => {
@@ -105,6 +105,15 @@ describe('pickBest', () => {
     const r = pickBest(cells, axes, { minTrades: 200, baseline })
     expect(r.passesGate).toBe(false)
     expect(r.reason).toBe('below-baseline')
+  })
+  it('평균 1위 셀이 중앙값 다리에서 떨어져도, 두 다리를 모두 통과하는 다른 셀을 찾아 채택한다', () => {
+    const cells = [
+      cell(7, 8, 3, 0.05, 0.5, 500, -0.01),   // 평균 1위지만 중앙값 실패(-0.01 < baseline.medianRet 0.0)
+      cell(10, 12, 5, 0.03, 0.5, 500, 0.01),  // 평균은 낮지만 두 다리 모두 통과
+    ]
+    const r = pickBest(cells, axes, { minTrades: 200, baseline })
+    expect(r.chosen.params).toEqual({ slPct: 10, tpPct: 12, holdMax: 5 })
+    expect(r.passesGate).toBe(true)
   })
 })
 
