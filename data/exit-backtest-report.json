@@ -1,56 +1,56 @@
 {
-  "generatedAt": "2026-10-05T12:29:56.889Z",
+  "generatedAt": "2026-10-05T12:45:02.978Z",
   "sel": {
     "chosen": {
       "params": {
         "slPct": 12,
-        "tpPct": 18,
+        "tpPct": 12,
         "holdMax": 7
       },
       "summary": {
         "n": 957,
-        "winRate": 0.4158829676071055,
-        "meanRet": 0.0051338034117849474,
-        "medianRet": -0.017857142857142794,
+        "winRate": 0.46394984326018807,
+        "meanRet": 0.0040230324764072125,
+        "medianRet": -0.0083478260869565,
         "reasons": {
-          "sl": 215,
-          "time": 539,
-          "tp": 203
+          "tp": 309,
+          "time": 442,
+          "sl": 206
         }
       }
     },
     "best": {
       "params": {
         "slPct": 12,
-        "tpPct": 18,
+        "tpPct": 12,
         "holdMax": 7
       },
       "summary": {
         "n": 957,
-        "winRate": 0.4158829676071055,
-        "meanRet": 0.0051338034117849474,
-        "medianRet": -0.017857142857142794,
+        "winRate": 0.46394984326018807,
+        "meanRet": 0.0040230324764072125,
+        "medianRet": -0.0083478260869565,
         "reasons": {
-          "sl": 215,
-          "time": 539,
-          "tp": 203
+          "tp": 309,
+          "time": 442,
+          "sl": 206
         }
       }
     },
     "stability": {
-      "ratio": 0.7959651554533356,
-      "nbrMedian": 0.00408632863072827,
+      "ratio": 0.599894984020039,
+      "nbrMedian": 0.0024133970031464027,
       "nbrCount": 4,
       "stable": true
     },
     "bestStability": {
-      "ratio": 0.7959651554533356,
-      "nbrMedian": 0.00408632863072827,
+      "ratio": 0.599894984020039,
+      "nbrMedian": 0.0024133970031464027,
       "nbrCount": 4,
       "stable": true
     },
-    "passesGate": false,
-    "reason": "below-baseline"
+    "passesGate": true,
+    "reason": "ok"
   },
   "trainBase": {
     "n": 957,
@@ -1154,13 +1154,13 @@
   ],
   "holdoutSummary": {
     "n": 600,
-    "winRate": 0.6516666666666666,
-    "meanRet": 0.06174478321590599,
-    "medianRet": 0.08024703415764867,
+    "winRate": 0.6866666666666666,
+    "meanRet": 0.048715792228976665,
+    "medianRet": 0.1200000000000001,
     "reasons": {
-      "tp": 242,
-      "time": 253,
-      "sl": 105
+      "tp": 346,
+      "time": 153,
+      "sl": 101
     }
   },
   "overext": {
