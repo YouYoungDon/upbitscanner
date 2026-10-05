@@ -3,7 +3,7 @@ import {
   calcEMA, calcSMA, calcRSI, calcBB, calcMACD,
   calcStochastic, calcWilliamsR, calcVolRatio,
   calcRSISeries, calcOBV, calcBBWidthSeries,
-  calcStochasticKSeries, calcVolRatioSeries,
+  calcStochasticKSeries, calcVolRatioSeries, calcRunUpPct,
 } from '../lib/indicators.mjs'
 
 describe('calcBBWidthSeries', () => {
@@ -177,5 +177,37 @@ describe('calcVolRatioSeries — calcVolRatio와 프리픽스 동치', () => {
     const vols = [...Array(20).fill(0), 5, 3]
     const s = calcVolRatioSeries(vols)
     expect(s[20]).toBeNull() // 이전 20봉 평균 0
+  })
+})
+
+describe('calcRunUpPct', () => {
+  it('상승폭을 퍼센트로 계산', () => {
+    expect(calcRunUpPct([100, 110], 1)).toBeCloseTo(10)
+    expect(calcRunUpPct([100, 120, 130], 2)).toBeCloseTo(30)
+  })
+  it('하락은 음수', () => {
+    expect(calcRunUpPct([100, 90], 1)).toBeCloseTo(-10)
+  })
+  it('무변동은 0', () => {
+    expect(calcRunUpPct([100, 100, 100], 2)).toBe(0)
+  })
+  it('경계: length === lookback + 1 이면 계산', () => {
+    expect(calcRunUpPct([50, 75], 1)).toBeCloseTo(50)
+  })
+  it('데이터 부족이면 null', () => {
+    expect(calcRunUpPct([100], 1)).toBeNull()
+    expect(calcRunUpPct([100, 110], 5)).toBeNull()
+    expect(calcRunUpPct([], 1)).toBeNull()
+  })
+  it('기준가가 0 이하면 null (0 나눗셈 가드)', () => {
+    expect(calcRunUpPct([0, 50], 1)).toBeNull()
+    expect(calcRunUpPct([-10, 50], 1)).toBeNull()
+  })
+  it('lookback이 1 미만이면 null', () => {
+    expect(calcRunUpPct([100, 110], 0)).toBeNull()
+    expect(calcRunUpPct([100, 110], -1)).toBeNull()
+  })
+  it('배열 아닌 입력이면 null', () => {
+    expect(calcRunUpPct(null, 1)).toBeNull()
   })
 })
