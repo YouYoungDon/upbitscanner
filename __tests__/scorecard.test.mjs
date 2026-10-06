@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes } from '../lib/scorecard.mjs'
+import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes, scoreEpisodeExit } from '../lib/scorecard.mjs'
+import { scoreStrategyOutcome } from '../lib/strategy.mjs' // 가드 없는 경로의 실패 양상 확인용
 
 const scan = (ts, markets) => ({
   timestamp: ts,
@@ -109,5 +110,76 @@ describe('mergeEpisodes', () => {
     const existing = [{ ...ep0(), id: 'KRW-OLD@x', market: 'KRW-OLD' }]
     const merged = mergeEpisodes(existing, [ep0()])
     expect(merged.length).toBe(2)
+  })
+})
+
+describe('scoreEpisodeExit', () => {
+  const DAY = 86400
+  const d0 = Math.floor(Date.parse('2026-06-10T00:00:00Z') / 1000 / DAY)
+  const bar = (dayOffset, { high, low, close }) => ({ time: (d0 + dayOffset) * DAY, high, low, close, open: close })
+  const ep = (over = {}) => ({ id: 'x', market: 'KRW-X', entryTs: '2026-06-10T00:00:00Z', entryPrice: 100, status: 'done', ret1: 0.01, ret3: 0.02, ret7: 0.03, mfe1: 0.05, ...over })
+  const params = { slPct: 10, tpPct: 18, holdMax: 7 }
+  const now = Date.parse('2026-07-01T00:00:00Z')
+
+  it('목표가 도달 → tp, ret은 분수', () => {
+    const c = [bar(1, { high: 120, low: 99, close: 119 })]
+    const r = scoreEpisodeExit(ep(), c, params, now)
+    expect(r.exit.reason).toBe('tp')
+    expect(r.exit.ret).toBeCloseTo(0.18)
+    expect(r.exit.exitDay).toBe(1)
+  })
+  it('손절 도달 → sl', () => {
+    const c = [bar(1, { high: 101, low: 85, close: 88 })]
+    expect(scoreEpisodeExit(ep(), c, params, now).exit.reason).toBe('sl')
+  })
+  it('같은 봉에서 SL·TP 동시 도달 → 손절 우선(보수적)', () => {
+    const c = [bar(1, { high: 130, low: 80, close: 100 })]
+    const r = scoreEpisodeExit(ep(), c, params, now)
+    expect(r.exit.reason).toBe('sl')
+    expect(r.exit.ret).toBeCloseTo(-0.10)
+  })
+  it('미도달로 보유 만료 → time', () => {
+    const c = [1, 2, 3, 4, 5, 6, 7].map((i) => bar(i, { high: 105, low: 95, close: 102 }))
+    const r = scoreEpisodeExit(ep(), c, params, now)
+    expect(r.exit.reason).toBe('time')
+    expect(r.exit.ret).toBeCloseTo(0.02)
+  })
+  it('기존 ret/mfe를 변경하지 않는다 (순수 추가)', () => {
+    const before = ep()
+    const r = scoreEpisodeExit(before, [bar(1, { high: 120, low: 99, close: 119 })], params, now)
+    expect(r.ret1).toBe(before.ret1)
+    expect(r.ret7).toBe(before.ret7)
+    expect(r.mfe1).toBe(before.mfe1)
+  })
+  it('픽에 스탬핑된 파라미터가 있으면 live, 없으면 backfill', () => {
+    const c = [bar(1, { high: 120, low: 99, close: 119 })]
+    const live = scoreEpisodeExit(ep({ exitParams: { slPct: 10, tpPct: 18, holdMax: 7, cfgVersion: 'general-exit-v1' } }), c, params, now)
+    expect(live.exit.cfgSource).toBe('live')
+    expect(live.exit.cfgVersion).toBe('general-exit-v1')
+    expect(scoreEpisodeExit(ep(), c, params, now).exit.cfgSource).toBe('backfill')
+  })
+  it('파라미터가 아예 없으면 exit를 만들지 않는다', () => {
+    expect(scoreEpisodeExit(ep(), [bar(1, { high: 120, low: 99, close: 119 })], null, now).exit).toBeUndefined()
+  })
+  it('entryPrice 비정상이면 no-data', () => {
+    expect(scoreEpisodeExit(ep({ entryPrice: 0 }), [], params, now).exit.reason).toBe('no-data')
+  })
+  it('적용된 파라미터를 exit에 함께 저장한다 (세대 식별용)', () => {
+    const c = [bar(1, { high: 120, low: 99, close: 119 })]
+    const back = scoreEpisodeExit(ep(), c, { slPct: 12, tpPct: 12, holdMax: 7, version: 'general-exit-v1' }, now)
+    expect(back.exit).toMatchObject({ slPct: 12, tpPct: 12, holdMax: 7, cfgSource: 'backfill' })
+    const live = scoreEpisodeExit(ep({ exitParams: { slPct: 10, tpPct: 18, holdMax: 5, cfgVersion: 'general-exit-v1' } }), c, params, now)
+    expect(live.exit).toMatchObject({ slPct: 10, tpPct: 18, holdMax: 5, cfgSource: 'live' })
+  })
+  it('파라미터가 비수치면 채점하지 않는다 (단순보유 수익이 규칙 성과로 둔갑하는 것을 막는다)', () => {
+    const c = [1, 2, 3, 4, 5, 6, 7].map((i) => bar(i, { high: 105, low: 95, close: 102 }))
+    for (const bad of [{ tpPct: 12, holdMax: 7 }, { slPct: null, tpPct: 12, holdMax: 7 },
+      { slPct: 12, tpPct: 'x', holdMax: 7 }, { slPct: 12, tpPct: 12, holdMax: NaN }]) {
+      expect(scoreEpisodeExit(ep(), c, bad, now).exit).toBeUndefined()
+    }
+    // 가드가 없으면 'time' + 유한 ret(단순보유 수익)으로 조용히 통과한다 — 유한수 필터에 걸리지 않는다.
+    const unguarded = scoreStrategyOutcome(ep(), c, { slPct: NaN, tpPct: NaN, holdMax: 7 }, now)
+    expect(unguarded.reason).toBe('time')
+    expect(Number.isFinite(unguarded.ret)).toBe(true)
   })
 })

@@ -38,6 +38,11 @@ async function check4hStochGC(market) {
 async function main() {
   const weights = await readWeights()
   const strategyConfig = await readJson('strategy-config.json', null) // 없으면 전략 태깅 스킵
+  // 일반 청산 레벨(백테스트로 확정) — 학습구간이 레짐 라벨 457스캔 중 456이 하락장(99.8%)
+  // 이었던 점을 기억할 것(data/exit-backtest-report.json의 regime.train = {bear:456, neutral:1}).
+  // 그 구간에서는 7일 단순보유 대비 우위였지만, 불장 비중이 높은 홀드아웃에서는
+  // 평균수익률이 7일보유보다 3.31%p 낮았다(중앙값은 오히려 개선). 즉 참고용 기준치이며 보증이 아니다.
+  const exitConfig = await readJson('exit-config.json', null) // 없으면 일반 청산 레벨 생략(스캔 불사침)
   const { targets, nameOf, total, tradePrice, warnOf } = await getScanUniverse()
   if (!targets.length) { console.error('스캔 대상 없음 (마켓/유동성 조회 실패)'); process.exit(1) }
   console.log(`스캔 대상 ${targets.length}종목 (전체 ${total})`)
@@ -144,6 +149,16 @@ async function main() {
         if (pumpSL != null) item.pumpSL = pumpSL
         if (lowLiq) item.lowLiquidity = true
         if (strategyLv) item.strategy = strategyLv
+        if (exitConfig) {
+          const el = strategyLevels(sig.price, exitConfig)
+          // 풀 정밀도 저장 — 0.0x원대 코인에서 반올림하면 손절=목표로 붕괴한다.
+          if (el) {
+            item.exit = {
+              slPct: exitConfig.slPct, tpPct: exitConfig.tpPct, holdMax: exitConfig.holdMax,
+              stopLoss: el.stopLoss, takeProfit: el.takeProfit, cfgVersion: exitConfig.version,
+            }
+          }
+        }
         if (dom.share != null) item.dominance = { share: dom.share, mult: dom.mult }
         if (fundRate != null) item.funding = { rate: fundRate, mult: fundMult }
         if (sr.flags.length) item.structuralRisk = { mult: sr.mult, flags: sr.flags, level: sr.level }
@@ -267,6 +282,7 @@ async function notifyTelegram(buyList, ctx = {}) {
     if (strategy && b.strategy) lines.push(`  🎯 조용한바닥 · 손절 ${fmt(b.strategy.stopLoss)} / 목표 ${fmt(b.strategy.takeProfit)}`)
     else if (b.vbottomSL != null) lines.push(`  🎯 V바텀 손절 ${fmt(b.vbottomSL)}`)
     else if (b.pumpSL != null) lines.push(`  🚀 펌프 손절 ${fmt(b.pumpSL)}`)
+    else if (b.exit) lines.push(`  📐 청산 · 손절 ${fmt(b.exit.stopLoss)} / 목표 ${fmt(b.exit.takeProfit)} (${b.exit.holdMax}일)`)
     if (warns.length) lines.push(`  ⚠️ ${esc(warns.join(' · '))}`)
     if (b.kimchi?.flag === 'overheat') lines.push(`  🇰🇷 국내 과열(추격 위험) · 김치프 ${(b.kimchi.premium * 100).toFixed(1)}%`)
     else if (b.kimchi?.flag === 'discount') lines.push(`  💧 국내 디스카운트 · 김치프 ${(b.kimchi.premium * 100).toFixed(1)}%`)

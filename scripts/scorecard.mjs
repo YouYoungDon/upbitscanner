@@ -6,13 +6,31 @@ import { join } from 'node:path'
 import { DATA_DIR, readJson, writeJson } from '../lib/store.mjs'
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcvAsOf } from '../lib/ohlcv.mjs'
-import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes } from '../lib/scorecard.mjs'
+import { extractEpisodes, scoreEpisode, scoreEpisodeExit, neededCandleCount, mergeEpisodes } from '../lib/scorecard.mjs'
 import { scoreStrategyOutcome } from '../lib/strategy.mjs'
 
 // 🎯전략 태그 에피소드 중 SL/TP 채점이 미확정인 것 (config 없으면 항상 false)
 const needsStrategyScore = (e, config) =>
   !!config && (e.signals ?? []).some((s) => s.includes('🎯전략')) &&
   !['sl', 'tp', 'time', 'no-data'].includes(e.strategyOutcome?.reason)
+
+const EXIT_FINAL = ['sl', 'tp', 'time', 'no-data']
+// 저장된 파라미터가 현재 config와 다른지. 필드 부재(구 스키마)도 "다름"으로 본다.
+const exitParamsStale = (ex, config) =>
+  ex?.slPct !== config.slPct || ex?.tpPct !== config.tpPct || ex?.holdMax !== config.holdMax
+
+// 일반 청산 규칙(exit-config.json) 채점이 미확정인 에피소드 (config 없으면 항상 false).
+// 멱등성 검증(2026-10-06): 파라미터가 현재 config와 일치하는 상태에서 재실행하면 재채점 0건,
+// 확정 1,603건의 exit 결과가 바이트 동일했다.
+const needsExitScore = (e, config) => {
+  if (!config) return false
+  if (!EXIT_FINAL.includes(e.exit?.reason)) return true
+  // 라이브 스탬프는 절대 재채점하지 않는다(스펙 §3.2⑤) — 픽 시점에 사용자가 본 수치가
+  // 소급 변경되면 성과 비교의 기준 자체가 움직인다. 소급분만 현재 config로 재계산한다
+  // (스펙 §3.4: 백필 = "현재 config로 소급 계산"). 그러지 않으면 재선정 후 소급분은
+  // 구 세대 파라미터로 굳은 채 같은 cfgVersion 라벨을 달고 신규분과 한 집계에 섞인다.
+  return e.exit?.cfgSource === 'backfill' && exitParamsStale(e.exit, config)
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -36,8 +54,10 @@ async function main() {
 
   const now = Date.now()
   const strategyConfig = await readJson('strategy-config.json', null)
+  const exitConfig = await readJson('exit-config.json', null) // 없으면 청산 채점 생략
   const pending = episodes.filter((e) =>
-    e.status === 'pending' || e.status === 'partial' || needsStrategyScore(e, strategyConfig))
+    e.status === 'pending' || e.status === 'partial' ||
+    needsStrategyScore(e, strategyConfig) || needsExitScore(e, exitConfig))
   const byMarket = new Map()
   for (const e of pending) {
     if (!byMarket.has(e.market)) byMarket.set(e.market, [])
@@ -45,6 +65,7 @@ async function main() {
   }
 
   let scored = 0
+  let exitRescored = 0 // 이미 확정된 소급분을 파라미터 세대 불일치로 재계산한 건수
   let failedMarkets = 0
   const updated = new Map()
   for (const [market, eps] of byMarket) {
@@ -55,13 +76,19 @@ async function main() {
     const confirmed = confirmedOhlcvAsOf(candlesToOhlcv(candles), now)
     for (const e of eps) {
       const s = scoreEpisode(e, confirmed, now)
+      let withExit = s
+      if (needsExitScore(e, exitConfig)) {
+        if (EXIT_FINAL.includes(e.exit?.reason)) exitRescored++
+        withExit = scoreEpisodeExit(s, confirmed, exitConfig, now)
+        if (withExit.exit?.reason !== e.exit?.reason) withExit.scoredAt = new Date(now).toISOString()
+      }
       if (needsStrategyScore(e, strategyConfig)) {
         const out = scoreStrategyOutcome(e, confirmed, strategyConfig, now)
-        if (out.reason !== e.strategyOutcome?.reason) s.scoredAt = new Date(now).toISOString()
-        s.strategyOutcome = out
+        if (out.reason !== e.strategyOutcome?.reason) withExit.scoredAt = new Date(now).toISOString()
+        withExit.strategyOutcome = out
       }
-      if (s.status !== e.status || s.scoredAt !== e.scoredAt) scored++
-      updated.set(s.id, s)
+      if (withExit.status !== e.status || withExit.scoredAt !== e.scoredAt) scored++
+      updated.set(withExit.id, withExit)
     }
     await sleep(120) // 업비트 rate limit 여유
   }
@@ -70,6 +97,9 @@ async function main() {
   await writeJson('scorecard.json', { updatedAt: new Date(now).toISOString(), episodes })
   const remain = episodes.filter((e) => e.status === 'pending' || e.status === 'partial').length
   console.log(`스코어카드: 에피소드 ${episodes.length} (신규 ${episodes.length - prevCount}) / 이번 채점 ${scored} / 남은 미채점 ${remain} / 실패 마켓 ${failedMarkets}`)
+  const live = episodes.filter((e) => e.exit?.cfgSource === 'live').length
+  const back = episodes.filter((e) => e.exit?.cfgSource === 'backfill').length
+  console.log(`청산 채점: live ${live} / backfill ${back} / 소급분 재계산 ${exitRescored}`)
 }
 
 main()
