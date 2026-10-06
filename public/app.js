@@ -525,6 +525,41 @@ const routes = {
       open: '<span class="badge badge-xs badge-ghost" title="전략 보유 중">🎯보유</span>',
       'no-data': '<span class="badge badge-xs badge-warning" title="전략 채점 데이터 없음">🎯?</span>',
     }[o.reason] ?? '')
+    // 청산 성과(exit rule) — live/backfill 절대 미합산. backfill은 규칙 도입 전 픽에 현재
+    // 설정값을 소급 적용한 참고치일 뿐 실현 성과가 아니므로 행을 분리하고 주석을 명시한다.
+    // 규칙 행 바로 아래에 "규칙 없이 7일 종가 보유" 기준선 행을 항상 붙인다. 규칙 수치만
+    // 노출하면 엣지로 읽히지만 실측에서 규칙은 평균을 단순보유에 내주고 있다(중앙값·승률은 우위).
+    // 두 행은 exit.ret·ret7이 모두 확정된 **동일 에피소드 집합**에서 산출되므로 n이 같아야 한다.
+    const exitRow = (label, s, note, base) => !s ? '' : `<tr${base ? ' class="bg-base-100"' : ''}>
+      <td>${base ? '<span class="opacity-50">↳ </span>' : ''}<b>${label}</b>${note ? ` <span class="text-xs opacity-60">${note}</span>` : ''}</td>
+      <td>${s.n}</td>
+      <td>${s.winRate == null ? '—' : Math.round(s.winRate * 100) + '%'}</td>
+      <td>${pctCell(s.meanRet)}</td>
+      <td>${pctCell(s.medianRet)}</td>
+      <td class="text-xs opacity-70">${base ? '<span class="opacity-40">해당 없음</span>' : (s.n ? `TP ${s.reasons.tp ?? 0} · SL ${s.reasons.sl ?? 0} · 시간 ${s.reasons.time ?? 0}` : '표본 없음')}</td>
+    </tr>`
+    const exitGroup = (label, s, note) => !s ? '' :
+      exitRow(label, s, note) +
+      (s.hold7?.n ? exitRow('7일 단순보유(규칙 없음)', s.hold7, `(동일 에피소드 n=${s.hold7.n} — 비교 기준선)`, true) : '')
+    // 제목은 저장된 파라미터에서 생성한다 — 하드코딩하면 재선정 시 수치와 제목이 각기 다른 세대가 된다.
+    const exitTitle = (es) => {
+      const p = es.live?.params ?? es.backfill?.params
+      if (!p) return '🚪 청산 성과'
+      return `🚪 청산 성과 (SL ${p.slPct}% · TP ${p.tpPct}% · 최대 ${p.holdMax}일 보유)${p.mixed ? ' ⚠️파라미터 세대 혼재' : ''}`
+    }
+    const exitStatsCard = (es) => !es || (!es.live?.n && !es.backfill?.n) ? '' : `<div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
+      <h3 class="card-title text-sm">${exitTitle(es)}</h3>
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr><th>구분</th><th>n</th><th>승률</th><th>평균</th><th>중앙값</th><th>청산 사유</th></tr></thead>
+          <tbody>
+            ${exitGroup('라이브', es.live)}
+            ${exitGroup('소급 계산', es.backfill, '(규칙 도입 전 픽에 현 설정 소급 적용 — 실현 성과 아님)')}
+          </tbody>
+        </table>
+      </div>
+      <div class="text-xs opacity-60 mt-2">⚠️ 이 파라미터는 레짐 라벨 457스캔 중 456이 하락장(99.8%)인 학습 구간에서 선택됐습니다. 그 구간에서는 7일 단순보유보다 평균·중앙값·승률 모두 우위였으나, 상승장 비중이 높은 홀드아웃에서는 평균수익률이 3.31%p 밀렸습니다(중앙값은 TP 목표가에 정확히 도달해 개선). 또한 표본이 약 3.5개월(2026-06-11~09-22)뿐이고 같은 시점·같은 종목 에피소드가 중첩되므로 승률 신뢰구간은 실제보다 낙관적입니다. 참고용 기준값이며 모든 장세에 보편적으로 최적인 값은 아닙니다.</div>
+    </div></div>`
     const rows = (list) => list.map((e) => `<tr>
       <td><b>${esc(e.korean_name)}</b> <span class="text-xs opacity-60">${esc(e.market)}</span>${e.lowLiquidity ? ' <span class="badge badge-xs badge-warning">저유동</span>' : ''}${stratBadge(e.strategyOutcome)}</td>
       <td class="text-xs">${esc(String(e.entryTs).slice(0, 10))}</td>
@@ -552,6 +587,7 @@ const routes = {
           ${d.risk?.strategy?.n >= 2 ? kpiTile('리스크(실현)', `MDD ${pctCell(d.risk.strategy.mdd)}`, `샤프 ${sh(d.risk.strategy.sharpe)} · n=${d.risk.strategy.n}`) : ''}
         </div>
       </div></div>` : ''}
+      ${exitStatsCard(d.exitStats)}
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
       <div class="overflow-x-auto">
         <table class="table table-sm">

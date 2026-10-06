@@ -322,4 +322,49 @@ describe('buildScorecard', () => {
     expect(r.episodes[0].id).toBe('new')
     expect(r.noDataCount).toBe(1)
   })
+  it('청산 성과를 live/backfill로 분리 집계', () => {
+    const sc = { updatedAt: 'x', episodes: [
+      { id: 'a', status: 'done', ret7: 0.01, exit: { reason: 'tp', ret: 0.18, cfgSource: 'live' } },
+      { id: 'b', status: 'done', ret7: -0.02, exit: { reason: 'sl', ret: -0.10, cfgSource: 'live' } },
+      { id: 'c', status: 'done', ret7: 0.00, exit: { reason: 'time', ret: 0.02, cfgSource: 'backfill' } },
+      { id: 'd', status: 'done', ret7: 0.00, exit: { reason: 'open', ret: null, cfgSource: 'live' } },
+    ] }
+    const out = buildScorecard(sc)
+    expect(out.exitStats.live.n).toBe(2)       // open은 제외
+    expect(out.exitStats.live.winRate).toBeCloseTo(0.5)
+    expect(out.exitStats.backfill.n).toBe(1)
+  })
+  it('규칙 수치와 함께 7일단순보유 기준선을 같은 집합에서 산출한다', () => {
+    const sc = { updatedAt: 'x', episodes: [
+      { id: 'a', status: 'done', ret7: 0.01, exit: { reason: 'tp', ret: 0.12, cfgSource: 'backfill', slPct: 12, tpPct: 12, holdMax: 7 } },
+      { id: 'b', status: 'done', ret7: 0.30, exit: { reason: 'sl', ret: -0.12, cfgSource: 'backfill', slPct: 12, tpPct: 12, holdMax: 7 } },
+    ] }
+    const es = buildScorecard(sc).exitStats
+    expect(es.backfill.n).toBe(2)
+    expect(es.backfill.hold7.n).toBe(2)
+    expect(es.backfill.meanRet).toBeCloseTo(0.0)      // (0.12 - 0.12)/2
+    expect(es.backfill.hold7.meanRet).toBeCloseTo(0.155) // (0.01 + 0.30)/2 — 규칙이 평균에서 밀린다
+    expect(es.backfill.medianRet).toBeCloseTo(0.0)
+    expect(es.backfill.hold7.medianRet).toBeCloseTo(0.155)
+  })
+  it('ret7이 없는 에피소드는 양쪽에서 제외 — 두 행의 n이 반드시 같다', () => {
+    const sc = { updatedAt: 'x', episodes: [
+      { id: 'a', status: 'done', ret7: 0.01, exit: { reason: 'tp', ret: 0.12, cfgSource: 'backfill', slPct: 12, tpPct: 12, holdMax: 7 } },
+      { id: 'b', status: 'done', ret7: null, exit: { reason: 'sl', ret: -0.12, cfgSource: 'backfill', slPct: 12, tpPct: 12, holdMax: 7 } },
+    ] }
+    const es = buildScorecard(sc).exitStats
+    expect(es.backfill.n).toBe(1)
+    expect(es.backfill.hold7.n).toBe(es.backfill.n)
+  })
+  it('적용 파라미터를 집계에 동봉하고, 세대가 섞이면 mixed로 표시', () => {
+    const e = (id, p) => ({ id, status: 'done', ret7: 0.01, exit: { reason: 'tp', ret: 0.1, cfgSource: 'live', ...p } })
+    const one = buildScorecard({ episodes: [e('a', { slPct: 12, tpPct: 12, holdMax: 7 })] }).exitStats
+    expect(one.live.params).toEqual({ slPct: 12, tpPct: 12, holdMax: 7, mixed: false })
+    const two = buildScorecard({ episodes: [
+      e('a', { slPct: 12, tpPct: 12, holdMax: 7 }), e('b', { slPct: 10, tpPct: 18, holdMax: 5 }),
+    ] }).exitStats
+    expect(two.live.params.mixed).toBe(true)
+    // 파라미터 없는 구 스키마 행만 있으면 params는 null (제목을 하드코딩하지 않기 위한 폴백)
+    expect(buildScorecard({ episodes: [e('a', {})] }).exitStats.live.params).toBeNull()
+  })
 })
