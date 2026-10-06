@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes, scoreEpisodeExit } from '../lib/scorecard.mjs'
+import { scoreStrategyOutcome } from '../lib/strategy.mjs' // 가드 없는 경로의 실패 양상 확인용
 
 const scan = (ts, markets) => ({
   timestamp: ts,
@@ -162,5 +163,23 @@ describe('scoreEpisodeExit', () => {
   })
   it('entryPrice 비정상이면 no-data', () => {
     expect(scoreEpisodeExit(ep({ entryPrice: 0 }), [], params, now).exit.reason).toBe('no-data')
+  })
+  it('적용된 파라미터를 exit에 함께 저장한다 (세대 식별용)', () => {
+    const c = [bar(1, { high: 120, low: 99, close: 119 })]
+    const back = scoreEpisodeExit(ep(), c, { slPct: 12, tpPct: 12, holdMax: 7, version: 'general-exit-v1' }, now)
+    expect(back.exit).toMatchObject({ slPct: 12, tpPct: 12, holdMax: 7, cfgSource: 'backfill' })
+    const live = scoreEpisodeExit(ep({ exitParams: { slPct: 10, tpPct: 18, holdMax: 5, cfgVersion: 'general-exit-v1' } }), c, params, now)
+    expect(live.exit).toMatchObject({ slPct: 10, tpPct: 18, holdMax: 5, cfgSource: 'live' })
+  })
+  it('파라미터가 비수치면 채점하지 않는다 (단순보유 수익이 규칙 성과로 둔갑하는 것을 막는다)', () => {
+    const c = [1, 2, 3, 4, 5, 6, 7].map((i) => bar(i, { high: 105, low: 95, close: 102 }))
+    for (const bad of [{ tpPct: 12, holdMax: 7 }, { slPct: null, tpPct: 12, holdMax: 7 },
+      { slPct: 12, tpPct: 'x', holdMax: 7 }, { slPct: 12, tpPct: 12, holdMax: NaN }]) {
+      expect(scoreEpisodeExit(ep(), c, bad, now).exit).toBeUndefined()
+    }
+    // 가드가 없으면 'time' + 유한 ret(단순보유 수익)으로 조용히 통과한다 — 유한수 필터에 걸리지 않는다.
+    const unguarded = scoreStrategyOutcome(ep(), c, { slPct: NaN, tpPct: NaN, holdMax: 7 }, now)
+    expect(unguarded.reason).toBe('time')
+    expect(Number.isFinite(unguarded.ret)).toBe(true)
   })
 })
