@@ -25,10 +25,16 @@ describe('readableSignals', () => {
     // 약 티어에 (강)이 섞여들어가지 않음
     expect(readableSignals(['⚡펀딩 스퀴즈연료']).reasons).not.toContain('⚡펀딩 스퀴즈연료(강)')
   })
-  it('구조리스크는 경고로(플래그 상세 포함)', () => {
+  it('구조리스크는 경고로 — 래퍼를 벗기고 플래그만 노출(괄호 이중중첩 제거)', () => {
     const r = readableSignals(['⚠️구조리스크(언락오버행(유통 41%)·거래소 주의)'])
-    expect(r.warns.some((x) => x.includes('구조리스크'))).toBe(true)
-    expect(r.warns.some((x) => x.includes('언락오버행'))).toBe(true)
+    expect(r.warns).toContain('언락오버행(유통 41%) · 거래소 주의')
+    expect(r.warns.some((x) => x.includes('구조리스크'))).toBe(false) // 래퍼는 벗겨진다
+  })
+  it('구조리스크 플래그가 하나뿐이어도 정상', () => {
+    expect(readableSignals(['⚠️구조리스크(거래소 주의)']).warns).toContain('거래소 주의')
+  })
+  it('구조리스크 형식이 예상과 다르면 원문 폴백(⚠️만 제거)', () => {
+    expect(readableSignals(['⚠️구조리스크']).warns).toContain('구조리스크')
   })
   it('과매도만 있고 골든크로스 없으면 "과매도 반등"', () => {
     expect(readableSignals(['RSI 과매도 (29)']).reasons).toContain('과매도 반등')

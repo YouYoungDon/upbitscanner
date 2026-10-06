@@ -63,6 +63,27 @@ describe('applyCombos', () => {
     expect(buyScore).toBeCloseTo(10 * 1.4 * 1.3, 5)
   })
 
+  // 반등확인 콤보는 Stoch 전용이 아니다 — 'MACD 골든크로스'·'EMA 20/50 골든크로스'에도 발동한다.
+  // 최초 커밋부터 그런 술어였고 변수명(hasStochGC)만 Stoch였다. 2026-10-06 측정 후
+  // 좁히지 않고 유지하기로 결정했으므로(근거는 lib/signals.mjs 주석), 그 결정을 테스트로 고정한다.
+  // 이 테스트가 깨지면 누군가 측정 없이 범위를 바꾼 것이다.
+  it('[의도] 반등확인 콤보는 MACD 골든크로스에도 발동한다', () => {
+    const { buyScore, buy: out } = applyCombos(['MACD 골든크로스'], [], 10)
+    expect(buyScore).toBeCloseTo(14, 5)
+    expect(out).toContain('[콤보] 반등확인 보너스')
+  })
+  it('[의도] 반등확인 콤보는 EMA 20/50 골든크로스에도 발동한다', () => {
+    const { buyScore } = applyCombos(['EMA 20/50 골든크로스'], [], 10)
+    expect(buyScore).toBeCloseTo(14, 5)
+  })
+  it('[의도] 골든크로스 계열이 있으면 과매도 함정 페널티가 억제된다(종류 무관)', () => {
+    const buy = ['RSI 과매도 (28)', 'BB 하단 지지', 'Stoch 과매도 (15)', 'Williams %R 과매도 (-90)']
+    const withoutGC = applyCombos(buy, [], 10)
+    expect(withoutGC.buy).toContain('[콤보] 과매도 함정 페널티')
+    const withMacdGC = applyCombos([...buy, 'MACD 골든크로스'], [], 10)
+    expect(withMacdGC.buy).not.toContain('[콤보] 과매도 함정 페널티')
+  })
+
   it('거래량 배수가 구간 따라 비례: 20x+ → ×1.6', () => {
     const buy = ['Stoch 과매도 골든크로스 (5)', '거래량 급증 (25.0x)']
     const { buyScore } = applyCombos(buy, [], 10, 25)

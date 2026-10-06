@@ -76,3 +76,26 @@ describe('applyBuyModifiers', () => {
     expect(r.eventRisk).toEqual({ mult: 1, label: null })
   })
 })
+
+// 추격 감점 제거(2026-10-06) 회귀 방어. 거래량 배율은 "추격"의 대리변수로
+// 부적합하다는 측정 결과에 따라 제거했으므로, 어떤 volRatio 값에서도
+// 감점·라벨이 되살아나면 안 된다.
+describe('추격 감점 제거(회귀)', () => {
+  it('volRatio가 아무리 커도 감점하지 않는다', () => {
+    for (const volRatio of [5, 9, 30, 100]) {
+      const r = applyBuyModifiers(10, [], { ...base(), volRatio })
+      expect(r.score).toBe(10)
+      expect(r.signals.some((s) => s.includes('추격주의'))).toBe(false)
+    }
+  })
+  it('pump 여부와 무관하게 감점하지 않는다(면제 로직도 함께 제거됨)', () => {
+    for (const pump of [true, false]) {
+      expect(applyBuyModifiers(10, [], { ...base(), volRatio: 9, pump }).score).toBe(10)
+    }
+  })
+  it('volRatio/pump를 ctx로 받아도 다른 배수군은 정상 작동한다', () => {
+    const r = applyBuyModifiers(10, [], { ...base(), volRatio: 9, pump: false, regimeTrend: 'bear' })
+    expect(r.score).toBeCloseTo(8.5, 6) // 레짐 감점만 적용
+    expect(r.signals.some((s) => s.includes('추격주의'))).toBe(false)
+  })
+})
