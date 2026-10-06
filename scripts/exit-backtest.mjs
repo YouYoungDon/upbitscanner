@@ -88,7 +88,7 @@ async function main() {
   const trainCells = runGrid(train)
   const sel = pickBest(trainCells, AXES, { minTrades: MIN_TRADES, baseline: trainBase })
 
-  console.log('\n[상위 5조합 — 학습]')
+  console.log('\n[상위 5조합 — 학습, 평균수익 기준. 게이트(평균·중앙값 두 다리) 통과 여부와 무관한 나열]')
   for (const c of [...trainCells].filter((c) => c.summary.n >= MIN_TRADES)
     .sort((a, b) => b.summary.meanRet - a.summary.meanRet).slice(0, 5)) {
     console.log(`  ${cellKey(c.params)}  n=${c.summary.n} 승률 ${pct(c.summary.winRate)} 평균 ${pct(c.summary.meanRet)} 중앙 ${pct(c.summary.medianRet)} ${JSON.stringify(c.summary.reasons)}`)
@@ -101,7 +101,8 @@ async function main() {
   // stability는 chosen을 서술한다(Ruling F1). 거부된 봉우리는 bestStability.
   console.log(`[이웃안정성] 채택셀 비율 ${sel.stability.ratio == null ? 'n/a' : sel.stability.ratio.toFixed(2)} (이웃중앙 ${pct(sel.stability.nbrMedian)}) → ${sel.stability.stable ? '안정' : '판정불가'}`)
   if (cellKey(sel.best.params) !== cellKey(sel.chosen.params)) {
-    console.log(`  ⚠️ 최적 셀 ${cellKey(sel.best.params)}은 봉우리(이웃비율 ${sel.bestStability.ratio == null ? 'n/a' : sel.bestStability.ratio.toFixed(2)})로 판정되어 교체됨`)
+    // sel.best는 "게이트 통과 셀 중 평균 1위"이며 그리드 전체의 argmax가 아니다(exit-select.mjs 주석).
+    console.log(`  ⚠️ 게이트 통과 셀 중 평균 1위 ${cellKey(sel.best.params)}은 봉우리(이웃비율 ${sel.bestStability.ratio == null ? 'n/a' : sel.bestStability.ratio.toFixed(2)})로 판정되어 교체됨`)
   }
 
   // 홀드아웃은 확인용 1회만 — 보고 재선정하지 않는다.

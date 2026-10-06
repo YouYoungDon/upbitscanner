@@ -158,4 +158,16 @@ describe('applyPreRegisteredRule', () => {
     ]
     expect(applyPreRegisteredRule(table, opts).monotonic).toBe(false)
   })
+  it('단조성 불성립이면 임계값을 반환하지 않는다 (스펙 §3.1 하드 스톱)', () => {
+    // 두 임계 모두 중앙값·n 조건을 만족하지만 승률이 중간에 올라 단조성이 깨진다.
+    // monotonic을 확인하지 않고 tier*Pct만 읽는 소비자가 거부된 값을 배선하지 못하게 한다.
+    const table = [
+      { threshold: 20, n: 159, winRate: 0.40, medianRet: -0.09 },
+      { threshold: 30, n: 80, winRate: 0.48, medianRet: -0.12 },
+    ]
+    const r = applyPreRegisteredRule(table, opts)
+    expect(r.monotonic).toBe(false)
+    expect(r.tier1Pct).toBeNull()
+    expect(r.tier2Pct).toBeNull()
+  })
 })
