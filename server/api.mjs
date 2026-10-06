@@ -141,11 +141,37 @@ const SCORECARD_CUTOVER = Date.parse('2026-07-12T15:00:00Z') // 확정봉 체제
 // 청산 성과(ep.exit) — 소급(backfill)과 라이브 확정(live)을 절대 합산하지 않는다.
 // backfill은 규칙 도입 전 픽에 현재 설정값을 소급 적용해 계산한 참고치일 뿐, 실현 성과가 아니다.
 // 'open'·'no-data'는 미확정이므로 summarizeTrades가 ret 비유한수(non-finite)로 걸러낸다.
+//
+// 규칙 수치는 **반드시 비교 기준선과 함께** 내보낸다(스펙 §3.3.2·§8.5). 규칙 행만 보여주면
+// 읽는 사람이 그것을 엣지로 받아들이는데, 실측에서 규칙은 평균을 7일단순보유에 내주고 있다.
+// 기준선 hold7 = "청산규칙 없이 7일 종가 보유"(e.ret7).
+//
+// 동일 집합 원칙: exit.ret과 ret7이 **둘 다** 유한한 에피소드만 양쪽에 넣는다. 한쪽에만
+// 있는 에피소드를 허용하면 규칙 n과 기준선 n이 어긋나(실측 1603 vs 1557) 비교 자체가
+// §3.3.2가 요구하는 "같은 에피소드 집합"이 아니게 된다.
 function exitStatsOf(eps) {
-  const pick = (src) => summarizeTrades(
-    eps.filter((e) => e.exit?.cfgSource === src)
-       .map((e) => ({ ret: e.exit.ret, reason: e.exit.reason })),
-  )
+  // 적용된 파라미터를 집계에 동봉한다 — buildScorecard는 scorecard.json만 받으므로
+  // exit-config.json을 읽을 수 없고, 대시보드 제목을 하드코딩하면 재선정 시 낡는다.
+  // 여러 세대가 섞이면(라이브 스탬프는 재채점하지 않으므로 가능) mixed로 드러낸다.
+  const paramsOf = (rows) => {
+    const seen = new Map()
+    for (const e of rows) {
+      const { slPct, tpPct, holdMax } = e.exit
+      if (![slPct, tpPct, holdMax].every((v) => Number.isFinite(v))) continue
+      seen.set(`${slPct}/${tpPct}/${holdMax}`, { slPct, tpPct, holdMax })
+    }
+    const vals = [...seen.values()]
+    return vals.length ? { ...vals.at(-1), mixed: vals.length > 1 } : null
+  }
+  const pick = (src) => {
+    const rows = eps.filter((e) => e.exit?.cfgSource === src &&
+      Number.isFinite(e.exit?.ret) && Number.isFinite(e.ret7))
+    return {
+      ...summarizeTrades(rows.map((e) => ({ ret: e.exit.ret, reason: e.exit.reason }))),
+      params: paramsOf(rows),
+      hold7: summarizeTrades(rows.map((e) => ({ ret: e.ret7, reason: 'hold7' }))),
+    }
+  }
   return { live: pick('live'), backfill: pick('backfill') }
 }
 
