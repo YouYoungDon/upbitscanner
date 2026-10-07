@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applyCombos, detectSignals, volumeGrade, fallingKnifePenalty, SIGNAL_KEYS, PATTERN_SCORE } from '../lib/signals.mjs'
+import { applyCombos, detectSignals, detectPatterns, volumeGrade, fallingKnifePenalty, SIGNAL_KEYS, PATTERN_SCORE } from '../lib/signals.mjs'
 
 describe('volumeGrade', () => {
   it('계단 등급: <2→0, 2x→1, 7x→2, 15x→3, 30x→4', () => {
@@ -72,18 +72,6 @@ describe('detectSignals', () => {
     expect(r).toHaveProperty('sell')
     expect(typeof r.buyScore).toBe('number')
     expect(typeof r.sellScore).toBe('number')
-  })
-
-  it('Stoch 과매수 데드크로스 발생 시 익절 타이밍 태그를 sell에 추가', () => {
-    // 횡보 40봉 → +4% 3연속 → -1.4%: K>80에서 K가 D를 하향 교차
-    const closes = []
-    for (let i = 0; i < 40; i++) closes.push(100 + (i % 2 ? 3 : -3))
-    for (let i = 0; i < 3; i++) closes.push(closes.at(-1) * 1.04)
-    closes.push(closes.at(-1) * 0.986)
-    const ohlcv = closes.map((c) => ({ close: c, high: c * 1.01, low: c * 0.99, volume: 10 }))
-    const r = detectSignals(ohlcv, {})
-    expect(r.sell.some((s) => s.startsWith('Stoch 과매수 데드크로스'))).toBe(true)
-    expect(r.sell).toContain('[익절] Stoch DC — 매도 타이밍')
   })
 
   it('MACD 데드크로스만 있고 Stoch DC가 없으면 Stoch DC 태그를 붙이지 않음', () => {
@@ -221,5 +209,32 @@ describe('신호 정리 (2026-10-07, 18개월 재생 근거)', () => {
     closes.push(149 * 0.96)
     const r = detectSignals(closes.map((c) => ({ close: c, high: c * 1.01, low: c * 0.99, volume: 10 })), {})
     expect(r.sell).toContain('MACD 하락전환')
+  })
+})
+
+// 2026-10-08 종합 점검: 18개월 재생에서 매도 목록(매도점수≥3)의 이 다섯 신호는 역방향이었다
+// (뜬 뒤 오히려 올랐다). 함께 빼자 매도 픽의 1/3/7일 초과수익이 전·후반 6칸 모두 더 음(−)이 됐다
+// (3일 후반 −0.13 → −0.30%p). scripts/research/signal-ablation/review-checks.mjs
+describe('매도 역방향 신호 제거 (2026-10-08)', () => {
+  it('과매수 구간에서도 Stoch 과매수·과매수 DC·W%R 과매수·익절 태그를 내지 않는다', () => {
+    const closes = []
+    for (let i = 0; i < 40; i++) closes.push(100 + (i % 2 ? 3 : -3))
+    for (let i = 0; i < 3; i++) closes.push(closes.at(-1) * 1.04)
+    closes.push(closes.at(-1) * 0.986)
+    const r = detectSignals(closes.map((c) => ({ close: c, high: c * 1.01, low: c * 0.99, volume: 10 })), {})
+    expect(r.sell.some((s) => /Stoch 과매수|Williams %R 과매수|\[익절\]/.test(s))).toBe(false)
+    expect(r.sell).toContain('BB 상단 돌파') // 유효한 매도 신호는 유지
+  })
+  it('쌍봉·하락깃발 패턴은 감지하지 않는다', () => {
+    const top = []
+    for (let i = 0; i < 30; i++) top.push(100 + 10 * Math.sin((i / 30) * Math.PI * 2 * 2))
+    const flag = []
+    for (let i = 0; i < 16; i++) flag.push(120 - i * 1.2)
+    for (let i = 0; i < 14; i++) flag.push(101 + (i % 2) * 0.5)
+    for (const closes of [top, flag]) {
+      const r = detectPatterns(closes.map((c) => ({ close: c, high: c * 1.005, low: c * 0.995, volume: 10 })))
+      expect(r.sell).toEqual([])
+    }
+    for (const k of ['쌍봉 패턴', '하락깃발 패턴', 'Stoch 과매수', 'Stoch 과매수 데드크로스', 'Williams %R 과매수']) expect(SIGNAL_KEYS).not.toContain(k)
   })
 })
