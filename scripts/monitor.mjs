@@ -21,6 +21,7 @@ import { readableSignals } from '../lib/signal-format.mjs'
 import scoringRegistry from '../lib/scoring/features/index.mjs'
 import { loadScoringConfig } from '../lib/scoring/config.mjs'
 import { runScoringShadow } from '../lib/scoring/context.mjs'
+import { newsDaemonStale } from '../lib/news/health.mjs'
 
 const MAX_SCANS = 30
 const BUY_THRESHOLD = 5
@@ -228,6 +229,7 @@ async function main() {
   await notifyTelegram(buy, { regime: regimeInfo, buyCount: buy.length, sellCount: sell.length, kimchi: entry.kimchi, funding: entry.funding })
   await notifyEventAlerts(events)
   await notifyPositionAlerts()
+  await warnNewsDaemonStale()
 }
 
 // 이번 스캔에서 처음 감지된 거래소 이벤트 → 콘솔 + Telegram 즉시 경보
@@ -241,6 +243,16 @@ async function notifyEventAlerts(events) {
   console.log(msg)
   const TG_TOKEN = process.env.TELEGRAM_TOKEN, TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID
   if (TG_TOKEN && TG_CHAT_ID) await sendTelegram(msg)
+}
+
+// news-watch 데몬 생존 점검: 10분 넘게 사이클이 없으면 하루 1회 경고(설치 전이면 조용).
+async function warnNewsDaemonStale() {
+  const st = await readJson('news-state.json', null)
+  const health = await readJson('news-watch-health.json', {})
+  const r = newsDaemonStale(st, health, Date.now())
+  if (!r.warn) return
+  console.log('⚠️ 뉴스 데몬 정지 — 마지막 사이클', st.lastLoopAt)
+  if (await sendTelegram(`⚠️ 뉴스 데몬 정지 — 마지막 사이클 ${st.lastLoopAt}\n작업 스케줄러 UpbitNewsWatch 상태를 확인하세요.`)) await writeJson('news-watch-health.json', r.health)
 }
 
 // 보유 포지션(data/positions.json) 중 손절선 도달 종목 경고 (콘솔 + Telegram)

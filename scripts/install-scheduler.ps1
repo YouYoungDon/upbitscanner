@@ -81,4 +81,11 @@ $botSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnB
 Register-ScheduledTask -TaskName 'UpbitTelegramBot' -Action $botAction -Trigger $botTrigger -Settings $botSettings -Force | Out-Null
 Write-Host "registered: UpbitTelegramBot (AtLogOn, always-on)"
 
+# 상주 뉴스·공지 감시 데몬 — 로그인 시 시작, 죽으면 1분 뒤 재시작(봇과 같은 설정).
+$newsScript = Join-Path $projectRoot 'scripts\news-watch.mjs'
+$newsAction = New-LoggingAction $newsScript 'UpbitNewsWatch'
+$newsTrigger = New-ScheduledTaskTrigger -AtLogOn
+Register-ScheduledTask -TaskName 'UpbitNewsWatch' -Action $newsAction -Trigger $newsTrigger -Settings $botSettings -Force | Out-Null
+Write-Host "registered: UpbitNewsWatch (AtLogOn, always-on)"
+
 Write-Host "`nverify: Get-ScheduledTask -TaskName 'Upbit*'"
