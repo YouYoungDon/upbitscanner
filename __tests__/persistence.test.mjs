@@ -51,38 +51,26 @@ describe('appearanceStreak (일 단위)', () => {
 })
 
 describe('scorePersistence', () => {
+  it('회귀: 거래량 관련 라벨은 더 이상 붙지 않음(근거 신호 제거)', () => {
+    const prior = [scan(at(1), ['KRW-A'], ['KRW-A'])]
+    const r = scorePersistence({ market: 'KRW-A' }, prior, NOW)
+    expect(r.signals.some((x) => x.includes('거래량'))).toBe(false)
+  })
   it('3일 연속 → +2', () => {
     const prior = [scan(at(3), ['KRW-A']), scan(at(2), ['KRW-A']), scan(at(1), ['KRW-A'])]
-    const r = scorePersistence({ market: 'KRW-A', hasVolumeSurge: false }, prior, NOW)
+    const r = scorePersistence({ market: 'KRW-A' }, prior, NOW)
     expect(r.bonus).toBe(2)
     expect(r.signals).toContain('🔥지속 매수권 (3일+)')
   })
   it('2일 연속 → +1 (3일 라벨과 중복 없음)', () => {
     const prior = [scan(at(3), []), scan(at(2), ['KRW-A']), scan(at(1), ['KRW-A'])]
-    const r = scorePersistence({ market: 'KRW-A', hasVolumeSurge: false }, prior, NOW)
+    const r = scorePersistence({ market: 'KRW-A' }, prior, NOW)
     expect(r.bonus).toBe(1)
     expect(r.signals).toContain('지속 매수권 (2일)')
     expect(r.signals).not.toContain('🔥지속 매수권 (3일+)')
   })
-  it('오늘+어제 봉 거래량 급증 → 거래량 지속 +1', () => {
-    const prior = [scan(at(1), ['KRW-A'], ['KRW-A'])]
-    const r = scorePersistence({ market: 'KRW-A', hasVolumeSurge: true }, prior, NOW)
-    expect(r.signals).toContain('거래량 지속')
-    expect(r.bonus).toBe(1)
-  })
-  it('회귀: 같은 날 앞선 스캔의 급증(같은 봉)은 "지속"이 아님', () => {
-    const prior = [scan(at(0, 3), ['KRW-A'], ['KRW-A'])]
-    const r = scorePersistence({ market: 'KRW-A', hasVolumeSurge: true }, prior, NOW)
-    expect(r).toEqual({ bonus: 0, signals: [] })
-  })
-  it('어제 급증·오늘 소멸 → 경고만, bonus 0', () => {
-    const prior = [scan(at(1), ['KRW-A'], ['KRW-A'])]
-    const r = scorePersistence({ market: 'KRW-A', hasVolumeSurge: false }, prior, NOW)
-    expect(r.signals).toContain('⚠️거래량 소멸 (1회성)')
-    expect(r.bonus).toBe(0)
-  })
   it('빈 이력 → bonus 0, 라벨 없음', () => {
-    const r = scorePersistence({ market: 'KRW-A', hasVolumeSurge: true }, [], NOW)
+    const r = scorePersistence({ market: 'KRW-A' }, [], NOW)
     expect(r).toEqual({ bonus: 0, signals: [] })
   })
 })

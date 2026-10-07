@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
+import { detectLiquiditySweep, detectVBottom } from '../lib/smc-signals.mjs'
 
 const bar = (o, h, l, c, v = 100) => ({ open: o, high: h, low: l, close: c, volume: v })
 
@@ -38,21 +38,5 @@ describe('detectVBottom', () => {
   it('평범한 상승추세 → null', () => {
     const bars = Array.from({ length: 35 }, (_, i) => { const c = 100 + i; return bar(c - 0.5, c + 0.5, c - 0.5, c, 100) })
     expect(detectVBottom(bars)).toBeNull()
-  })
-})
-
-describe('detectPumpStart', () => {
-  it('스퀴즈+매집+발사 → score 7', () => {
-    const bars = []
-    for (let i = 0; i <= 70; i++) { const c = 100 + i * 0.02; bars.push(bar(c, c + 0.05, c - 0.05, c, 100)) } // 타이트 횡보+완만상승
-    bars.push(bar(102, 109, 101.5, 108, 300)) // index 71: BB상단 돌파 + 거래량 3x
-    const r = detectPumpStart(bars)
-    expect(r).not.toBeNull()
-    expect(r.score).toBe(7)
-    expect(r.stopLoss1).toBe(101.5)
-  })
-  it('변동 없는 시장 → null', () => {
-    const bars = Array.from({ length: 80 }, () => bar(100, 100.1, 99.9, 100, 100))
-    expect(detectPumpStart(bars)).toBeNull()
   })
 })

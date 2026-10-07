@@ -3,7 +3,7 @@ import { getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../l
 import { confirmedOhlcvAsOf, confirmedOhlcvByPeriod } from '../lib/ohlcv.mjs'
 import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
-import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
+import { detectLiquiditySweep, detectVBottom } from '../lib/smc-signals.mjs'
 import { detectQuietBottom, strategyLevels } from '../lib/strategy.mjs'
 import { calcStochastic } from '../lib/indicators.mjs'
 import { readJson, writeJson, rollingAppend, withLock, readWeights } from '../lib/store.mjs'
@@ -88,7 +88,7 @@ async function main() {
       for (const p of pat.buy) { sig.buy.push(p); sig.buyScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
       for (const p of pat.sell) { sig.sell.push(p); sig.sellScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
 
-      const combo = applyCombos(sig.buy, sig.sell, sig.buyScore, sig.volRatio)
+      const combo = applyCombos(sig.buy, sig.sell, sig.buyScore)
       let finalBuyScore = combo.buyScore
       let buySignals = combo.buy
       // 멀티 타임프레임 보너스: 일봉 GC + 4시간봉도 Stoch GC면 ×1.2
@@ -100,14 +100,13 @@ async function main() {
       }
       // 고강도 SMC 신호 (드물지만 강력 — combo/MTF와 별개의 가산 점수)
       let sellScore = sig.sellScore, sellSignals = sig.sell
-      let vbottomSL, pumpSL
+      let vbottomSL
       const sweep = detectLiquiditySweep(confirmed)
       const vbottom = detectVBottom(confirmed)
-      const pump = detectPumpStart(confirmed)
       if (sweep.side === 'buy') { finalBuyScore += sweep.score; buySignals = [...buySignals, `유동성 스윕 (깊이 ${sweep.depthPct}%)`] }
       if (sweep.side === 'sell') { sellScore += sweep.score; sellSignals = [...sellSignals, `유동성 스윕 고점 (깊이 ${sweep.depthPct}%)`] }
       if (vbottom) { finalBuyScore += vbottom.score; buySignals = [...buySignals, `🎯V-Bottom (RSI${vbottom.rsi9}·꼬리${vbottom.wickRatio}%)`]; vbottomSL = vbottom.stopLoss }
-      if (pump) { finalBuyScore += pump.score; buySignals = [...buySignals, `🚀Pump Start (vol ${pump.volRatio}x)`]; pumpSL = pump.stopLoss1 }
+      // 🚀Pump Start(+7)는 2026-10-07 제거 — 돌파+거래량 급증이라 거래량 급증 매수와 같은 이유(재생 단일 제거 악화 0/12).
       // 배수군 일괄 적용 (레짐·유동성·dominance·낙하칼·추격·펀딩·구조리스크) — lib/buy-modifiers, 순서·배수 동일.
       const cgE0 = cg.byMarket[market]
       const evE = events.byMarket[market]
@@ -117,7 +116,7 @@ async function main() {
       const hasEventCaution = evE?.events?.some((e) => e.type === 'caution')
       const mods = applyBuyModifiers(finalBuyScore, buySignals, {
         regimeTrend: regime.trend, tradePrice24h: tradePrice[market], globalVolKrw: cgE0?.globalVolKrw,
-        sellSignals, volRatio: sig.volRatio, pump: !!pump,
+        sellSignals,
         fundingRate: funding.byMarket[market]?.rate,
         circRatio: cgE0?.circRatio, athChangePct: cgE0?.athChangePct, rank: cgE0?.rank,
         caution: warnOf[market] === 'caution' && !hasEventCaution,
@@ -129,8 +128,7 @@ async function main() {
       const fundRate = mods.funding.rate, fundMult = mods.funding.mult
       const sr = mods.structuralRisk
       // 지속성 보너스 (이력 기반, 마지막 가산)
-      const hasVolumeSurge = buySignals.some((s) => s.startsWith('거래량 급증'))
-      const pers = scorePersistence({ market, hasVolumeSurge }, priorScans, scanStart)
+      const pers = scorePersistence({ market }, priorScans, scanStart)
       finalBuyScore += pers.bonus
       if (pers.signals.length) buySignals = [...buySignals, ...pers.signals]
       // 조용한 바닥 전략 태깅 (표시 전용 — 점수 불변)
@@ -152,7 +150,6 @@ async function main() {
       if (finalBuyScore >= BUY_THRESHOLD && warn !== 'warning') {
         const item = { market, korean_name: nameOf[market], price: livePrice, priceBasis: 'live', score: +finalBuyScore.toFixed(1), signals: buySignals }
         if (vbottomSL != null) item.vbottomSL = vbottomSL
-        if (pumpSL != null) item.pumpSL = pumpSL
         if (lowLiq) item.lowLiquidity = true
         if (strategyLv) item.strategy = strategyLv
         if (exitConfig) {
@@ -287,7 +284,6 @@ async function notifyTelegram(buyList, ctx = {}) {
     if (reasons.length) lines.push(`  📈 ${esc(reasons.join(', '))}`)
     if (strategy && b.strategy) lines.push(`  🎯 조용한바닥 · 손절 ${fmt(b.strategy.stopLoss)} / 목표 ${fmt(b.strategy.takeProfit)}`)
     else if (b.vbottomSL != null) lines.push(`  🎯 V바텀 손절 ${fmt(b.vbottomSL)}`)
-    else if (b.pumpSL != null) lines.push(`  🚀 펌프 손절 ${fmt(b.pumpSL)}`)
     else if (b.exit) lines.push(`  📐 청산 · 손절 ${fmt(b.exit.stopLoss)} / 목표 ${fmt(b.exit.takeProfit)} (${b.exit.holdMax}일)`)
     if (warns.length) lines.push(`  ⚠️ ${esc(warns.join(' · '))}`)
     if (b.kimchi?.flag === 'overheat') lines.push(`  🇰🇷 국내 과열(추격 위험) · 김치프 ${(b.kimchi.premium * 100).toFixed(1)}%`)

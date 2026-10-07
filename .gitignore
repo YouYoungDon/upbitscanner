@@ -13,3 +13,4 @@ data/signal-weights.json
 data/scorecard.json
 data/event-log.json
 .worktrees/
+data/research/
