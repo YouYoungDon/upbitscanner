@@ -43,3 +43,12 @@ describe('마켓 범위 표기는 코인이 아니다', () => {
     expect(mk(item('BTC 현물 ETF 순유입')).markets).toEqual(['KRW-BTC'])
   })
 })
+
+describe('#6 조사가 붙은 한글명', () => {
+  it('솔라나가·이더리움의·솔라나에서 매칭, 솔라나파이는 아님', () => {
+    expect(m(item('솔라나가 사상 최고치')).markets).toEqual(['KRW-SOL'])
+    expect(m(item('이더리움의 업그레이드 일정')).markets).toEqual(['KRW-ETH'])
+    expect(m(item('솔라나에서 신규 프로젝트')).markets).toEqual(['KRW-SOL'])
+    expect(m(item('솔라나파이 출시')).markets).toEqual([])
+  })
+})

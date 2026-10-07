@@ -90,3 +90,49 @@ describe('runCycle', () => {
     expect(r.state.initialized).toBe(true)
   })
 })
+
+describe('최종 리뷰 수정 (2026-10-07)', () => {
+  const DAY = 86400000
+  it('#1 피드에 남아 있는 항목은 7일이 지나도 새 글이 아니다', async () => {
+    const deps = mkDeps()
+    let s = (await runCycle({ state: emptyState(), nowMs: NOW, deps })).state
+    for (let d = 1; d <= 10; d++) s = (await runCycle({ state: s, nowMs: NOW + d * DAY, deps })).state
+    expect(deps.send).not.toHaveBeenCalled()
+  })
+  it('#2 첫 사이클에 모든 소스가 실패해도, 각 소스의 첫 성공은 조용히 seen만', async () => {
+    const fail = { coinness: vi.fn(async () => null), upbit: vi.fn(async () => null), binance: vi.fn(async () => null), bithumb: vi.fn(async () => null) }
+    const deps = mkDeps({ fetchers: fail })
+    let s = (await runCycle({ state: emptyState(), nowMs: NOW, deps })).state
+    deps.fetchers.coinness = vi.fn(async () => [ni('coinness:9', 'coinness', 'ID 고래', { codes: ['ID'] })])
+    deps.fetchers.upbit = vi.fn(async () => [ni('upbit:9', 'upbit', '뉴메레르(NMR) KRW, USDT 마켓 디지털 자산 추가')])
+    s = (await runCycle({ state: s, nowMs: NOW + 61000, deps })).state
+    expect(deps.send).not.toHaveBeenCalled()
+    deps.fetchers.coinness = vi.fn(async () => [ni('coinness:10', 'coinness', 'ID 메인넷', { codes: ['ID'] })])
+    await runCycle({ state: s, nowMs: NOW + 122000, deps })
+    expect(deps.send).toHaveBeenCalledTimes(1)
+  })
+  it('#4 전송 실패한 알림은 30분 안의 다음 사이클에 다시 보낸다', async () => {
+    const deps = mkDeps()
+    let s = (await runCycle({ state: emptyState(), nowMs: NOW, deps })).state
+    deps.send = vi.fn(async () => false)
+    deps.fetchers.coinness = vi.fn(async () => [ni('coinness:20', 'coinness', 'ID 고래 이체', { codes: ['ID'] })])
+    s = (await runCycle({ state: s, nowMs: NOW + 61000, deps })).state
+    deps.send = vi.fn(async () => true)
+    deps.fetchers.coinness = vi.fn(async () => [])
+    s = (await runCycle({ state: s, nowMs: NOW + 122000, deps })).state
+    expect(deps.send).toHaveBeenCalledTimes(1)
+    expect(deps.send.mock.calls[0][0]).toContain('ID 고래 이체')
+    expect(s.pending).toEqual([])
+  })
+  it('#10 마켓 목록이 비면 그 사이클은 seen 처리하지 않는다(다음에 다시 판정)', async () => {
+    const deps = mkDeps()
+    let s = (await runCycle({ state: emptyState(), nowMs: NOW, deps })).state
+    deps.getMarkets = vi.fn(async () => [])
+    deps.fetchers.upbit = vi.fn(async () => [ni('upbit:30', 'upbit', '뉴메레르(NMR) KRW, USDT 마켓 디지털 자산 추가')])
+    s = (await runCycle({ state: s, nowMs: NOW + 61000, deps })).state
+    expect(s.seen['upbit:30']).toBeUndefined()
+    deps.getMarkets = vi.fn(async () => markets)
+    await runCycle({ state: s, nowMs: NOW + 122000, deps })
+    expect(deps.send.mock.calls.at(-1)[0]).toContain('🟢상장')
+  })
+})

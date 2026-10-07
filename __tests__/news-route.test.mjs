@@ -64,3 +64,10 @@ describe('formatNewsAlert', () => {
     expect(formatNewsAlert([], '22:41', ['⚠️뉴스 소스 중단: 바이낸스'])).toContain('⚠️뉴스 소스 중단: 바이낸스')
   })
 })
+
+describe('#7 메시지 길이 상한', () => {
+  it('긴 티커·태그 줄이 20개여도 4096자 미만', () => {
+    const big = Array.from({ length: 20 }, (_, i) => ({ rec: rec({ id: `b:${i}`, important: true, title: 'x'.repeat(120), markets: Array.from({ length: 40 }, (_, k) => `KRW-COIN${k}`), tags: ['해킹', '규제', '고래', '파트너십'] }), reasons: ['important'] }))
+    expect(formatNewsAlert(big, '22:41', ['⚠️뉴스 소스 중단: 바이낸스']).length).toBeLessThan(4096)
+  })
+})

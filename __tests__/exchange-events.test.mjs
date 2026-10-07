@@ -342,3 +342,21 @@ describe('중단 공지의 완료·재개 꼬리표 → resume', () => {
     expect(classifyAnnouncement('아이오타(IOTA) 입출금 일시 중단 안내 (10/08 12:00 ~)')).toMatchObject({ type: 'halt' })
   })
 })
+
+describe('#3 재개 꼬리표 범위·거래소 한정', () => {
+  it('입출금 중단 문구 없이 (완료)만 있으면 resume 아님', () => {
+    expect(classifyAnnouncement('아발란체(AVAX) 네트워크 업그레이드 지원 안내 (완료)')?.type).not.toBe('resume')
+    expect(resumeClears('아발란체(AVAX) 에어드랍 지급 안내 (완료)').has('halt')).toBe(false)
+  })
+  it('빗썸 재개 공지는 업비트 중단을 지우지 않는다(같은 거래소만 해제)', async () => {
+    const T0 = Date.parse('2026-10-01T00:00:00Z')
+    const deps = {
+      ...memStore(),
+      fetchUpbitAnnouncements: vi.fn(async () => [{ id: 'upbit:700', title: '소폰(SOPH) 입출금 일시 중단 안내', ts: '2026-10-01T00:00:00Z' }]),
+      fetchBinanceAnnouncements: vi.fn(async () => null),
+      fetchBithumbAnnouncements: vi.fn(async () => [{ id: 'bithumb:701', title: '소폰(SOPH) 입출금 일시 중지 안내 (10/02 재개)', ts: '2026-10-01T06:00:00Z' }]),
+    }
+    const r = await ensureEvents(['KRW-SOPH'], { now: T0 + 86400000, deps })
+    expect(r.byMarket['KRW-SOPH'].mult).toBe(0.7)
+  })
+})
