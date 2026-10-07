@@ -14,3 +14,6 @@ data/scorecard.json
 data/event-log.json
 .worktrees/
 data/research/
+data/news-log.jsonl
+data/news-state.json
+data/news-watch-health.json
