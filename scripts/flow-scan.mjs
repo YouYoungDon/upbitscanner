@@ -3,7 +3,7 @@ import { getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
-import { shouldAlert, updateAlertState } from '../lib/flow-alert.mjs'
+import { updateAlertState, selectFlowAlerts, formatFlowAlert } from '../lib/flow-alert.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
 import { ensureEvents, applyEventDefense } from '../lib/exchange-events.mjs'
 import { readPositions } from '../lib/positions.mjs'
@@ -15,10 +15,13 @@ import {
 
 const MAX_SCANS = 30
 const FIVE_MIN_COUNT = 81 // 81개 조회 후 형성 중인 최신 봉 1개 제외 → 완성봉 80개
-const LEVEL_EMOJI = { strong: '🔴', attention: '🟠', watch: '🟡' }
 
 async function main() {
-  const { targets, nameOf, warnOf, tradePrice } = await getScanUniverse({ minTradePrice: CONFIG.minTradePrice24h })
+  const universe = await getScanUniverse({ minTradePrice: CONFIG.minTradePrice24h })
+  const { nameOf, warnOf, tradePrice } = universe
+  // 보유 코인은 거래대금과 무관하게 항상 감시(급변동 경보는 보유 코인 리스크 알림이다)
+  const held = new Set(readPositions().map((p) => p.market))
+  const targets = [...new Set([...universe.targets, ...[...held].filter((m) => nameOf[m])])]
   if (!targets.length) { console.error('자금유입 스캔 대상 없음'); process.exit(1) }
   console.log(`자금유입 스캔 대상 ${targets.length}종목 (24h≥${CONFIG.minTradePrice24h / 1e8}억)`)
 
@@ -115,20 +118,19 @@ async function main() {
   console.log(`자금유입 스캔 #${scanNum} — 🔴${counts.strong} 🟠${counts.attention} 🟡${counts.watch}`)
   console.log('상위:', picks.slice(0, 5).map((p) => `${p.korean_name}(${p.score})`).join(', ') || '없음')
 
-  await notifyFlow(picks)
+  await notifyFlow(picks, held)
 }
 
-async function notifyFlow(picks) {
+async function notifyFlow(picks, held) {
   const now = Date.now()
   // 락 안에서 fresh 재읽기 → 판정 → 전송 → 성공 시에만 상태 갱신·쓰기.
   // 전송 실패(네트워크 오류/non-2xx)에도 억제창이 시작되면 실제로는 못 받은 알림이 억제되어 버린다.
   await withLock('flow-alert-state', async () => {
     const state = await readJson('flow-alert-state.json', {})
-    const fire = picks.filter((p) => (p.level === 'strong' || p.level === 'attention') && shouldAlert({ market: p.market, score: p.score, now }, state, CONFIG))
+    const fire = selectFlowAlerts(picks, held, state, CONFIG, now)
     if (!fire.length) return
-    const lines = fire.map((p) => `${LEVEL_EMOJI[p.level]} ${p.korean_name}(${p.market.replace('KRW-', '')}) ${p.score}점 · 머니 ${p.ratio}x${p.accel ? ` ·가속 ${p.accel}x` : ''}${p.breakout ? ' ·돌파' : ''}${p.domLabel ? ' ' + p.domLabel : ''}${p.event ? ' ' + p.event.label : ''}`)
     const when = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
-    const sent = await sendTelegram(`💸 자금유입 ${when}\n\n${lines.join('\n')}`)
+    const sent = await sendTelegram(formatFlowAlert(fire, when))
     if (!sent) return
     let newState = state
     for (const p of fire) newState = updateAlertState(newState, p.market, p.score, now)
