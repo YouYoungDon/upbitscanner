@@ -235,7 +235,7 @@ async function notifyEventAlerts(events) {
   const list = events?.newEvents || []
   if (!list.length) return
   const TYPE_KO = { delist: '상장폐지', caution: '유의지정', halt: '입출금중단', resume: '재개/해제' }
-  const EX_KO = { upbit: '업비트', binance: '바이낸스' }
+  const EX_KO = { upbit: '업비트', binance: '바이낸스', bithumb: '빗썸' }
   const lines = list.map((e) => `🚨 ${e.markets.map((m) => m.replace('KRW-', '')).join(',')} — ${TYPE_KO[e.type] || e.type}(${EX_KO[e.exchange] || e.exchange})\n   ${e.title}`)
   const msg = `🚨 [거래소 이벤트] ${list.length}건\n${lines.join('\n')}`
   console.log(msg)

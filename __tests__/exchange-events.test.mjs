@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
-  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult, ensureEvents, applyEventDefense, scopedOutsideKrw,
+  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult, ensureEvents, applyEventDefense, scopedOutsideKrw, EXCHANGE_MULT_OVERRIDE,
 } from '../lib/exchange-events.mjs'
 
 describe('classifyAnnouncement', () => {
@@ -145,6 +145,7 @@ describe('ensureEvents', () => {
     ...memStore(),
     fetchUpbitAnnouncements: vi.fn(async () => sophHalt),
     fetchBinanceAnnouncements: vi.fn(async () => null),
+    fetchBithumbAnnouncements: vi.fn(async () => null), // 기본 페처가 실제 네트워크를 타지 않게
     ...over,
   })
 
@@ -292,5 +293,38 @@ describe('ensureEvents', () => {
     const deps2 = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => [{ id: 'upbit:7000', title: '도지코인(DOGE) 입출금 중단 안내', ts: '2026-09-07T00:00:00+09:00' }]) })
     const r2 = await ensureEvents(['KRW-SOPH'], { now: 1_000_000_000_000, positions: [{ market: 'KRW-DOGE' }], deps: deps2 })
     expect(r2.byMarket['KRW-DOGE'].mult).toBe(0.7) // 보유 포지션이면 포함
+  })
+})
+
+describe('빗썸 소스 (2026-10-07)', () => {
+  const HALT_TS2 = Date.parse('2026-10-07T17:00:00+09:00')
+  const mkDeps2 = (bithumb) => ({
+    ...memStore(),
+    fetchUpbitAnnouncements: vi.fn(async () => null),
+    fetchBinanceAnnouncements: vi.fn(async () => null),
+    fetchBithumbAnnouncements: vi.fn(async () => bithumb),
+  })
+  it('"입출금 일시 중지"도 halt로 분류(빗썸 표현)', () => {
+    expect(classifyAnnouncement('세이(SEI) 입출금 일시 중지 안내')).toMatchObject({ type: 'halt' })
+  })
+  it('빗썸 halt는 ×0.85, 유의는 ×0.8 (업비트보다 약하게)', async () => {
+    const r = await ensureEvents(['KRW-SEI', 'KRW-XAI'], { now: HALT_TS2, deps: mkDeps2([
+      { id: 'bithumb:1', title: '세이(SEI) 입출금 일시 중지 안내', ts: '2026-10-07T08:00:00.000Z' },
+      { id: 'bithumb:2', title: '자이(XAI) 거래유의종목 지정', ts: '2026-10-07T03:00:00.000Z' },
+    ]) })
+    expect(r.byMarket['KRW-SEI'].mult).toBe(0.85)
+    expect(r.byMarket['KRW-XAI'].mult).toBe(0.8)
+    expect(r.byMarket['KRW-SEI'].label).toContain('빗썸')
+  })
+  it('빗썸 상폐는 제외(×0)하지 않음 — 업비트 거래는 계속', async () => {
+    const r = await ensureEvents(['KRW-AAA'], { now: HALT_TS2, deps: mkDeps2([{ id: 'bithumb:3', title: '에이(AAA) 거래지원 종료 안내', ts: '2026-10-07T03:00:00.000Z' }]) })
+    expect(r.byMarket['KRW-AAA'].mult).toBe(1)
+    expect(EXCHANGE_MULT_OVERRIDE.bithumb.delist).toBe(1)
+  })
+  it('빗썸만 성공해도 fetch-fail 아님(세 소스 모두 실패해야 fetch-fail)', async () => {
+    const ok = await ensureEvents(['KRW-SEI'], { now: HALT_TS2, deps: mkDeps2([]) })
+    expect(ok.reason).toBeUndefined()
+    const r = await ensureEvents(['KRW-SEI'], { now: HALT_TS2, deps: mkDeps2(null) })
+    expect(r.reason).toBe('fetch-fail')
   })
 })
