@@ -18,6 +18,11 @@ describe('extractEpisodes', () => {
       mfe1: null, mfe3: null, mfe7: null, status: 'pending', scoredAt: null,
     })
   })
+  it('진입가 기준: priceBasis 있으면 그대로, 없으면(구 픽) confirmed-close', () => {
+    const live = { timestamp: 't1', buy: [{ market: 'KRW-A', price: 101, priceBasis: 'live', signals: [] }] }
+    expect(extractEpisodes([live])[0].entryBasis).toBe('live')
+    expect(extractEpisodes([scan('t1', ['KRW-A'])])[0].entryBasis).toBe('confirmed-close')
+  })
   it('연속 등장은 중복 에피소드를 만들지 않는다', () => {
     const eps = extractEpisodes([scan('t1', ['KRW-A']), scan('t2', ['KRW-A'])])
     expect(eps.length).toBe(1)

@@ -1,5 +1,5 @@
 import { getDayCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
-import { confirmedOhlcv } from '../lib/ohlcv.mjs'
+import { confirmedOhlcvAsOf } from '../lib/ohlcv.mjs'
 import {
   calcRSI, calcBB, calcMACD, calcStochastic, calcWilliamsR, calcVolRatio, calcEMA,
 } from '../lib/indicators.mjs'
@@ -13,7 +13,7 @@ const [candles, ticker] = await Promise.all([
 ])
 if (!candles || !ticker) { console.error('조회 실패:', market); process.exit(1) }
 
-const confirmed = confirmedOhlcv(candlesToOhlcv(candles))
+const confirmed = confirmedOhlcvAsOf(candlesToOhlcv(candles), Date.now())
 const closes = confirmed.map((c) => c.close)
 const highs = confirmed.map((c) => c.high)
 const lows = confirmed.map((c) => c.low)

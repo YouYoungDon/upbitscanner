@@ -1,6 +1,6 @@
 import '../lib/env.mjs' // .env 로드(스케줄러 환경 캐시 미스 대비) — Telegram 알림 토큰 확보
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
-import { confirmedOhlcv, ensureMinConfirmed } from '../lib/ohlcv.mjs'
+import { confirmedOhlcvAsOf, ensureMinConfirmed } from '../lib/ohlcv.mjs'
 import { scoreMomentum, MIN_MOMENTUM_SCORE } from '../lib/momentum.mjs'
 import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
@@ -24,7 +24,8 @@ async function main() {
     await Promise.all(chunk.map(async (market) => {
       const candles = await getDayCandles(market, 201)
       if (!candles || candles.length < 61) return
-      const confirmed = ensureMinConfirmed(confirmedOhlcv(candlesToOhlcv(candles)), 60)
+      const ohlcv = candlesToOhlcv(candles)
+      const confirmed = ensureMinConfirmed(confirmedOhlcvAsOf(ohlcv, Date.now()), 60)
       if (!confirmed) return
       let { score, signals } = scoreMomentum(confirmed)
       const { liqMult, lowLiq, label: liqLabel } = liquidityPenalty(tradePrice[market])
@@ -35,7 +36,7 @@ async function main() {
       const warn = warnOf[market]
       // 경고(상폐심사급)는 추세지속 후보에서 제외. 주의는 ⚠️배지로 표시만.
       if (score >= MIN_MOMENTUM_SCORE && warn !== 'warning') {
-        const pick = { market, korean_name: nameOf[market], price: confirmed.at(-1).close, score, signals }
+        const pick = { market, korean_name: nameOf[market], price: ohlcv.at(-1).close, priceBasis: 'live', score, signals } // 지금 가격(확정 종가는 최대 ~21h 묵음)
         if (lowLiq) pick.lowLiquidity = true
         if (dom.share != null) pick.dominance = { share: dom.share, mult: dom.mult }
         if (warn) pick.warn = warn

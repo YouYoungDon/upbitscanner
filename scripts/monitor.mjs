@@ -1,6 +1,6 @@
 import '../lib/env.mjs' // .env 로드(스케줄러 환경 캐시 미스 대비) — Telegram 알림 토큰 확보
 import { getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
-import { confirmedOhlcv } from '../lib/ohlcv.mjs'
+import { confirmedOhlcvAsOf, confirmedOhlcvByPeriod } from '../lib/ohlcv.mjs'
 import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { detectSignals, detectPatterns, applyCombos, PATTERN_SCORE } from '../lib/signals.mjs'
 import { detectLiquiditySweep, detectVBottom, detectPumpStart } from '../lib/smc-signals.mjs'
@@ -30,7 +30,7 @@ const SELL_THRESHOLD = 3
 async function check4hStochGC(market) {
   const candles = await getMinuteCandles(market, 240, 61)
   if (!Array.isArray(candles) || candles.length < 31) return false
-  const ohlcv = confirmedOhlcv(candlesToOhlcv(candles))
+  const ohlcv = confirmedOhlcvByPeriod(candlesToOhlcv(candles), Date.now(), 240 * 60)
   const stoch = calcStochastic(ohlcv.map((c) => c.high), ohlcv.map((c) => c.low), ohlcv.map((c) => c.close))
   return stoch ? stoch.k < 20 && stoch.prevK < stoch.prevD && stoch.k > stoch.d : false
 }
@@ -61,7 +61,8 @@ async function main() {
 
   // 시장 레짐: BTC 일봉 추세 (약세면 반등 매수 감점)
   const btcCandles = await getDayCandles('KRW-BTC', 201)
-  const regime = btcRegime(btcCandles ? confirmedOhlcv(candlesToOhlcv(btcCandles)) : [])
+  const scanStart = Date.now()
+  const regime = btcRegime(btcCandles ? confirmedOhlcvAsOf(candlesToOhlcv(btcCandles), scanStart) : [])
   console.log(`시장 레짐(BTC): ${regime.trend}`)
 
   const log = await readJson('monitor-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
@@ -75,8 +76,13 @@ async function main() {
       const candles = await getDayCandles(market, 201)
       if (!candles || candles.length < 61) return
       const ohlcv = candlesToOhlcv(candles)
-      candleMap[market] = ohlcv // 표시/차트용 전체(형성봉 포함) 유지
-      const confirmed = confirmedOhlcv(ohlcv) // 신호 판정은 확정봉만
+      // 신호 판정은 확정봉만. 날짜 인지 버전을 쓴다: 09:00 정각 스캔에서 아직 당일 체결이 없는 코인은
+      // 마지막 봉이 '어제 확정봉'인데, 무조건 마지막을 버리는 confirmedOhlcv는 그걸 버려 그저께 봉으로 판정했다.
+      const confirmed = confirmedOhlcvAsOf(ohlcv, scanStart)
+      if (confirmed.length < 60) return
+      candleMap[market] = confirmed // 쉐도우 스코어링 입력도 확정봉(형성봉은 시각에 따라 거래량이 출렁여 피처 오염)
+      // 알림·SL/TP·스코어카드 진입가는 '지금 살 수 있는 가격'. 확정 종가는 최대 ~21시간 묵은 값이다.
+      const livePrice = ohlcv.at(-1).close
       const sig = detectSignals(confirmed, weights)
       const pat = detectPatterns(confirmed)
       for (const p of pat.buy) { sig.buy.push(p); sig.buyScore += (PATTERN_SCORE[p] || 0) * (weights[p] ?? 1) }
@@ -124,7 +130,7 @@ async function main() {
       const sr = mods.structuralRisk
       // 지속성 보너스 (이력 기반, 마지막 가산)
       const hasVolumeSurge = buySignals.some((s) => s.startsWith('거래량 급증'))
-      const pers = scorePersistence({ market, hasVolumeSurge }, priorScans)
+      const pers = scorePersistence({ market, hasVolumeSurge }, priorScans, scanStart)
       finalBuyScore += pers.bonus
       if (pers.signals.length) buySignals = [...buySignals, ...pers.signals]
       // 조용한 바닥 전략 태깅 (표시 전용 — 점수 불변)
@@ -132,7 +138,7 @@ async function main() {
       if (strategyConfig) {
         const qb = detectQuietBottom(confirmed, strategyConfig)
         if (qb) {
-          const lv = strategyLevels(sig.price, strategyConfig)
+          const lv = strategyLevels(livePrice, strategyConfig)
           if (lv) {
             // 풀 정밀도 저장 (vbottomSL과 동일 정책) — 0.0x원대 코인에서 toFixed(2)는 손절=목표로 붕괴
             strategyLv = { stopLoss: lv.stopLoss, takeProfit: lv.takeProfit }
@@ -144,13 +150,13 @@ async function main() {
       const warn = warnOf[market] // 'warning'(경고) | 'caution'(주의) | undefined
       // 경고(상폐심사급)는 매수후보에서 제외. 주의는 ⚠️배지로 표시만.
       if (finalBuyScore >= BUY_THRESHOLD && warn !== 'warning') {
-        const item = { market, korean_name: nameOf[market], price: sig.price, score: +finalBuyScore.toFixed(1), signals: buySignals }
+        const item = { market, korean_name: nameOf[market], price: livePrice, priceBasis: 'live', score: +finalBuyScore.toFixed(1), signals: buySignals }
         if (vbottomSL != null) item.vbottomSL = vbottomSL
         if (pumpSL != null) item.pumpSL = pumpSL
         if (lowLiq) item.lowLiquidity = true
         if (strategyLv) item.strategy = strategyLv
         if (exitConfig) {
-          const el = strategyLevels(sig.price, exitConfig)
+          const el = strategyLevels(livePrice, exitConfig)
           // 풀 정밀도 저장 — 0.0x원대 코인에서 반올림하면 손절=목표로 붕괴한다.
           if (el) {
             item.exit = {
@@ -169,7 +175,7 @@ async function main() {
         buy.push(item)
       }
       if (sellScore >= SELL_THRESHOLD) {
-        const item = { market, korean_name: nameOf[market], price: sig.price, score: +sellScore.toFixed(1), signals: sellSignals }
+        const item = { market, korean_name: nameOf[market], price: livePrice, priceBasis: 'live', score: +sellScore.toFixed(1), signals: sellSignals }
         if (warn) item.warn = warn // 매도/청산 신호는 유지하되 유의 표시
         sell.push(item)
       }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { confirmedOhlcv, confirmedOhlcvAsOf, ensureMinConfirmed } from '../lib/ohlcv.mjs'
+import { confirmedOhlcv, confirmedOhlcvAsOf, confirmedOhlcvByPeriod, ensureMinConfirmed } from '../lib/ohlcv.mjs'
 
 describe('confirmedOhlcvAsOf — 날짜 인지 확정봉', () => {
   const DAY = 86400
@@ -28,4 +28,22 @@ describe('ensureMinConfirmed', () => {
   it('길이 >= min이면 그대로', () => { expect(ensureMinConfirmed([1, 2, 3], 3)).toEqual([1, 2, 3]) })
   it('길이 < min이면 null', () => { expect(ensureMinConfirmed([1, 2], 3)).toBe(null) })
   it('비배열이면 null', () => { expect(ensureMinConfirmed(null, 1)).toBe(null) })
+})
+
+describe('confirmedOhlcvByPeriod — 주기 인지 확정봉', () => {
+  const H4 = 240 * 60
+  const t0 = Date.parse('2026-10-07T00:00:00Z') / 1000
+  const bars = [0, 1, 2].map((i) => ({ time: t0 + i * H4, close: i }))
+  it('형성 중인 봉(시작+주기 > 지금)만 제외', () => {
+    const now = (t0 + 2 * H4 + 60) * 1000 // 세 번째 봉 시작 1분 후
+    expect(confirmedOhlcvByPeriod(bars, now, H4).map((c) => c.close)).toEqual([0, 1])
+  })
+  it('회귀: 정각 직후 새 봉이 아직 없으면 방금 확정된 마지막 봉을 보존', () => {
+    const now = (t0 + 3 * H4 + 5) * 1000 // 네 번째 봉 시작 5초 후, 체결 없어 봉 미생성
+    expect(confirmedOhlcvByPeriod(bars, now, H4).map((c) => c.close)).toEqual([0, 1, 2])
+    expect(confirmedOhlcv(bars).map((c) => c.close)).toEqual([0, 1]) // 구 방식은 확정봉을 버렸다
+  })
+  it('비배열 → []', () => {
+    expect(confirmedOhlcvByPeriod(null, 0, H4)).toEqual([])
+  })
 })

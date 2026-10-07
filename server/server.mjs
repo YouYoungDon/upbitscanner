@@ -5,7 +5,7 @@ import { dirname, join, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readJson, withLock, readWeights } from '../lib/store.mjs'
 import { readBody } from '../lib/http-body.mjs'
-import { confirmedOhlcv } from '../lib/ohlcv.mjs'
+import { confirmedOhlcvByPeriod } from '../lib/ohlcv.mjs'
 import { getMarkets, getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
 import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum, buildFlow, buildRecommendations, buildScorecard } from './api.mjs'
@@ -155,7 +155,7 @@ const server = createServer(async (req, res) => {
         : await getMinuteCandles(market, tf === '4h' ? 240 : 60, 201)
       if (!candles || candles.length < 31) return sendJson(res, 400, { error: 'no data' })
       const ohlcv = candlesToOhlcv(candles)
-      const confirmed = confirmedOhlcv(ohlcv)
+      const confirmed = confirmedOhlcvByPeriod(ohlcv, Date.now(), tf === 'day' ? 86400 : (tf === '4h' ? 240 : 60) * 60)
       const weights = await readWeights()
       const result = analyzeMarket(confirmed, { weights }) // 지표/신호는 확정봉
       return sendJson(res, 200, { market, tf, ohlcv, ...result }) // 차트용 ohlcv는 전체 유지
