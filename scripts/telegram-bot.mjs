@@ -9,6 +9,7 @@ import { confirmedOhlcvAsOf } from '../lib/ohlcv.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
 import { detectQuietBottom } from '../lib/strategy.mjs'
 import { readJson, readWeights } from '../lib/store.mjs'
+import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { buildScorecard } from '../server/api.mjs'
 import {
   parseCommand, resolveSymbol,
@@ -114,8 +115,13 @@ async function handleStrategy() {
 
 async function handlePositions() {
   const p = await localApi('/api/positions')
-  const list = Array.isArray(p) ? p : (p?.positions || [])
-  return formatPositions(list)
+  if (p) return formatPositions(Array.isArray(p) ? p : (p.positions || []))
+  // 대시보드 미가동 → 파일 직접 읽기 + 현재가 조회(서버 /api/positions와 동일 산출). 예전엔 "포지션 없음"으로 오답.
+  const positions = readPositions()
+  if (!positions.length) return formatPositions([])
+  const tickers = await getTicker(positions.map((x) => x.market)) || []
+  const priceOf = Object.fromEntries(tickers.map((t) => [t.market, t.trade_price]))
+  return formatPositions(evalPositions(positions, priceOf))
 }
 
 async function handleScorecard() {

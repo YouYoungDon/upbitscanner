@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
-  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult, ensureEvents, applyEventDefense,
+  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult, ensureEvents, applyEventDefense, scopedOutsideKrw,
 } from '../lib/exchange-events.mjs'
 
 describe('classifyAnnouncement', () => {
@@ -25,6 +25,23 @@ describe('classifyAnnouncement', () => {
   it('무관 제목 → null', () => {
     expect(classifyAnnouncement('보이스피싱 예방 주간 안내')).toBeNull()
     expect(classifyAnnouncement(null)).toBeNull()
+  })
+})
+
+describe('scopedOutsideKrw (KRW 외 마켓 한정 공지)', () => {
+  it('BTC 마켓만 거래지원 종료 → KRW 무관(null)', () => {
+    expect(scopedOutsideKrw('썸씽(SSX) BTC 마켓 거래지원 종료 안내')).toBe(true)
+    expect(classifyAnnouncement('썸씽(SSX) BTC 마켓 거래지원 종료 안내')).toBe(null)
+    expect(classifyAnnouncement('썸씽(SSX) 거래지원 종료 안내 (BTC, USDT 마켓)')).toBe(null)
+  })
+  it('KRW 포함 범위·범위 표기 없음 → 기존대로 상폐 처리(방어 우선)', () => {
+    expect(classifyAnnouncement('썸씽(SSX) 거래지원 종료 안내 (KRW, BTC 마켓)')).toMatchObject({ type: 'delist' })
+    expect(classifyAnnouncement('아이콘(ICX) 거래지원 종료 안내 (10/19 15:00)')).toMatchObject({ type: 'delist' })
+  })
+  it('실제 업비트 제목 형식', () => {
+    expect(scopedOutsideKrw('뉴메레르(NMR) KRW, USDT 마켓 디지털 자산 추가')).toBe(false)
+    expect(scopedOutsideKrw('렌조(REZ) 신규 거래지원 안내 (USDT 마켓)')).toBe(true)
+    expect(scopedOutsideKrw('BTC 마켓 및 USDT 마켓 거래 수수료 인하 이벤트 안내')).toBe(true)
   })
 })
 
@@ -123,6 +140,7 @@ describe('ensureEvents', () => {
   const markets = ['KRW-SOPH', 'KRW-BTC']
   const sophHalt = [{ id: 'upbit:6548', title: '네트워크 전환에 따른 소폰(SOPH) 입출금 중단 안내', ts: '2026-09-07T12:20:00+09:00' }]
 
+  const HALT_TS = Date.parse(sophHalt[0].ts) // 만료 기준이 공지 시각이므로 현실적인 now를 쓴다
   const mkDeps = (over = {}) => ({
     ...memStore(),
     fetchUpbitAnnouncements: vi.fn(async () => sophHalt),
@@ -195,9 +213,33 @@ describe('ensureEvents', () => {
   it('만료된 활성 이벤트 청소', async () => {
     // 14일 지난 halt는 자동 제거
     const deps = mkDeps()
-    await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    await ensureEvents(markets, { now: HALT_TS, deps })
     deps.fetchUpbitAnnouncements = vi.fn(async () => []) // 신규 없음
-    const r = await ensureEvents(markets, { now: 1_000_000_000_000 + 15 * 86400000, deps })
+    const r = await ensureEvents(markets, { now: HALT_TS + 15 * 86400000, deps })
+    expect(r.byMarket['KRW-SOPH']).toBeUndefined()
+  })
+
+  it('만료된 공지가 목록에 남아 있어도 새 만료일로 재등록되지 않음', async () => {
+    // 회귀: 만료 기준이 "지금"이던 시절엔 청소 직후 같은 공지가 다시 14일짜리로 등록됐다.
+    const deps = mkDeps()
+    await ensureEvents(markets, { now: HALT_TS, deps })
+    const r = await ensureEvents(markets, { now: HALT_TS + 15 * 86400000, deps }) // 같은 공지 계속 노출
+    expect(r.byMarket['KRW-SOPH']).toBeUndefined()
+  })
+
+  it('만료는 공지 시각 기준 — 공지 10일 뒤 처음 봤으면 남은 4일만 유지', async () => {
+    const deps = mkDeps()
+    const r = await ensureEvents(markets, { now: HALT_TS + 10 * 86400000, deps })
+    expect(r.byMarket['KRW-SOPH'].events[0].expiresAt).toBe(new Date(HALT_TS + 14 * 86400000).toISOString())
+  })
+
+  it('ts 없는 공지(바이낸스)는 최초 목격 시각 기준으로 만료 — 재목격이 연장하지 않음', async () => {
+    const deps = mkDeps({
+      fetchUpbitAnnouncements: vi.fn(async () => null),
+      fetchBinanceAnnouncements: vi.fn(async () => [{ id: 'binance:77', title: 'Sophon (SOPH) Network Migration', ts: null }]),
+    })
+    await ensureEvents(markets, { now: HALT_TS, deps })
+    const r = await ensureEvents(markets, { now: HALT_TS + 15 * 86400000, deps })
     expect(r.byMarket['KRW-SOPH']).toBeUndefined()
   })
 
@@ -216,16 +258,16 @@ describe('ensureEvents', () => {
 
   it('둘 다 실패해도 저장된 활성 이벤트로 계속 방어(소실 방지) — 만료 전엔 유지, 만료 후엔 청소', async () => {
     const deps = mkDeps() // 1차: 업비트 halt 저장
-    await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    await ensureEvents(markets, { now: HALT_TS, deps })
     deps.fetchUpbitAnnouncements = vi.fn(async () => null)
     deps.fetchBinanceAnnouncements = vi.fn(async () => null)
     // 2차: 둘 다 실패, 만료 전(14일 이내) → 저장된 방어가 사라지면 안 됨
-    const r = await ensureEvents(markets, { now: 1_000_000_000_000, deps })
+    const r = await ensureEvents(markets, { now: HALT_TS, deps })
     expect(r.byMarket['KRW-SOPH'].mult).toBe(0.7)
     expect(r.reason).toBe('fetch-fail')
     expect(r.newEvents).toHaveLength(0)
     // 3차: 둘 다 실패, 만료 후(15일 이상) → 이제는 청소되어야 함
-    const r2 = await ensureEvents(markets, { now: 1_000_000_000_000 + 15 * 86400000, deps })
+    const r2 = await ensureEvents(markets, { now: HALT_TS + 15 * 86400000, deps })
     expect(r2.byMarket['KRW-SOPH']).toBeUndefined()
     expect(r2.reason).toBe('fetch-fail')
   })

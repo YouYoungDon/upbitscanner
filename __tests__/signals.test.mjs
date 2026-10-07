@@ -110,15 +110,28 @@ describe('detectSignals', () => {
     expect(typeof r.sellScore).toBe('number')
   })
 
-  it('데드크로스 발생 시 익절 타이밍 태그를 sell에 추가', () => {
-    // 상승 50봉 후 마지막 1봉 -4% → MACD 데드크로스 유발
+  it('Stoch 과매수 데드크로스 발생 시 익절 타이밍 태그를 sell에 추가', () => {
+    // 횡보 40봉 → +4% 3연속 → -1.4%: K>80에서 K가 D를 하향 교차
+    const closes = []
+    for (let i = 0; i < 40; i++) closes.push(100 + (i % 2 ? 3 : -3))
+    for (let i = 0; i < 3; i++) closes.push(closes.at(-1) * 1.04)
+    closes.push(closes.at(-1) * 0.986)
+    const ohlcv = closes.map((c) => ({ close: c, high: c * 1.01, low: c * 0.99, volume: 10 }))
+    const r = detectSignals(ohlcv, {})
+    expect(r.sell.some((s) => s.startsWith('Stoch 과매수 데드크로스'))).toBe(true)
+    expect(r.sell).toContain('[익절] Stoch DC — 매도 타이밍')
+  })
+
+  it('MACD 데드크로스만 있고 Stoch DC가 없으면 Stoch DC 태그를 붙이지 않음', () => {
+    // 상승 50봉 후 마지막 1봉 -4% → MACD 데드크로스(Stoch 과매수 DC 아님)
     const closes = []
     for (let i = 0; i < 50; i++) closes.push(100 + i)
     closes.push(149 * 0.96)
     const ohlcv = closes.map((c) => ({ close: c, high: c * 1.01, low: c * 0.99, volume: 10 }))
     const r = detectSignals(ohlcv, {})
-    expect(r.sell.some((s) => s.includes('데드크로스'))).toBe(true)
-    expect(r.sell).toContain('[익절] Stoch DC — 매도 타이밍')
+    expect(r.sell).toContain('MACD 데드크로스')
+    expect(r.sell.some((s) => s.startsWith('Stoch 과매수 데드크로스'))).toBe(false)
+    expect(r.sell).not.toContain('[익절] Stoch DC — 매도 타이밍')
   })
 
   it('데드크로스 없으면 익절 태그도 없음', () => {

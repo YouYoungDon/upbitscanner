@@ -70,6 +70,9 @@ describe('toCacheEntry', () => {
     })
     expect(toCacheEntry({ market_cap: 1e9, fully_diluted_valuation: 0 }).circRatio).toBe(null)
   })
+  it('시총 0(유통량 미상) → circRatio null (0%로 오인해 언락 오버행 감점 금지)', () => {
+    expect(toCacheEntry({ market_cap: 0, fully_diluted_valuation: 5e9 }).circRatio).toBe(null)
+  })
 })
 
 function makeDeps(files, { key = 'k', coinsList, marketRows } = {}) {

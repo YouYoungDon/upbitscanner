@@ -1,3 +1,4 @@
+import '../lib/env.mjs' // .env 로드(스케줄러 환경 캐시 미스 대비) — 다른 스캐너와 동일하게 Telegram 토큰 확보
 import { getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
