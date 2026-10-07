@@ -1,7 +1,7 @@
 import '../lib/env.mjs' // .env 로드(스케줄러 환경 캐시 미스 대비) — Telegram 알림 토큰 확보
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcvAsOf, ensureMinConfirmed } from '../lib/ohlcv.mjs'
-import { scoreMomentum, MIN_MOMENTUM_SCORE } from '../lib/momentum.mjs'
+import { scoreMomentum, MIN_MOMENTUM_SCORE, sameDayOverheat } from '../lib/momentum.mjs'
 import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
@@ -19,6 +19,7 @@ async function main() {
   const cg = await ensureCgData(targets, { allowFetch: false }) // 캐시만 읽기 (monitor가 갱신 주체)
 
   let picks = []
+  const chase = [] // 당일 과열 → 추격주의(매수 목록 제외)
   for (let i = 0; i < targets.length; i += BATCH) {
     const chunk = targets.slice(i, i + BATCH)
     await Promise.all(chunk.map(async (market) => {
@@ -40,7 +41,10 @@ async function main() {
         if (lowLiq) pick.lowLiquidity = true
         if (dom.share != null) pick.dominance = { share: dom.share, mult: dom.mult }
         if (warn) pick.warn = warn
-        picks.push(pick)
+        // 당일 과열 픽은 매수 목록이 아니라 추격주의 목록으로(lib/momentum.mjs 근거 주석)
+        const oh = sameDayOverheat(confirmed)
+        if (oh.hot) chase.push({ ...pick, chase: oh.reason })
+        else picks.push(pick)
       }
     }))
     await sleep(DELAY)
@@ -58,12 +62,12 @@ async function main() {
   await withLock('momentum-log', async () => {
     const fresh = await readJson('momentum-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
     fresh.totalScans = (fresh.totalScans || 0) + 1
-    fresh.scans = rollingAppend(fresh.scans || [], { timestamp: new Date().toISOString(), picks }, MAX_SCANS)
+    fresh.scans = rollingAppend(fresh.scans || [], { timestamp: new Date().toISOString(), picks, chase }, MAX_SCANS)
     await writeJson('momentum-log.json', fresh)
     scanNum = fresh.totalScans
   })
 
-  console.log(`모멘텀 스캔 #${scanNum} 완료 — 추세지속 ${picks.length}종목`)
+  console.log(`모멘텀 스캔 #${scanNum} 완료 — 추세지속 ${picks.length}종목 (당일과열 추격주의 ${chase.length}종목 제외)`)
   console.log('상위:', picks.slice(0, 5).map((p) => `${p.korean_name}(${p.score})`).join(', ') || '없음')
 
   await notifyTelegram(picks)

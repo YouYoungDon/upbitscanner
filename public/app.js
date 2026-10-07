@@ -250,6 +250,7 @@ const routes = {
         <div class="card bg-base-200 shadow"><div class="card-body p-3">
           <h3 class="card-title text-sm">🚀 모멘텀 TOP</h3>
           <table class="table table-zebra table-sm"><tbody>${momRows}</tbody></table>
+          ${(mom.chase || []).length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer" title="당일 +2.4%↑ 또는 윗꼬리 5.8%↑ — 18개월 재생상 이런 날 산 모멘텀 픽은 손해였다">⚠️추격주의(당일 과열) ${mom.chase.length}개 — 매수 목록에서 제외</summary><div class="text-xs opacity-70 mt-1">${mom.chase.map((x) => `${esc(x.korean_name)} <span class="opacity-60">(${esc(x.chase)})</span>`).join(' · ')}</div></details>` : ''}
         </div></div>
         <div class="card bg-base-200 shadow"><div class="card-body p-3">
           <h3 class="card-title text-sm">💸 자금유입 TOP</h3>

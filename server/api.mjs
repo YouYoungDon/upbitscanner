@@ -91,6 +91,7 @@ export function buildMomentum(log) {
     timestamp: scan.timestamp,
     kpi: { count: (scan.picks || []).length, totalScans: log.totalScans || 0 },
     picks: scan.picks || [],
+    chase: scan.chase || [], // 당일 과열로 매수 목록에서 뺀 종목(추격주의)
   }
 }
 

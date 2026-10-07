@@ -368,3 +368,11 @@ describe('buildScorecard', () => {
     expect(buildScorecard({ episodes: [e('a', {})] }).exitStats.live.params).toBeNull()
   })
 })
+
+describe('buildMomentum chase(당일 과열 제외 목록)', () => {
+  it('chase 목록을 그대로 전달, 없으면 빈 배열', () => {
+    const log = { totalScans: 1, scans: [{ timestamp: 't', picks: [], chase: [{ market: 'KRW-X', korean_name: '엑스', score: 12, chase: '당일 +5.1%' }] }] }
+    expect(buildMomentum(log).chase[0].market).toBe('KRW-X')
+    expect(buildMomentum({ totalScans: 1, scans: [{ timestamp: 't', picks: [] }] }).chase).toEqual([])
+  })
+})

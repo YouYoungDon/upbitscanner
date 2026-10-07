@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { detectDivergence, calcBBSqueeze, scoreMomentum, MIN_MOMENTUM_SCORE, backtestSamples } from '../lib/momentum.mjs'
+import { detectDivergence, calcBBSqueeze, scoreMomentum, MIN_MOMENTUM_SCORE, backtestSamples , sameDayOverheat } from '../lib/momentum.mjs'
 
 describe('backtestSamples', () => {
   it('상승추세에서 신호 표본 + forward return 기록', () => {
@@ -72,5 +72,28 @@ describe('scoreMomentum', () => {
   })
   it('데이터 부족 시 0점', () => {
     expect(scoreMomentum([{ open: 1, high: 1, low: 1, close: 1, volume: 1 }]).score).toBe(0)
+  })
+})
+
+// 2026-10-07: 18개월 재생에서 당일 과열(종가 +2.4%↑ 또는 윗꼬리 5.8%↑) 픽을 빼자 모멘텀 픽의
+// 1/3/7일 초과수익이 전·후반 6칸 모두 양(+)으로 바뀌었다(컷은 전반 데이터로만 정함).
+describe('sameDayOverheat (당일 과열 = 추격주의)', () => {
+  const bar = (o, h, l, c) => ({ open: o, high: h, low: l, close: c, volume: 1 })
+  const prev = Array.from({ length: 5 }, () => bar(100, 101, 99, 100))
+  it('당일 종가 +2.4% 이상 → 과열', () => {
+    const r = sameDayOverheat([...prev, bar(100, 102.5, 100, 102.4)])
+    expect(r.hot).toBe(true)
+    expect(r.reason).toMatch(/당일/)
+  })
+  it('윗꼬리(고가−종가)/종가 5.8% 이상 → 과열', () => {
+    const r = sameDayOverheat([...prev, bar(100, 106, 99, 100.1)])
+    expect(r.hot).toBe(true)
+    expect(r.reason).toMatch(/윗꼬리/)
+  })
+  it('경계 바로 아래 → 과열 아님', () => {
+    expect(sameDayOverheat([...prev, bar(100, 102.3, 99, 102.3)]).hot).toBe(false)
+  })
+  it('봉 부족 → 과열 아님', () => {
+    expect(sameDayOverheat([bar(100, 101, 99, 100)]).hot).toBe(false)
   })
 })
