@@ -35,3 +35,11 @@ describe('buildMatcher', () => {
     expect(m(item('x', ['DOGE'])).markets).toEqual([])
   })
 })
+
+describe('마켓 범위 표기는 코인이 아니다', () => {
+  it('"(KRW, BTC, USDT 마켓)"의 BTC를 비트코인으로 매칭하지 않음', () => {
+    const mk = buildMatcher([...markets, { market: 'KRW-BTC', korean_name: '비트코인', english_name: 'Bitcoin' }, { market: 'KRW-POD', korean_name: '돌핀', english_name: 'Dolphin' }])
+    expect(mk(item('돌핀(POD) 신규 거래지원 안내 (KRW, BTC, USDT 마켓)')).markets).toEqual(['KRW-POD'])
+    expect(mk(item('BTC 현물 ETF 순유입')).markets).toEqual(['KRW-BTC'])
+  })
+})

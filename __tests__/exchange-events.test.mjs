@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
-  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult, ensureEvents, applyEventDefense, scopedOutsideKrw, EXCHANGE_MULT_OVERRIDE,
+  classifyAnnouncement, parseTickers, matchMarkets, eventRiskMult, ensureEvents, applyEventDefense, scopedOutsideKrw, EXCHANGE_MULT_OVERRIDE, resumeClears,
 } from '../lib/exchange-events.mjs'
 
 describe('classifyAnnouncement', () => {
@@ -326,5 +326,19 @@ describe('빗썸 소스 (2026-10-07)', () => {
     expect(ok.reason).toBeUndefined()
     const r = await ensureEvents(['KRW-SEI'], { now: HALT_TS2, deps: mkDeps2(null) })
     expect(r.reason).toBe('fetch-fail')
+  })
+})
+
+// 2026-10-07 news-watch 실데이터 점검: 업비트·빗썸은 중단 공지 제목에 "(완료)"·"(10/07 재개)"·
+// "(출금 서비스 재개 안내)"를 덧붙여 재개를 알린다. 이를 halt로 읽으면 이미 재개된 코인이 ×0.7 감점된다.
+describe('중단 공지의 완료·재개 꼬리표 → resume', () => {
+  it('꼬리표가 붙으면 resume, 해제 대상은 halt', () => {
+    for (const t of ['피르마체인(FCT2) 입출금 일시 중단 안내 (완료)', '멀티버스엑스(EGLD) 입출금 일시 중단 안내 (출금 서비스 재개 안내)', '스타크넷(STRK) 입출금 일시 중지 안내 (10/07 재개)']) {
+      expect(classifyAnnouncement(t)).toMatchObject({ type: 'resume' })
+      expect(resumeClears(t).has('halt')).toBe(true)
+    }
+  })
+  it('예정 중단은 그대로 halt', () => {
+    expect(classifyAnnouncement('아이오타(IOTA) 입출금 일시 중단 안내 (10/08 12:00 ~)')).toMatchObject({ type: 'halt' })
   })
 })

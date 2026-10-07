@@ -32,3 +32,15 @@ describe('classifyItem — 코인니스 뉴스 태그', () => {
     expect(classifyItem(it_('coinness', '미 10년물 국채 수익률 5.35%')).tags).toEqual([])
   })
 })
+
+describe('실데이터 오분류 보정 (2026-10-07)', () => {
+  it('바이낸스 선물 분기물 상장은 futures', () => {
+    expect(classifyItem(it_('binance', 'Binance Futures Will List USDⓈ-M & COIN-M Quarterly 0326 Delivery Contracts'))).toMatchObject({ type: 'binance-futures' })
+  })
+  it('빗썸 상장 기념 이벤트 공지는 상장이 아님', () => {
+    expect(classifyItem(it_('bithumb', '총 1억 3천만원 상당, 베드록(BR) 원화마켓 추가 기념 에어드랍 이벤트 (*거래 수수료 무료)')).kind).toBe('official-other')
+  })
+  it('중단 공지 (완료)는 해제', () => {
+    expect(classifyItem(it_('upbit', '헤데라(HBAR) 입출금 일시 중단 안내 (완료)'))).toMatchObject({ kind: 'official-clear', type: 'resume' })
+  })
+})
