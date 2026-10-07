@@ -232,6 +232,11 @@ export function buildScorecard(sc) {
       pre: agg(eps.filter((e) => Date.parse(e.entryTs) < SCORECARD_CUTOVER)),
       post: agg(eps.filter((e) => Date.parse(e.entryTs) >= SCORECARD_CUTOVER)),
     },
+    // 진입가 기준별(2026-10-07~ 현재가 'live' vs 이전 확정 종가). 두 세대의 수익률은 의미가 달라 따로 본다.
+    byBasis: {
+      live: agg(eps.filter((e) => e.entryBasis === 'live')),
+      confirmed: agg(eps.filter((e) => e.entryBasis !== 'live')),
+    },
     episodes: [...eps].sort((a, b) => String(b.entryTs).localeCompare(String(a.entryTs))),
   }
 }

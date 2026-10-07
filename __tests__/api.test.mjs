@@ -376,3 +376,15 @@ describe('buildMomentum chase(당일 과열 제외 목록)', () => {
     expect(buildMomentum({ totalScans: 1, scans: [{ timestamp: 't', picks: [] }] }).chase).toEqual([])
   })
 })
+
+// 2026-10-08: 진입가가 확정 종가(~10-07)에서 스캔 시점 현재가(10-07~)로 바뀌었다. 두 세대의 수익률은
+// 의미가 달라 섞으면 안 된다 → 진입가 기준별 집계를 따로 낸다(구 에피소드는 entryBasis 없음 = confirmed-close).
+describe('buildScorecard byBasis', () => {
+  it('entryBasis별로 따로 집계', () => {
+    const ep = (id, basis, ret1) => ({ id, entryTs: '2026-10-07T00:00:00Z', entryPrice: 1, ...(basis ? { entryBasis: basis } : {}), ret1, ret3: null, ret7: null, mfe1: null, status: 'partial', signals: [] })
+    const r = buildScorecard({ episodes: [ep('a', 'live', 0.1), ep('b', 'live', -0.1), ep('c', null, 0.2)] })
+    expect(r.byBasis.live.h1.n).toBe(2)
+    expect(r.byBasis.live.h1.winRate).toBe(0.5)
+    expect(r.byBasis.confirmed.h1.n).toBe(1)
+  })
+})

@@ -578,6 +578,7 @@ const routes = {
         ${kpiTile('에피소드', d.total, `대기 ${d.pendingCount} · 데이터없음 ${d.noDataCount}`)}
       </div>
       <div class="alert mb-4 text-sm">확정봉 체제(7/13~) +1일 승률: 이전 <b>${rg(d.regimes.pre)}</b> → 이후 <b>${rg(d.regimes.post)}</b></div>
+      ${d.byBasis?.live?.h1?.n ? `<div class="alert mb-4 text-sm" title="10/7부터 진입가를 확정 종가(최대 ~21시간 전) 대신 스캔 시점 현재가로 기록한다. 두 세대는 섞어 비교하지 않는다.">진입가 기준 +1일 승률: 확정 종가(~10/7) <b>${rg(d.byBasis.confirmed)}</b> · 현재가(10/7~) <b>${rg(d.byBasis.live)}</b></div>` : ''}
       ${d.risk?.scorecard?.n >= 2 ? `<div class="alert mb-4 text-sm">📉 리스크(+1일 일별포트폴리오): MDD ${pctCell(d.risk.scorecard.mdd)} · 샤프 ${sh(d.risk.scorecard.sharpe)} <span class="opacity-60">(per-trade, n=${d.risk.scorecard.n})</span></div>` : ''}
       ${d.strategy ? `<div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
         <h3 class="card-title text-sm">🎯 조용한바닥 전략 (규칙 기준: SL/TP/보유일 청산)</h3>
