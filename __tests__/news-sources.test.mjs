@@ -49,3 +49,14 @@ describe('업비트·바이낸스 래퍼', () => {
     expect(bn[0]).toMatchObject({ id: 'binance:9', source: 'binance', ts: null })
   })
 })
+
+describe('바이낸스 제목의 USDT 페어 → 코인 코드', () => {
+  it('"SOPHUSDT Perpetual"·"(SOPH)"에서 SOPH 추출, USDⓈ 표기는 무시', async () => {
+    const bn = await fetchBinanceNews({ fetchAnn: async () => [
+      { id: 'binance:1', title: 'Binance Futures Will Launch USDⓈ-Margined SOPHUSDT Perpetual Contract (2026-10-01)', ts: null },
+      { id: 'binance:2', title: 'Binance Futures Will Launch Multiple USDⓈ-Margined BTCUSDT and ETHUSDT Perpetual Contracts', ts: null },
+    ] })
+    expect(bn[0].codes).toEqual(['SOPH'])
+    expect(bn[1].codes).toEqual(['BTC', 'ETH'])
+  })
+})
