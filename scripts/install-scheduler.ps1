@@ -44,11 +44,14 @@ $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowSt
 $logDir = Join-Path $projectRoot 'data\task-logs'
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
-# wrap node in cmd /c so output can be appended to a log file (prefix each line via node, kept simple here)
+# Run windowless: conhost --headless -> node scripts\run-logged.mjs <script> <log> (appends stdout/stderr).
+# Was 'cmd /c node ... 1>> log', but on Windows 11 that opens a visible Windows Terminal window, and closing
+# it killed the always-on bot with Ctrl+C (0xC000013A, 2026-10-08). conhost mangles cmd's nested quotes,
+# so the log redirect lives in run-logged.mjs instead of cmd.
+$runner = Join-Path $projectRoot 'scripts\run-logged.mjs'
 function New-LoggingAction([string]$scriptPath, [string]$logName) {
   $log = Join-Path $logDir "$logName.log"
-  $inner = "`"$nodePath`" `"$scriptPath`" 1>> `"$log`" 2>&1"
-  New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c `"$inner`"" -WorkingDirectory $projectRoot
+  New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless `"$nodePath`" `"$runner`" `"$scriptPath`" `"$log`"" -WorkingDirectory $projectRoot
 }
 
 foreach ($j in $jobs) {
@@ -74,25 +77,25 @@ Register-ScheduledTask -TaskName 'UpbitScorecard' -Action $scAction -Trigger $sc
 Write-Host "registered: UpbitScorecard @ daily 09:10"
 
 # paper trading: hourly xx:10 (checks SL/TP on 1h candles, enters the newest scan picks at live orderbook prices)
-$paper = Join-Path $projectRoot 'scriptspaper-trade.mjs'
+$paper = Join-Path $projectRoot 'scripts\paper-trade.mjs'
 $pAction = New-LoggingAction $paper 'UpbitPaper'
 $pTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date.AddMinutes(10) -RepetitionInterval (New-TimeSpan -Hours 1)
 Register-ScheduledTask -TaskName 'UpbitPaper' -Action $pAction -Trigger $pTrigger -Settings $settings -Force | Out-Null
 Write-Host "registered: UpbitPaper @ hourly xx:10"
 
-# 상주 텔레그램 봇 — 로그인 시 시작(조회 명령 응답). 스캔 태스크와 독립.
+# always-on Telegram bot: starts at logon (answers lookup commands), independent of scan tasks
 $botScript = Join-Path $projectRoot 'scripts\telegram-bot.mjs'
 $botAction = New-LoggingAction $botScript 'UpbitTelegramBot'
-# 상주 데몬 자동 복구: RestartInterval은 "시작 실패"만 다시 시도하고, 실행 중 죽은 프로세스는 살리지 않는다
-# (2026-10-08 봇·뉴스 데몬이 Ctrl+C 종료 후 3시간 꺼져 있었다). 5분마다 도는 감시 트리거를 더하고
-# IgnoreNew로 두면, 살아 있을 땐 아무 일도 없고 죽어 있으면 5분 안에 다시 켜진다.
+# daemon auto-recovery: RestartInterval only retries a failed START, it does not revive a process that died
+# while running (2026-10-08 bot and news daemon were down 3h after a Ctrl+C exit). A 5-minute watchdog
+# trigger with IgnoreNew does nothing while alive and restarts within 5 minutes when dead.
 $watchdogTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval (New-TimeSpan -Minutes 5)
 $botTrigger = @((New-ScheduledTaskTrigger -AtLogOn), $watchdogTrigger)
 $botSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartInterval (New-TimeSpan -Minutes 1) -RestartCount 999 -MultipleInstances IgnoreNew
 Register-ScheduledTask -TaskName 'UpbitTelegramBot' -Action $botAction -Trigger $botTrigger -Settings $botSettings -Force | Out-Null
 Write-Host "registered: UpbitTelegramBot (AtLogOn + 5min watchdog, always-on)"
 
-# 상주 뉴스·공지 감시 데몬 — 로그인 시 시작, 죽으면 1분 뒤 재시작(봇과 같은 설정).
+# always-on news/notice watch daemon: starts at logon, same recovery settings as the bot
 $newsScript = Join-Path $projectRoot 'scripts\news-watch.mjs'
 $newsAction = New-LoggingAction $newsScript 'UpbitNewsWatch'
 $newsTrigger = @((New-ScheduledTaskTrigger -AtLogOn), $watchdogTrigger)
