@@ -249,8 +249,8 @@ const routes = {
       <div id="scanProgress" class="mb-3"></div>
       ${posBar}
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        ${recCard('📅 오늘의 추천', '24h 누적 · 등장×평균점수', rec?.daily)}
-        ${recCard('📆 이번주 추천', '7일 누적 · 등장×평균점수', rec?.weekly)}
+        ${recCard('📅 오늘 자주 잡힌 코인', '24h 누적 · 등장×평균점수 · 매수 추천 아님', rec?.daily)}
+        ${recCard('📆 이번주 자주 잡힌 코인', '7일 누적 · 등장×평균점수 · 매수 추천 아님', rec?.weekly)}
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="card bg-base-200 shadow"><div class="card-body p-3">
@@ -402,9 +402,13 @@ const routes = {
       if (!$('#rSegVerify')?.classList.contains('btn-active')) return // 그새 기록 탭으로 전환됐으면 중단(레이스 방지)
       const bar = (rate) => `<progress class="progress progress-success w-24 align-middle" value="${Math.round((rate || 0) * 100)}" max="100"></progress>`
       const retCell = (ar) => ar == null ? '-' : `<span class="${ar >= 0 ? 'text-success' : 'text-error'}">${ar >= 0 ? '+' : ''}${ar}%</span>`
-      const statsRows = Object.entries(v.signalStats || {})
-        .sort((a, b) => (b[1].hitRate) - (a[1].hitRate))
-        .map(([k, s]) => `<tr><td>${esc(k)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td>${retCell(s.avgReturn)}</td><td><span class="badge badge-ghost badge-sm">${(v.weights?.[k] ?? 1).toFixed(2)}</span></td></tr>`).join('')
+      // 현재 쓰는 신호만 본 표에, 제거된 신호(과거 집계)는 접힌 영역에. 표본이 적은 신호는 흐리게.
+      const statRow = ([k, s]) => `<tr class="${s.lowSample || s.removed ? 'dim-row' : ''}"><td>${esc(k)}${s.lowSample && !s.removed ? ` <span class="badge badge-ghost badge-xs" title="표본 ${v.minSamples ?? 30}건 미만 — 적중률이 크게 흔들립니다">표본 적음</span>` : ''}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}% ${bar(s.hitRate)}</td><td>${retCell(s.avgReturn)}</td><td><span class="badge badge-ghost badge-sm">${s.removed ? '—' : (v.weights?.[k] ?? 1).toFixed(2)}</span></td></tr>`
+      const statEntries = Object.entries(v.signalStats || {}).sort((a, b) => (b[1].hitRate) - (a[1].hitRate))
+      const statsRows = statEntries.filter(([, s]) => !s.removed).map(statRow).join('')
+      const removedStats = statEntries.filter(([, s]) => s.removed)
+      const removedBlock = !removedStats.length ? '' : `<details class="mt-3"><summary class="text-xs opacity-60 cursor-pointer">제거된 신호 ${removedStats.length}개 (과거 집계 — 2026-10-07·08 재생에서 역방향·중복으로 판정돼 스캐너에서 뺐습니다)</summary>
+            <div class="overflow-x-auto"><table class="table table-sm"><tbody>${removedStats.map(statRow).join('')}</tbody></table></div></details>`
       const timed = v.timedHitRates || {}
       const mom = v.momentum
       const momCard = !mom ? '' : `
@@ -418,12 +422,12 @@ const routes = {
           </div>
         </div></div>`
       const r = v.report
-      const sigBadge = (s) => `<tr><td>${esc(s.key)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}%</td><td><span class="badge badge-success badge-sm">${s.hits}</span></td></tr>`
+      const sigBadge = (s) => `<tr class="${s.count < (v.minSamples ?? 30) ? 'dim-row' : ''}"><td>${esc(s.key)}</td><td>${s.count}</td><td>${Math.round(s.hitRate * 100)}%</td><td><span class="badge badge-success badge-sm">${s.hits}</span></td></tr>`
       const wChange = (w) => `<tr><td>${esc(w.key)}</td><td>${w.old.toFixed(2)} → ${w.new.toFixed(2)}</td><td>${w.direction === 'up' ? '<span class="text-success">▲</span>' : '<span class="text-error">▼</span>'}</td><td class="opacity-70">${esc(w.reason)}</td></tr>`
       const coinBadge = (c) => `<span class="badge badge-success badge-outline gap-1">${esc(c.korean_name || c.market.replace('KRW-', ''))} <span class="opacity-60">${c.hits}/${c.total}</span></span>`
       const sigTable = (list, label) => `
         <div>
-          <div class="text-xs opacity-60 mb-1">${label} <span class="opacity-50">(표본 3+ · 적중률순)</span></div>
+          <div class="text-xs opacity-60 mb-1">${label} <span class="opacity-50">(표본 3+ · 적중률순 · 제거된 신호 제외)</span></div>
           <table class="table table-sm"><thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>적중</th></tr></thead>
             <tbody>${(list || []).map(sigBadge).join('') || '<tr><td colspan="4" class="opacity-60">없음</td></tr>'}</tbody></table>
         </div>`
@@ -476,6 +480,7 @@ const routes = {
         ? sideStat('매수 적중률', ss.buy, 'text-success') + sideStat('매도 적중률', ss.sell, 'text-error')
         : `<div class="stat"><div class="stat-title">전체 적중률</div><div class="stat-value">${v.overallHitRate != null ? Math.round(v.overallHitRate * 100) + '%' : '-'}</div></div>`
       $('#rBody').innerHTML = `
+        <div class="text-xs opacity-70 mb-3">ⓘ 이 화면의 적중률은 <b>원수익 기준</b>이라 시장 전체가 오르내린 효과가 섞여 있습니다. 코인을 잘 골랐는지는 <a class="link" href="#/scorecard">스코어카드</a>의 '시장대비'로 보세요. 표본 ${v.minSamples ?? 30}건 미만은 흐리게 표시합니다.</div>
         <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200 w-full mb-4">
           ${headlineStats}
           <div class="stat"><div class="stat-title">+1일</div><div class="stat-value text-2xl">${timed['+1일'] ? Math.round(timed['+1일'].hitRate * 100) + '%' : '-'}</div></div>
@@ -490,6 +495,7 @@ const routes = {
           <div class="overflow-x-auto"><table class="table table-zebra table-sm">
             <thead><tr><th>신호</th><th>표본</th><th>적중률</th><th>평균수익</th><th>가중치</th></tr></thead>
             <tbody>${statsRows || '<tr><td colspan="5" class="opacity-60">데이터 없음 (주간 분석 필요)</td></tr>'}</tbody></table></div>
+          ${removedBlock}
         </div></div>`
     }
     const showHistory = () => {
@@ -572,12 +578,13 @@ const routes = {
         <table class="table table-sm">
           <thead><tr><th>구분</th><th>n</th><th>승률</th><th>평균</th><th>중앙값</th><th>청산 사유</th></tr></thead>
           <tbody>
-            ${exitGroup('라이브', es.live)}
+            ${es.live?.n ? exitGroup('라이브', es.live) : ''}
             ${exitGroup('소급 계산', es.backfill, '(규칙 도입 전 픽에 현 설정 소급 적용 — 실현 성과 아님)')}
           </tbody>
         </table>
       </div>
-      <div class="text-xs opacity-60 mt-2">⚠️ 이 파라미터는 레짐 라벨 457스캔 중 456이 하락장(99.8%)인 학습 구간에서 선택됐습니다. 그 구간에서는 7일 단순보유보다 평균·중앙값·승률 모두 우위였으나, 상승장 비중이 높은 홀드아웃에서는 평균수익률이 3.31%p 밀렸습니다(중앙값은 TP 목표가에 정확히 도달해 개선). 또한 표본이 약 3.5개월(2026-06-11~09-22)뿐이고 같은 시점·같은 종목 에피소드가 중첩되므로 승률 신뢰구간은 실제보다 낙관적입니다. 참고용 기준값이며 모든 장세에 보편적으로 최적인 값은 아닙니다.</div>
+      ${!es.live?.n ? '<div class="text-xs opacity-50 mt-1">라이브 청산 표본은 아직 없습니다 — 청산 규칙이 스탬핑된 픽이 D+7을 지나면 채워집니다.</div>' : ''}
+      <details class="mt-2"><summary class="text-xs opacity-60 cursor-pointer">ⓘ 파라미터 선택 배경과 한계</summary><div class="text-xs opacity-60 mt-1">⚠️ 이 파라미터는 레짐 라벨 457스캔 중 456이 하락장(99.8%)인 학습 구간에서 선택됐습니다. 그 구간에서는 7일 단순보유보다 평균·중앙값·승률 모두 우위였으나, 상승장 비중이 높은 홀드아웃에서는 평균수익률이 3.31%p 밀렸습니다(중앙값은 TP 목표가에 정확히 도달해 개선). 또한 표본이 약 3.5개월(2026-06-11~09-22)뿐이고 같은 시점·같은 종목 에피소드가 중첩되므로 승률 신뢰구간은 실제보다 낙관적입니다. 참고용 기준값이며 모든 장세에 보편적으로 최적인 값은 아닙니다.</div></details>
     </div></div>`
     const rows = (list) => list.map((e) => `<tr>
       <td><b>${esc(e.korean_name)}</b> <span class="text-xs opacity-60">${esc(e.market)}</span>${e.lowLiquidity ? ' <span class="badge badge-xs badge-warning">저유동</span>' : ''}${stratBadge(e.strategyOutcome)}</td>
@@ -589,8 +596,9 @@ const routes = {
       <td>${statusBadge(e.status)}</td>
     </tr>`).join('')
     // 코인별 요약 표 — 줄을 누르면 그 코인의 날짜별 픽이 바로 아래에 펼쳐진다.
-    const coinRows = (coins) => coins.map((c) => `<tr class="hover cursor-pointer sc-coin" data-market="${esc(c.market)}">
-      <td><span class="sc-caret opacity-50">▸</span> <b>${esc(c.korean_name)}</b> <span class="text-xs opacity-60">${esc(c.market)}</span>${c.lowLiquidity ? ' <span class="badge badge-xs badge-warning">저유동</span>' : ''}</td>
+    // 픽 3회 미만 코인은 평균이 한두 건에 좌우되므로 흐리게(정렬 시 맨 위로 튀어 오르는 착시 방지).
+    const coinRows = (coins) => coins.map((c) => `<tr class="hover cursor-pointer sc-coin${c.picks < 3 ? ' dim-row' : ''}" data-market="${esc(c.market)}"${c.picks < 3 ? ' title="픽 3회 미만 — 평균이 한두 건에 좌우됩니다"' : ''}>
+      <td><span class="sc-caret opacity-50">▸</span> <b>${esc(c.korean_name)}</b> <span class="text-xs opacity-60">${esc(c.market)}</span> <a class="sc-analyze opacity-60 hover:opacity-100" href="#/analyze?market=${encodeURIComponent(c.market)}" title="개별분석으로 이동">🔍</a>${c.lowLiquidity ? ' <span class="badge badge-xs badge-warning">저유동</span>' : ''}</td>
       <td>${c.picks}${c.pending ? ` <span class="text-xs opacity-50">(대기 ${c.pending})</span>` : ''}</td>
       <td class="text-xs">${esc(String(c.lastEntry).slice(0, 10))}</td>
       <td>${pctCell(c.avg1)}</td><td>${pctCell(c.avg3)}</td><td>${pctCell(c.avg7)}</td>
@@ -613,10 +621,20 @@ const routes = {
         ${hTile('+7일 승률(비용후)', d.horizons.h7)}
         ${kpiTile('에피소드', d.total, `대기 ${d.pendingCount} · 데이터없음 ${d.noDataCount}`)}
       </div>
-      <div class="text-xs opacity-70 mb-4">비용후 = 왕복 ${((d.cost ?? 0.003) * 100).toFixed(1)}%(수수료 0.1% + 슬리피지 0.2%) 차감. 시장대비 = 픽의 D0 종가→D+n 종가 수익에서 같은 구간 KRW 전 종목 동일가중 평균을 뺀 값(종목 선택력), 같은 날 픽은 하루 하나로 묶어 평균·t를 냅니다. |t|&lt;2면 우연과 구별되지 않습니다(흐리게 표시).</div>
-      <div class="alert mb-4 text-sm">확정봉 체제(7/13~) +1일 승률: 이전 <b>${rg(d.regimes.pre)}</b> → 이후 <b>${rg(d.regimes.post)}</b></div>
-      ${d.byBasis?.live?.h1?.n ? `<div class="alert mb-4 text-sm" title="10/7부터 진입가를 확정 종가(최대 ~21시간 전) 대신 스캔 시점 현재가로 기록한다. 두 세대는 섞어 비교하지 않는다.">진입가 기준 +1일 승률: 확정 종가(~10/7) <b>${rg(d.byBasis.confirmed)}</b> · 현재가(10/7~) <b>${rg(d.byBasis.live)}</b></div>` : ''}
-      ${d.risk?.scorecard?.n >= 2 ? `<div class="alert mb-4 text-sm">📉 리스크(+1일 일별포트폴리오): MDD ${pctCell(d.risk.scorecard.mdd)} · 샤프 ${sh(d.risk.scorecard.sharpe)} <span class="opacity-60">(per-trade, n=${d.risk.scorecard.n})</span></div>` : ''}
+      <div class="text-xs opacity-70 mb-2 flex flex-wrap gap-x-4 gap-y-1">
+        <span>확정봉 체제(7/13~) +1일 승률: 이전 <b>${rg(d.regimes.pre)}</b> → 이후 <b>${rg(d.regimes.post)}</b></span>
+        ${d.byBasis?.live?.h1?.n ? `<span title="10/7부터 진입가를 확정 종가(최대 ~21시간 전) 대신 스캔 시점 현재가로 기록한다. 두 세대는 섞어 비교하지 않는다.">진입가 기준 +1일: 확정 종가 <b>${rg(d.byBasis.confirmed)}</b> · 현재가(10/7~) <b>${rg(d.byBasis.live)}</b></span>` : ''}
+        ${d.risk?.scorecard?.n >= 2 ? `<span title="모든 픽을 +1일 동일가중으로 매일 들고 갔다고 본 곡선(per-trade 샤프)">📉 +1일 포트폴리오 MDD ${pctCell(d.risk.scorecard.mdd)} · 샤프 ${sh(d.risk.scorecard.sharpe)} (n=${d.risk.scorecard.n}일)</span>` : ''}
+      </div>
+      <details class="mb-4"><summary class="text-xs opacity-60 cursor-pointer">ⓘ 지표 설명 (비용후·시장대비·t)</summary><div class="text-xs opacity-70 mt-1">      비용후 = 왕복 ${((d.cost ?? 0.003) * 100).toFixed(1)}%(수수료 0.1% + 슬리피지 0.2%) 차감. 시장대비 = 픽의 D0 종가→D+n 종가 수익에서 같은 구간 KRW 전 종목 동일가중 평균을 뺀 값(종목 선택력), 같은 날 픽은 하루 하나로 묶어 평균·t를 냅니다. |t|&lt;2면 우연과 구별되지 않습니다(흐리게 표시).</div></details>
+      <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr>${sortTh('korean_name', '코인', '줄을 누르면 날짜별 픽이 펼쳐집니다')}${sortTh('picks', '픽')}${sortTh('lastEntry', '최근 진입')}${sortTh('avg1', '+1일 평균')}${sortTh('avg3', '+3일 평균')}${sortTh('avg7', '+7일 평균')}${sortTh('win3Net', '3일 승률(비용후)', '+3일 수익이 왕복 비용 0.3%를 넘은 비율')}${sortTh('exc3', '3일 시장대비', '+3일 픽 수익 − 같은 구간 KRW 전 종목 평균')}</tr></thead>
+          <tbody id="scRows">${coinRows(d.coins ?? [])}</tbody>
+        </table>
+      </div>
+      <div class="text-xs opacity-50 mt-2 mb-6">채점: ${esc(String(d.updatedAt ?? '-').replace('T', ' ').slice(0, 16))} UTC · 진입 시점 신규등장 기준 · 확정 종가/고가만 사용</div>
       ${d.strategy ? `<div class="card bg-base-200 shadow mb-4"><div class="card-body p-4">
         <h3 class="card-title text-sm">🎯 조용한바닥 전략 (규칙 기준: SL/TP/보유일 청산)</h3>
         <div class="kpi-row">
@@ -625,17 +643,9 @@ const routes = {
           ${kpiTile('보유 중', `${d.strategy.open}건`, `전체 ${d.strategy.n}건${d.strategy.noData ? ` · 데이터없음 ${d.strategy.noData}` : ''}`)}
           ${d.risk?.strategy?.n >= 2 ? kpiTile('리스크(실현)', `MDD ${pctCell(d.risk.strategy.mdd)}`, `슬롯 ${d.risk.strategy.slots}개 분할 · 샤프 ${sh(d.risk.strategy.sharpe)} · n=${d.risk.strategy.n}`) : ''}
         </div>
-        <div class="text-xs opacity-60 mt-2">⚠️ 2026-10-08 18개월 재생: 같은 날 전 종목을 같은 SL/TP/보유 규칙으로 산 것 대비 +0.26%p(t=0.49) — 코인 선택력은 확인되지 않았고, 수익 대부분은 급락 뒤 시장 반등입니다. "시장 급락일 진입 타이밍"으로도 전·후반이 엇갈려(후반 효과 없음) 근거가 약합니다. 참고 신호로만 보세요.</div>
+        <details class="mt-2"><summary class="text-xs opacity-60 cursor-pointer">ⓘ 검증 한계 — 시장 대비 우위 미확인 (t=0.49)</summary><div class="text-xs opacity-60 mt-1">2026-10-08 18개월 재생: 같은 날 전 종목을 같은 SL/TP/보유 규칙으로 산 것 대비 +0.26%p(t=0.49) — 코인 선택력은 확인되지 않았고, 수익 대부분은 급락 뒤 시장 반등입니다. "시장 급락일 진입 타이밍"으로도 전·후반이 엇갈려(후반 효과 없음) 근거가 약합니다. 참고 신호로만 보세요.</div></details>
       </div></div>` : ''}
-      ${exitStatsCard(d.exitStats)}
-      <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
-      <div class="overflow-x-auto">
-        <table class="table table-sm">
-          <thead><tr>${sortTh('korean_name', '코인', '줄을 누르면 날짜별 픽이 펼쳐집니다')}${sortTh('picks', '픽')}${sortTh('lastEntry', '최근 진입')}${sortTh('avg1', '+1일 평균')}${sortTh('avg3', '+3일 평균')}${sortTh('avg7', '+7일 평균')}${sortTh('win3Net', '3일 승률(비용후)', '+3일 수익이 왕복 비용 0.3%를 넘은 비율')}${sortTh('exc3', '3일 시장대비', '+3일 픽 수익 − 같은 구간 KRW 전 종목 평균')}</tr></thead>
-          <tbody id="scRows">${coinRows(d.coins ?? [])}</tbody>
-        </table>
-      </div>
-      <div class="text-xs opacity-50 mt-2">채점: ${esc(String(d.updatedAt ?? '-').replace('T', ' ').slice(0, 16))} UTC · 진입 시점 신규등장 기준 · 확정 종가/고가만 사용</div>`
+      ${exitStatsCard(d.exitStats)}`
     // 저유동 필터와 정렬을 함께 반영해 다시 그린다(펼친 상세는 접힌다)
     const redraw = () => {
       const base = document.getElementById('scNoLowLiq').checked ? (d.coins ?? []).filter((c) => !c.lowLiquidity) : (d.coins ?? [])
@@ -658,6 +668,7 @@ const routes = {
     }
     // 펼침/접힘 — tbody에 위임해서 저유동 필터로 다시 그려도 동작한다
     document.getElementById('scRows').addEventListener('click', (ev) => {
+      if (ev.target.closest('a.sc-analyze')) return // 링크는 펼침 대신 이동
       const tr = ev.target.closest('tr.sc-coin')
       if (!tr) return
       const next = tr.nextElementSibling

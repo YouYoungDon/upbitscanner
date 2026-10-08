@@ -35,6 +35,9 @@ body { position: relative; }
 /* ============================================================
    가독성 — 죽인 텍스트 밝히기 (다크 배경에서 흰색계열 유지)
    ============================================================ */
+/* 표본이 적거나 제거된 신호·코인 줄 — 위 opacity-* 무력화와 별개로 실제로 흐리게 */
+.dim-row { opacity: 0.42; }
+.dim-row:hover { opacity: 0.8; }
 .opacity-20, .opacity-30, .opacity-40, .opacity-50, .opacity-60, .opacity-70, .opacity-80, .opacity-90 { opacity: 1 !important; }
 /* 검은/어두운 글씨 원천 차단: 모든 텍스트 요소 기본색을 밝은 흰색으로.
    :where()는 특이도 0이라 badge/text-success/그라데이션 등 컬러 클래스가 항상 우선. */

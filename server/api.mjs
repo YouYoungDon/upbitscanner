@@ -1,4 +1,4 @@
-import { topSignalsOfScan, bestHitRateSignal } from '../lib/insights.mjs'
+import { topSignalsOfScan, bestHitRateSignal, isActiveSignal, MIN_STAT_SAMPLES } from '../lib/insights.mjs'
 import { summarizeScans } from '../lib/archive.mjs'
 import { aggregateRecommendations } from '../lib/recommend.mjs'
 import { sharpe, riskMetrics, dailyPortfolioReturns, clusteredT, strategyPortfolio } from '../lib/perf-metrics.mjs'
@@ -123,15 +123,27 @@ export function buildFlow(log) {
   return { empty: false, timestamp: scan.timestamp, btc: scan.btc || null, kpi, picks: scan.picks || [] }
 }
 
+// 신호 통계에 제거됨(removed)·표본 부족(lowSample) 표시를 붙인다. 주간 요약 TOP·가중치 변화에서는
+// 제거된 신호를 뺀다 — 지운 신호가 "적중률 97%"로 1위에 오르면 스코어카드(시장 대비)와 정반대로 읽힌다.
 export function buildVerify(weekly, weights) {
   const latest = weekly?.weeks?.at(-1) || {}
+  const signalStats = Object.fromEntries(Object.entries(latest.signalStats ?? {}).map(([k, s]) =>
+    [k, { ...s, removed: !isActiveSignal(k), lowSample: (s.count ?? 0) < MIN_STAT_SAMPLES }]))
+  const active = (list) => (list ?? []).filter((x) => isActiveSignal(x.key))
+  const report = latest.report ? {
+    ...latest.report,
+    ...(latest.report.topBuySignals ? { topBuySignals: active(latest.report.topBuySignals) } : {}),
+    ...(latest.report.topSellSignals ? { topSellSignals: active(latest.report.topSellSignals) } : {}),
+    ...(latest.report.weightChanges ? { weightChanges: active(latest.report.weightChanges) } : {}),
+  } : null
   return {
     overallHitRate: latest.overallHitRate ?? null,
     sideStats: latest.sideStats ?? null,
     timedHitRates: latest.timedHitRates ?? null,
-    signalStats: latest.signalStats ?? {},
+    signalStats,
+    minSamples: MIN_STAT_SAMPLES,
     weights: weights || {},
-    report: latest.report ?? null,
+    report,
     momentum: latest.momentum ?? null,
     horizonMode: latest.horizonMode ?? 'current-price-mixed',
     history: (weekly?.weeks || []).map((w) => ({ timestamp: w.timestamp, overallHitRate: w.overallHitRate, horizonMode: w.horizonMode ?? 'current-price-mixed' })),

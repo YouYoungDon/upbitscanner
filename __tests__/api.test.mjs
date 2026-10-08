@@ -59,7 +59,7 @@ describe('buildResults', () => {
 
 describe('buildInsights', () => {
   it('최다 신호와 적중률 1위', () => {
-    const weekly = { weeks: [{ signalStats: { 'Stoch 과매도 골든크로스': { count: 8, hitRate: 0.7 } } }] }
+    const weekly = { weeks: [{ signalStats: { 'Stoch 과매도 골든크로스': { count: 30, hitRate: 0.7 } } }] }
     const r = buildInsights(log, weekly)
     expect(r.topSignal.key).toBe('Stoch 과매도 골든크로스')
     expect(r.bestHitRate.key).toBe('Stoch 과매도 골든크로스')
@@ -83,6 +83,25 @@ describe('buildVerify', () => {
   it('report 없으면 null', () => {
     const r = buildVerify({ weeks: [{ timestamp: 't1' }] }, {})
     expect(r.report).toBeNull()
+  })
+  it('제거된 신호·표본 부족 표시, 주간 요약 TOP·가중치 변화에서는 제거된 신호를 뺀다', () => {
+    const weekly = { weeks: [{ signalStats: {
+      'RSI 과매도': { count: 100, hitRate: 0.5 },
+      'BB 하단 지지': { count: 22, hitRate: 0.7 },
+      '하락깃발 패턴': { count: 33, hitRate: 0.97 },
+    }, report: {
+      topBuySignals: [{ key: '거래량 선행 매집', count: 8 }, { key: 'BB 하단 지지', count: 22 }],
+      topSellSignals: [{ key: '하락깃발 패턴', count: 33 }, { key: 'RSI 과매수', count: 50 }],
+      weightChanges: [{ key: 'MACD 반등' }, { key: 'MACD 골든크로스' }],
+    } }] }
+    const r = buildVerify(weekly, {})
+    expect(r.signalStats['RSI 과매도']).toMatchObject({ removed: false, lowSample: false })
+    expect(r.signalStats['BB 하단 지지']).toMatchObject({ removed: false, lowSample: true })
+    expect(r.signalStats['하락깃발 패턴'].removed).toBe(true)
+    expect(r.report.topBuySignals.map((x) => x.key)).toEqual(['BB 하단 지지'])
+    expect(r.report.topSellSignals.map((x) => x.key)).toEqual(['RSI 과매수'])
+    expect(r.report.weightChanges.map((x) => x.key)).toEqual(['MACD 골든크로스'])
+    expect(r.minSamples).toBe(30)
   })
 })
 
