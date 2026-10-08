@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { DATA_DIR, readJson, writeJson } from '../lib/store.mjs'
 import { getMarkets, getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcvAsOf } from '../lib/ohlcv.mjs'
-import { extractEpisodes, scoreEpisode, scoreEpisodeExit, neededCandleCount, mergeEpisodes, applyExcess, needsExcess } from '../lib/scorecard.mjs'
+import { extractEpisodes, scoreEpisode, scoreEpisodeExit, neededCandleCount, mergeEpisodes, applyExcess, needsExcess, isDelisted } from '../lib/scorecard.mjs'
 import { marketDailyReturns, mergeDailyReturns } from '../lib/market-baseline.mjs'
 import { scoreStrategyOutcome } from '../lib/strategy.mjs'
 
@@ -60,7 +60,9 @@ async function main() {
   // 받은 캔들은 아래 채점에서도 재사용한다(현재 상장 종목은 재조회 없음).
   const cache = new Map()
   let baseFailed = 0
+  const listed = new Set()
   for (const m of (await getMarkets().catch(() => [])) ?? []) {
+    listed.add(m.market)
     const c = await getDayCandles(m.market, 200)
     if (c) cache.set(m.market, confirmedOhlcvAsOf(candlesToOhlcv(c), now))
     else baseFailed++
@@ -89,9 +91,16 @@ async function main() {
       const oldest = Math.min(...eps.map((e) => Date.parse(e.entryTs)))
       const candles = await getDayCandles(market, neededCandleCount(oldest, now))
       await sleep(120) // 업비트 rate limit 여유
-      if (!candles) { failedMarkets++; continue } // 다음 실행 때 재시도
-      // 날짜 인지 확정봉: 당일 거래가 없는 저유동 마켓에서 어제 확정봉을 잃지 않는다
-      confirmed = confirmedOhlcvAsOf(candlesToOhlcv(candles), now)
+      if (!candles) {
+        failedMarkets++
+        if (!isDelisted(market, listed)) continue // 일시 오류 — 다음 실행 때 재시도
+        // 상폐 코인은 일봉을 다시 받을 수 없다(404). 빈 캔들로 아래 채점을 그대로 돌리면 만료된 픽은
+        // 수익·청산·전략 채점이 모두 데이터없음으로 확정된다. 그러지 않으면 '대기'로 남아 매일 헛조회한다.
+        confirmed = []
+      } else {
+        // 날짜 인지 확정봉: 당일 거래가 없는 저유동 마켓에서 어제 확정봉을 잃지 않는다
+        confirmed = confirmedOhlcvAsOf(candlesToOhlcv(candles), now)
+      }
     }
     for (const e of eps) {
       const s = scoreEpisode(e, confirmed, now)

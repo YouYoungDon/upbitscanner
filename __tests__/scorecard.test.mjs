@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes, scoreEpisodeExit, applyExcess, needsExcess } from '../lib/scorecard.mjs'
+import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes, scoreEpisodeExit, applyExcess, needsExcess, isDelisted } from '../lib/scorecard.mjs'
 import { scoreStrategyOutcome } from '../lib/strategy.mjs' // 가드 없는 경로의 실패 양상 확인용
 
 const scan = (ts, markets) => ({
@@ -219,5 +219,15 @@ describe('applyExcess / needsExcess', () => {
     expect(needsExcess(ep())).toBe(true)
     expect(needsExcess(ep({ excDone: true }))).toBe(false)
     expect(needsExcess(ep({ status: 'pending' }))).toBe(false) // pending은 원래 채점 루프에 들어간다
+  })
+})
+
+describe('isDelisted', () => {
+  it('현재 KRW 목록에 없으면 상폐로 본다', () => {
+    expect(isDelisted('KRW-IP', new Set(['KRW-BTC', 'KRW-ETH']))).toBe(true)
+    expect(isDelisted('KRW-BTC', new Set(['KRW-BTC']))).toBe(false)
+  })
+  it('목록 조회 자체가 실패(빈 목록)하면 상폐로 단정하지 않는다', () => {
+    expect(isDelisted('KRW-BTC', new Set())).toBe(false)
   })
 })
