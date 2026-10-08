@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   equityCurve, maxDrawdown, sharpe, strategyReturns, dailyPortfolioReturns,
+  clusteredT, strategyPortfolio,
 } from '../lib/perf-metrics.mjs'
 
 describe('equityCurve', () => {
@@ -101,5 +102,50 @@ describe('dailyPortfolioReturns', () => {
   })
   it('빈 입력 → 빈 배열', () => {
     expect(dailyPortfolioReturns([], 1)).toEqual([])
+  })
+})
+
+describe('clusteredT', () => {
+  it('같은 날 값은 하루 평균 하나로 묶어 날짜 단위로 평균·t를 낸다', () => {
+    // 1일차에 같은 값 3개가 몰려 있어도 하루 하나로 센다
+    const rows = [
+      { day: 1, v: 0.1 }, { day: 1, v: 0.1 }, { day: 1, v: 0.1 },
+      { day: 2, v: -0.1 },
+      { day: 3, v: 0.03 },
+    ]
+    const r = clusteredT(rows)
+    expect(r.days).toBe(3)
+    expect(r.mean).toBeCloseTo(0.01, 10)
+    // 일평균 [0.1,-0.1,0.03] → sd(n-1)=0.10149, t = 0.01/(0.10149/√3)
+    expect(r.t).toBeCloseTo(0.01 / (Math.sqrt(((0.09) ** 2 + (0.11) ** 2 + (0.02) ** 2) / 2) / Math.sqrt(3)), 6)
+  })
+  it('날짜가 2개 미만이거나 분산 0이면 t=null', () => {
+    expect(clusteredT([{ day: 1, v: 0.1 }, { day: 1, v: 0.2 }]).t).toBeNull()
+    expect(clusteredT([{ day: 1, v: 0.1 }, { day: 2, v: 0.1 }]).t).toBeNull()
+    expect(clusteredT([]).mean).toBeNull()
+  })
+  it('비유한 값은 버린다', () => {
+    expect(clusteredT([{ day: 1, v: NaN }, { day: 2, v: 0.2 }]).days).toBe(1)
+  })
+})
+
+describe('strategyPortfolio', () => {
+  const ep = (ts, reason, ret, exitDay) => ({ entryTs: ts, strategyOutcome: { reason, ret, exitDay } })
+  it('동시 보유 최대치만큼 자금을 나눠 청산일 순서로 복리한다', () => {
+    // 8/1 진입→D+3(8/4) 청산과 8/2 진입→D+1(8/3) 청산이 8/2~8/3에 겹친다 → 슬롯 2
+    // 8/10 진입 거래는 겹침 없음, open은 제외
+    const eps = [
+      ep('2026-08-02T05:00:00Z', 'tp', 0.18, 1),
+      ep('2026-08-01T05:00:00Z', 'sl', -0.1, 3),
+      ep('2026-08-10T05:00:00Z', 'time', 0.04, 2),
+      ep('2026-08-11T05:00:00Z', 'open', null, null),
+    ]
+    const p = strategyPortfolio(eps)
+    expect(p.slots).toBe(2)
+    // 청산일 순서 8/3(+18%), 8/4(−10%), 8/12(+4%) → 각 수익의 1/2
+    expect(p.returns).toEqual([0.09, -0.05, 0.02])
+  })
+  it('청산된 거래가 없으면 빈 결과', () => {
+    expect(strategyPortfolio([])).toEqual({ returns: [], slots: 0 })
   })
 })

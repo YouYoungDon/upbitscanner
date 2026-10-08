@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes, scoreEpisodeExit } from '../lib/scorecard.mjs'
+import { extractEpisodes, scoreEpisode, neededCandleCount, mergeEpisodes, scoreEpisodeExit, applyExcess, needsExcess } from '../lib/scorecard.mjs'
 import { scoreStrategyOutcome } from '../lib/strategy.mjs' // 가드 없는 경로의 실패 양상 확인용
 
 const scan = (ts, markets) => ({
@@ -186,5 +186,38 @@ describe('scoreEpisodeExit', () => {
     const unguarded = scoreStrategyOutcome(ep(), c, { slPct: NaN, tpPct: NaN, holdMax: 7 }, now)
     expect(unguarded.reason).toBe('time')
     expect(Number.isFinite(unguarded.ret)).toBe(true)
+  })
+})
+
+describe('applyExcess / needsExcess', () => {
+  const DAYS = 86400
+  const bar = (d, close) => ({ time: d * DAYS, open: close, high: close, low: close, close, volume: 1 })
+  const ep = (extra) => ({ entryTs: new Date(10 * DAYS * 1000 + 3600e3).toISOString(), status: 'done', exc1: null, exc3: null, exc7: null, ...extra })
+  const confirmed = [bar(10, 100), bar(11, 110), bar(13, 120), bar(17, 90)]
+  const daily = { 11: 0.05, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0 }
+  const now = 20 * DAYS * 1000
+
+  it('비어 있는 exc만 채우고 이미 확정된 값은 덮지 않는다', () => {
+    const out = applyExcess(ep({ exc1: 0.123 }), confirmed, daily, now)
+    expect(out.exc1).toBe(0.123)
+    expect(out.exc3).toBeCloseTo(0.2 - 0.05, 12)
+    expect(out.exc7).toBeCloseTo(-0.1 - 0.05, 12)
+    expect(out.excDone).toBe(true) // 최종 상태 + 셋 다 채워짐
+  })
+  it('최종 상태라도 값이 비면 30일까지는 재시도 대상으로 남긴다', () => {
+    const out = applyExcess(ep(), confirmed, {}, now)
+    expect(out.excDone).toBeFalsy()
+    expect(needsExcess(out)).toBe(true)
+    const late = applyExcess(ep(), confirmed, {}, 41 * DAYS * 1000)
+    expect(late.excDone).toBe(true)
+    expect(needsExcess(late)).toBe(false)
+  })
+  it('진행 중(partial) 에피소드는 완료 처리하지 않는다', () => {
+    expect(applyExcess(ep({ status: 'partial' }), confirmed, daily, now).excDone).toBeFalsy()
+  })
+  it('needsExcess: 최종 상태이면서 미완료인 것만', () => {
+    expect(needsExcess(ep())).toBe(true)
+    expect(needsExcess(ep({ excDone: true }))).toBe(false)
+    expect(needsExcess(ep({ status: 'pending' }))).toBe(false) // pending은 원래 채점 루프에 들어간다
   })
 })

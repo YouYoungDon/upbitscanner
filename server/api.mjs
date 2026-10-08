@@ -1,7 +1,9 @@
 import { topSignalsOfScan, bestHitRateSignal } from '../lib/insights.mjs'
 import { summarizeScans } from '../lib/archive.mjs'
 import { aggregateRecommendations } from '../lib/recommend.mjs'
-import { sharpe, riskMetrics, strategyReturns, dailyPortfolioReturns } from '../lib/perf-metrics.mjs'
+import { sharpe, riskMetrics, dailyPortfolioReturns, clusteredT, strategyPortfolio } from '../lib/perf-metrics.mjs'
+import { ROUND_TRIP_COST } from '../lib/costs.mjs'
+import { utcDay } from '../lib/datetime.mjs'
 import { summarizeTrades } from '../lib/exit-select.mjs'
 
 // 일간(24h)/주간(7일) 누적 추천 — 아카이브 전체를 윈도우로 집계 (최신 스캔 아님).
@@ -184,10 +186,18 @@ export function buildScorecard(sc) {
     const out = {}
     for (const n of [1, 3, 7]) {
       const scored = list.filter((e) => e[`ret${n}`] != null)
+      // 시장 대비 초과(exc): 같은 날 픽은 하루 하나로 묶은 평균과 t — 픽 단위 평균은 신호가 몰린 날에 휘둘린다.
+      const withExc = list.filter((e) => Number.isFinite(e[`exc${n}`]))
+      const ex = clusteredT(withExc.map((e) => ({ day: utcDay(e.entryTs), v: e[`exc${n}`] })))
+      const avgRet = avg(scored.map((e) => e[`ret${n}`]))
       out[`h${n}`] = {
         n: scored.length,
         winRate: scored.length ? scored.filter((e) => e[`ret${n}`] > 0).length / scored.length : null,
-        avgRet: avg(scored.map((e) => e[`ret${n}`])),
+        // 비용 차감: 왕복 수수료·슬리피지(ROUND_TRIP_COST)를 넘어야 실제로 남는 거래다
+        winRateNet: scored.length ? scored.filter((e) => e[`ret${n}`] > ROUND_TRIP_COST).length / scored.length : null,
+        avgRet,
+        avgNet: avgRet == null ? null : avgRet - ROUND_TRIP_COST,
+        excN: withExc.length, excMean: ex.mean, excT: ex.t, excDays: ex.days,
         avgMfe: avg(scored.map((e) => e[`mfe${n}`]).filter((v) => v != null)),
         sharpe: sharpe(scored.map((e) => e[`ret${n}`])), // per-trade 분포 샤프
       }
@@ -214,14 +224,17 @@ export function buildScorecard(sc) {
     winRate: stResolved ? stWins / stResolved : null,
     avgRet: stResolved ? stRetSum / stResolved : null,
   } : null
-  // 리스크 곡선: 전략=실현 SL/TP/시간청산, 스코어카드=+1일 비중첩 일별포트폴리오. MDD·샤프.
+  // 리스크 곡선: 스코어카드=+1일 비중첩 일별포트폴리오. 전략=실현 청산을 최대 동시 보유 슬롯으로
+  // 자금 분할한 포트폴리오(최대 7일 보유가 겹치므로 거래마다 전액 복리하면 낙폭이 부풀려진다).
+  const sp = strategyPortfolio(eps)
   const risk = {
     scorecard: riskMetrics(dailyPortfolioReturns(eps, 1)),
-    strategy: riskMetrics(strategyReturns(eps)),
+    strategy: { ...riskMetrics(sp.returns), slots: sp.slots },
   }
   return {
     updatedAt: sc.updatedAt ?? null,
     total: eps.length,
+    cost: ROUND_TRIP_COST,
     pendingCount: eps.filter((e) => e.status === 'pending' || e.status === 'partial').length,
     noDataCount: eps.filter((e) => e.status === 'no-data').length,
     strategy,

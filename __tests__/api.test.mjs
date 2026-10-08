@@ -18,16 +18,18 @@ describe('buildScorecard risk (MDD·샤프)', () => {
   const sc = {
     updatedAt: '2026-08-04T00:00:00Z',
     episodes: [
-      ep('KRW-A', '2026-08-01T00:00:00Z', 0.05, { reason: 'tp', ret: 0.18 }),
-      ep('KRW-B', '2026-08-02T00:00:00Z', -0.03, { reason: 'sl', ret: -0.10 }),
-      ep('KRW-C', '2026-08-03T00:00:00Z', 0.02, { reason: 'time', ret: 0.03 }),
+      ep('KRW-A', '2026-08-01T00:00:00Z', 0.05, { reason: 'tp', ret: 0.18, exitDay: 2 }),
+      ep('KRW-B', '2026-08-02T00:00:00Z', -0.03, { reason: 'sl', ret: -0.10, exitDay: 1 }),
+      ep('KRW-C', '2026-08-03T00:00:00Z', 0.02, { reason: 'time', ret: 0.03, exitDay: 7 }),
     ],
   }
   const r = buildScorecard(sc)
 
-  it('전략 실현곡선 MDD·샤프', () => {
+  it('전략 실현곡선은 동시 보유 슬롯으로 자금을 나눈 포트폴리오 기준 MDD', () => {
+    // 8/3에 세 거래가 모두 보유 중 → 슬롯 3, 거래 수익의 1/3씩 청산일 순서로 복리
     expect(r.risk.strategy.n).toBe(3)
-    expect(r.risk.strategy.mdd).toBeCloseTo(-0.1, 6) // 1.062/1.18 - 1
+    expect(r.risk.strategy.slots).toBe(3)
+    expect(r.risk.strategy.mdd).toBeCloseTo(-0.1 / 3, 6)
     expect(r.risk.strategy.sharpe).toBeCloseTo(0.26168, 4)
   })
   it('스코어카드 +1일 일별포트폴리오 MDD·샤프', () => {
@@ -386,5 +388,29 @@ describe('buildScorecard byBasis', () => {
     expect(r.byBasis.live.h1.n).toBe(2)
     expect(r.byBasis.live.h1.winRate).toBe(0.5)
     expect(r.byBasis.confirmed.h1.n).toBe(1)
+  })
+})
+
+describe('buildScorecard 비용·시장 기준선', () => {
+  const ep = (id, ts, ret1, exc1) => ({ id, market: id, korean_name: id, entryTs: ts, entryPrice: 10,
+    ret1, ret3: null, ret7: null, mfe1: null, status: 'partial', exc1, exc3: null, exc7: null })
+  const r = buildScorecard({ episodes: [
+    ep('a', '2026-08-01T01:00:00Z', 0.002, 0.01),  // 원수익은 +지만 비용 0.3% 후엔 −
+    ep('b', '2026-08-01T05:00:00Z', 0.05, 0.03),   // 같은 날 → 하루 평균 0.02로 묶임
+    ep('c', '2026-08-02T01:00:00Z', -0.01, -0.01),
+    ep('d', '2026-08-03T01:00:00Z', 0.01, null),   // 기준선 없음 → 초과 집계 제외
+  ] })
+  it('비용 차감 승률·평균', () => {
+    expect(r.horizons.h1.winRate).toBe(0.75)
+    expect(r.horizons.h1.winRateNet).toBe(0.5)
+    expect(r.horizons.h1.avgNet).toBeCloseTo((0.002 + 0.05 - 0.01 + 0.01) / 4 - 0.003, 12)
+  })
+  it('시장 대비 초과수익은 진입일 군집 평균과 t', () => {
+    const h = r.horizons.h1
+    expect(h.excN).toBe(3)
+    expect(h.excDays).toBe(2)
+    expect(h.excMean).toBeCloseTo(0.005, 12) // (0.02 + −0.01) / 2
+    expect(h.excT).toBeCloseTo(0.005 / (Math.sqrt((0.015 ** 2) * 2) / Math.sqrt(2)), 6)
+    expect(r.cost).toBe(0.003)
   })
 })

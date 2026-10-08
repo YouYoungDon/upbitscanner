@@ -99,7 +99,7 @@ function signalTags(signals) {
     if (s.includes('캔들 강세')) return '<span class="badge badge-success badge-sm">🕯강세</span>'
     if (s.includes('캔들 약세')) return '<span class="badge badge-error badge-sm">🕯약세</span>'
     if (s.includes('추격주의')) return '<span class="badge badge-error badge-sm" title="거래량 급등 후 추격 진입 — 통계상 +3일 승률 30%, 평균 -3.4%">⚠️추격주의</span>'
-    if (s.includes('🎯전략')) return '<span class="badge badge-primary badge-sm" title="조용한 바닥 전략 시그니처 (RSI≤26·Stoch K≤15·거래량 조용)">🎯전략</span>'
+    if (s.includes('🎯전략')) return '<span class="badge badge-primary badge-sm" title="조용한 바닥 전략 시그니처 (RSI≤26·Stoch K≤15·거래량 조용) — 참고용, 시장 대비 우위 미확인(2026-10-08 재생)">🎯전략</span>'
     return ''
   }).join(' ')
 }
@@ -509,9 +509,12 @@ const routes = {
       : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}%</span>`
     const kpiTile = (label, val, sub) => `<div class="kpi-tile"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div><div class="text-xs opacity-60">${sub}</div></div>`
     const sh = (v) => v == null ? '—' : Number(v).toFixed(2) // 샤프(per-trade, 연율화 없음)
+    // 시장 대비 초과(진입일 군집 평균, %p)와 t. |t|<2는 우연과 구별되지 않으므로 흐리게 표시한다.
+    const excCell = (h) => h.excMean == null ? '' : `<br>시장대비 <span class="${h.excT != null && Math.abs(h.excT) >= 2 ? (h.excMean >= 0 ? 'text-success font-bold' : 'text-error font-bold') : 'opacity-60'}">${h.excMean >= 0 ? '+' : ''}${(h.excMean * 100).toFixed(2)}%p</span> (t=${h.excT == null ? '—' : h.excT.toFixed(2)}, ${h.excDays}일)`
+    // 큰 숫자 = 비용(왕복) 차감 승률. 원승률은 보조로.
     const hTile = (name, h) => kpiTile(name,
-      h.winRate == null ? '—' : `${Math.round(h.winRate * 100)}%`,
-      h.n ? `평균 ${pctCell(h.avgRet)} · MFE ${pctCell(h.avgMfe)} · 샤프 ${sh(h.sharpe)} · n=${h.n}` : '표본 없음')
+      h.winRateNet == null ? (h.winRate == null ? '—' : `${Math.round(h.winRate * 100)}%`) : `${Math.round(h.winRateNet * 100)}%`,
+      h.n ? `원승률 ${h.winRate == null ? '—' : Math.round(h.winRate * 100) + '%'} · 순평균 ${pctCell(h.avgNet ?? h.avgRet)} · MFE ${pctCell(h.avgMfe)} · 샤프 ${sh(h.sharpe)} · n=${h.n}${excCell(h)}` : '표본 없음')
     const rg = (r) => r.h1.winRate == null ? '—' : `${Math.round(r.h1.winRate * 100)}% (n=${r.h1.n})`
     const statusBadge = (s) => ({
       done: '<span class="badge badge-sm badge-success badge-outline">완료</span>',
@@ -572,11 +575,12 @@ const routes = {
     </tr>`).join('')
     view.innerHTML = `${head}
       <div class="kpi-row mb-4">
-        ${hTile('+1일 승률', d.horizons.h1)}
-        ${hTile('+3일 승률', d.horizons.h3)}
-        ${hTile('+7일 승률', d.horizons.h7)}
+        ${hTile('+1일 승률(비용후)', d.horizons.h1)}
+        ${hTile('+3일 승률(비용후)', d.horizons.h3)}
+        ${hTile('+7일 승률(비용후)', d.horizons.h7)}
         ${kpiTile('에피소드', d.total, `대기 ${d.pendingCount} · 데이터없음 ${d.noDataCount}`)}
       </div>
+      <div class="text-xs opacity-70 mb-4">비용후 = 왕복 ${((d.cost ?? 0.003) * 100).toFixed(1)}%(수수료 0.1% + 슬리피지 0.2%) 차감. 시장대비 = 픽의 D0 종가→D+n 종가 수익에서 같은 구간 KRW 전 종목 동일가중 평균을 뺀 값(종목 선택력), 같은 날 픽은 하루 하나로 묶어 평균·t를 냅니다. |t|&lt;2면 우연과 구별되지 않습니다(흐리게 표시).</div>
       <div class="alert mb-4 text-sm">확정봉 체제(7/13~) +1일 승률: 이전 <b>${rg(d.regimes.pre)}</b> → 이후 <b>${rg(d.regimes.post)}</b></div>
       ${d.byBasis?.live?.h1?.n ? `<div class="alert mb-4 text-sm" title="10/7부터 진입가를 확정 종가(최대 ~21시간 전) 대신 스캔 시점 현재가로 기록한다. 두 세대는 섞어 비교하지 않는다.">진입가 기준 +1일 승률: 확정 종가(~10/7) <b>${rg(d.byBasis.confirmed)}</b> · 현재가(10/7~) <b>${rg(d.byBasis.live)}</b></div>` : ''}
       ${d.risk?.scorecard?.n >= 2 ? `<div class="alert mb-4 text-sm">📉 리스크(+1일 일별포트폴리오): MDD ${pctCell(d.risk.scorecard.mdd)} · 샤프 ${sh(d.risk.scorecard.sharpe)} <span class="opacity-60">(per-trade, n=${d.risk.scorecard.n})</span></div>` : ''}
@@ -586,8 +590,9 @@ const routes = {
           ${kpiTile('승률(확정)', d.strategy.winRate == null ? '—' : Math.round(d.strategy.winRate * 100) + '%', `평균 ${pctCell(d.strategy.avgRet)}`)}
           ${kpiTile('청산', `${d.strategy.sl + d.strategy.tp + d.strategy.time}건`, `SL ${d.strategy.sl} · TP ${d.strategy.tp} · 시간 ${d.strategy.time}`)}
           ${kpiTile('보유 중', `${d.strategy.open}건`, `전체 ${d.strategy.n}건${d.strategy.noData ? ` · 데이터없음 ${d.strategy.noData}` : ''}`)}
-          ${d.risk?.strategy?.n >= 2 ? kpiTile('리스크(실현)', `MDD ${pctCell(d.risk.strategy.mdd)}`, `샤프 ${sh(d.risk.strategy.sharpe)} · n=${d.risk.strategy.n}`) : ''}
+          ${d.risk?.strategy?.n >= 2 ? kpiTile('리스크(실현)', `MDD ${pctCell(d.risk.strategy.mdd)}`, `슬롯 ${d.risk.strategy.slots}개 분할 · 샤프 ${sh(d.risk.strategy.sharpe)} · n=${d.risk.strategy.n}`) : ''}
         </div>
+        <div class="text-xs opacity-60 mt-2">⚠️ 2026-10-08 18개월 재생: 같은 날 전 종목을 같은 SL/TP/보유 규칙으로 산 것 대비 +0.26%p(t=0.49) — 코인 선택력은 확인되지 않았고, 수익 대부분은 급락 뒤 시장 반등입니다. "시장 급락일 진입 타이밍"으로도 전·후반이 엇갈려(후반 효과 없음) 근거가 약합니다. 참고 신호로만 보세요.</div>
       </div></div>` : ''}
       ${exitStatsCard(d.exitStats)}
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>

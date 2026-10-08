@@ -4,9 +4,10 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { DATA_DIR, readJson, writeJson } from '../lib/store.mjs'
-import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
+import { getMarkets, getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcvAsOf } from '../lib/ohlcv.mjs'
-import { extractEpisodes, scoreEpisode, scoreEpisodeExit, neededCandleCount, mergeEpisodes } from '../lib/scorecard.mjs'
+import { extractEpisodes, scoreEpisode, scoreEpisodeExit, neededCandleCount, mergeEpisodes, applyExcess, needsExcess } from '../lib/scorecard.mjs'
+import { marketDailyReturns, mergeDailyReturns } from '../lib/market-baseline.mjs'
 import { scoreStrategyOutcome } from '../lib/strategy.mjs'
 
 // 🎯전략 태그 에피소드 중 SL/TP 채점이 미확정인 것 (config 없으면 항상 false)
@@ -55,8 +56,22 @@ async function main() {
   const now = Date.now()
   const strategyConfig = await readJson('strategy-config.json', null)
   const exitConfig = await readJson('exit-config.json', null) // 없으면 청산 채점 생략
+  // 시장 기준선: KRW 전 종목 일봉(200개)으로 동일가중 일간 수익을 만들어 저장분과 병합한다.
+  // 받은 캔들은 아래 채점에서도 재사용한다(현재 상장 종목은 재조회 없음).
+  const cache = new Map()
+  let baseFailed = 0
+  for (const m of (await getMarkets().catch(() => [])) ?? []) {
+    const c = await getDayCandles(m.market, 200)
+    if (c) cache.set(m.market, confirmedOhlcvAsOf(candlesToOhlcv(c), now))
+    else baseFailed++
+    await sleep(120)
+  }
+  const baseline = await readJson('market-baseline.json', { daily: {} })
+  const daily = mergeDailyReturns(baseline.daily, marketDailyReturns(Object.fromEntries(cache)))
+  if (cache.size) await writeJson('market-baseline.json', { updatedAt: new Date(now).toISOString(), daily })
+
   const pending = episodes.filter((e) =>
-    e.status === 'pending' || e.status === 'partial' ||
+    e.status === 'pending' || e.status === 'partial' || needsExcess(e) ||
     needsStrategyScore(e, strategyConfig) || needsExitScore(e, exitConfig))
   const byMarket = new Map()
   for (const e of pending) {
@@ -69,11 +84,15 @@ async function main() {
   let failedMarkets = 0
   const updated = new Map()
   for (const [market, eps] of byMarket) {
-    const oldest = Math.min(...eps.map((e) => Date.parse(e.entryTs)))
-    const candles = await getDayCandles(market, neededCandleCount(oldest, now))
-    if (!candles) { failedMarkets++; continue } // 다음 실행 때 재시도
-    // 날짜 인지 확정봉: 당일 거래가 없는 저유동 마켓에서 어제 확정봉을 잃지 않는다
-    const confirmed = confirmedOhlcvAsOf(candlesToOhlcv(candles), now)
+    let confirmed = cache.get(market)
+    if (!confirmed) { // 상폐 등으로 현재 목록에 없는 마켓만 개별 조회
+      const oldest = Math.min(...eps.map((e) => Date.parse(e.entryTs)))
+      const candles = await getDayCandles(market, neededCandleCount(oldest, now))
+      await sleep(120) // 업비트 rate limit 여유
+      if (!candles) { failedMarkets++; continue } // 다음 실행 때 재시도
+      // 날짜 인지 확정봉: 당일 거래가 없는 저유동 마켓에서 어제 확정봉을 잃지 않는다
+      confirmed = confirmedOhlcvAsOf(candlesToOhlcv(candles), now)
+    }
     for (const e of eps) {
       const s = scoreEpisode(e, confirmed, now)
       let withExit = s
@@ -87,10 +106,10 @@ async function main() {
         if (out.reason !== e.strategyOutcome?.reason) withExit.scoredAt = new Date(now).toISOString()
         withExit.strategyOutcome = out
       }
+      withExit = applyExcess(withExit, confirmed, daily, now)
       if (withExit.status !== e.status || withExit.scoredAt !== e.scoredAt) scored++
       updated.set(withExit.id, withExit)
     }
-    await sleep(120) // 업비트 rate limit 여유
   }
   episodes = episodes.map((e) => updated.get(e.id) ?? e)
 
@@ -99,6 +118,8 @@ async function main() {
   console.log(`스코어카드: 에피소드 ${episodes.length} (신규 ${episodes.length - prevCount}) / 이번 채점 ${scored} / 남은 미채점 ${remain} / 실패 마켓 ${failedMarkets}`)
   const live = episodes.filter((e) => e.exit?.cfgSource === 'live').length
   const back = episodes.filter((e) => e.exit?.cfgSource === 'backfill').length
+  const exc = episodes.filter((e) => Number.isFinite(e.exc1)).length
+  console.log(`시장 기준선: ${Object.keys(daily).length}일 (조회 실패 ${baseFailed}) / 초과수익 채점 ${exc}건`)
   console.log(`청산 채점: live ${live} / backfill ${back} / 소급분 재계산 ${exitRescored}`)
 }
 

@@ -181,3 +181,23 @@ describe('formatHelp / formatNotFound', () => {
     expect(formatNotFound('소', ['소폰(SOPH)', '소닉(SONIC)'])).toContain('소폰(SOPH)')
   })
 })
+
+describe('비용·시장 기준선 표시 (2026-10-08 퀀트 QA)', () => {
+  it('스코어카드: 비용 차감 승률과 시장 대비 초과·t를 함께 보여준다', () => {
+    const h = { winRate: 0.6, winRateNet: 0.52, avgRet: 0.01, avgNet: 0.007, sharpe: 0.1, n: 100, excMean: -0.0017, excT: -0.56, excDays: 40 }
+    const out = formatScorecard({ h1: h, h3: { n: 0 }, h7: { n: 0 }, total: 100, pendingCount: 0 })
+    expect(out).toContain('비용후 52%')
+    expect(out).toContain('시장대비 -0.17%p')
+    expect(out).toContain('t=-0.56')
+    expect(out).toContain('우연과 구별 안 됨') // |t|<2 안내
+  })
+  it('스코어카드: 초과 데이터가 없으면 시장대비 표기 생략', () => {
+    const out = formatScorecard({ h1: { winRate: 0.42, avgRet: 0.01, sharpe: 0.33, n: 401 }, h3: { n: 0 }, h7: { n: 0 }, total: 936, pendingCount: 20 })
+    expect(out).not.toContain('시장대비')
+  })
+  it('전략: 슬롯 분할 MDD와 검증 한계 문구', () => {
+    const out = formatStrategy({ n: 3, sl: 1, tp: 1, time: 1, open: 0, noData: 0, winRate: 0.667, avgRet: 0.037, risk: { mdd: -0.03, sharpe: 0.26, n: 3, slots: 3 } })
+    expect(out).toContain('슬롯 3')
+    expect(out).toContain('시장 대비 우위 미확인')
+  })
+})
