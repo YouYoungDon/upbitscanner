@@ -52,6 +52,20 @@ function kimchiGauge(k) {
 }
 
 // 코인별 김치 프리미엄 배지 (BTC 대비 상대 플래그 있을 때만)
+// 스코어카드 코인 표 정렬 — key(avg1·avg3·avg7)와 dir('asc'|'desc'). dir 없으면 입력 순서(최근 진입순).
+// 값이 없는(아직 채점 전) 코인은 방향과 무관하게 맨 아래. 입력 배열은 바꾸지 않는다.
+function sortCoins(coins, key, dir) {
+  if (!key || !dir) return [...coins]
+  const sign = dir === 'asc' ? 1 : -1
+  return [...coins].sort((a, b) => {
+    const x = a[key], y = b[key]
+    if (x == null && y == null) return 0
+    if (x == null) return 1
+    if (y == null) return -1
+    return sign * (x - y)
+  })
+}
+
 function kimchiBadge(x) {
   const k = x.kimchi
   if (!k || k.premium == null || !k.flag) return ''
@@ -587,6 +601,10 @@ const routes = {
         <thead><tr><th>코인</th><th>진입일</th><th>진입가</th><th>점수</th><th>+1일</th><th>+3일</th><th>+7일</th><th>MFE(7일)</th><th>상태</th></tr></thead>
         <tbody>${rows(d.episodes.filter((e) => e.market === market))}</tbody>
       </table></td></tr>`
+    // 정렬 상태: 같은 머리글을 누를 때마다 내림차순 → 오름차순 → 해제(최근 진입순)
+    const sort = { key: null, dir: null }
+    const arrow = (key) => sort.key !== key ? '⇅' : sort.dir === 'desc' ? '▼' : '▲'
+    const sortTh = (key, label) => `<th><button type="button" class="sc-sort inline-flex items-center gap-1 hover:text-primary" data-key="${key}" title="눌러서 정렬 (내림차순 → 오름차순 → 해제)">${label} <span class="sc-arrow ${sort.key === key ? 'text-primary' : 'opacity-40'}">${arrow(key)}</span></button></th>`
     view.innerHTML = `${head}
       <div class="kpi-row mb-4">
         ${hTile('+1일 승률(비용후)', d.horizons.h1)}
@@ -612,15 +630,31 @@ const routes = {
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
       <div class="overflow-x-auto">
         <table class="table table-sm">
-          <thead><tr><th>코인 (누르면 날짜별 픽)</th><th>픽</th><th>최근 진입</th><th>+1일 평균</th><th>+3일 평균</th><th>+7일 평균</th><th title="+3일 수익이 왕복 비용 0.3%를 넘은 비율">3일 승률(비용후)</th><th title="+3일 픽 수익 − 같은 구간 KRW 전 종목 평균">3일 시장대비</th></tr></thead>
+          <thead><tr><th>코인 (누르면 날짜별 픽)</th><th>픽</th><th>최근 진입</th>${sortTh('avg1', '+1일 평균')}${sortTh('avg3', '+3일 평균')}${sortTh('avg7', '+7일 평균')}<th title="+3일 수익이 왕복 비용 0.3%를 넘은 비율">3일 승률(비용후)</th><th title="+3일 픽 수익 − 같은 구간 KRW 전 종목 평균">3일 시장대비</th></tr></thead>
           <tbody id="scRows">${coinRows(d.coins ?? [])}</tbody>
         </table>
       </div>
       <div class="text-xs opacity-50 mt-2">채점: ${esc(String(d.updatedAt ?? '-').replace('T', ' ').slice(0, 16))} UTC · 진입 시점 신규등장 기준 · 확정 종가/고가만 사용</div>`
-    document.getElementById('scNoLowLiq').addEventListener('change', (ev) => {
-      const list = ev.target.checked ? (d.coins ?? []).filter((c) => !c.lowLiquidity) : (d.coins ?? [])
-      document.getElementById('scRows').innerHTML = coinRows(list)
-    })
+    // 저유동 필터와 정렬을 함께 반영해 다시 그린다(펼친 상세는 접힌다)
+    const redraw = () => {
+      const base = document.getElementById('scNoLowLiq').checked ? (d.coins ?? []).filter((c) => !c.lowLiquidity) : (d.coins ?? [])
+      document.getElementById('scRows').innerHTML = coinRows(sortCoins(base, sort.key, sort.dir))
+      for (const btn of view.querySelectorAll('.sc-sort')) {
+        const a = btn.querySelector('.sc-arrow')
+        a.textContent = arrow(btn.dataset.key)
+        a.className = `sc-arrow ${sort.key === btn.dataset.key ? 'text-primary' : 'opacity-40'}`
+      }
+    }
+    document.getElementById('scNoLowLiq').addEventListener('change', redraw)
+    for (const btn of view.querySelectorAll('.sc-sort')) {
+      btn.addEventListener('click', () => {
+        const k = btn.dataset.key
+        if (sort.key !== k) Object.assign(sort, { key: k, dir: 'desc' })
+        else if (sort.dir === 'desc') sort.dir = 'asc'
+        else Object.assign(sort, { key: null, dir: null })
+        redraw()
+      })
+    }
     // 펼침/접힘 — tbody에 위임해서 저유동 필터로 다시 그려도 동작한다
     document.getElementById('scRows').addEventListener('click', (ev) => {
       const tr = ev.target.closest('tr.sc-coin')
