@@ -218,7 +218,10 @@ const routes = {
         <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
         <td class="text-xs opacity-70">${x.ratio == null ? '' : x.ratio + 'x'}</td>
         <td class="text-xs">${pct(x.ch1m)}</td>
-      </tr>`).join('') || '<tr><td colspan="4" class="opacity-60 text-xs">스캔 대기</td></tr>'
+      </tr>`).join('') || (flow.timestamp
+      // 0건은 '안 돌았다'가 아니라 '그 순간 급변이 없었다'다 — 5분봉 순간 포착이라 대부분의 스캔이 0건이다.
+      ? `<tr><td colspan="4" class="opacity-60 text-xs">${new Date(flow.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 스캔 완료 · 급변 감지 없음<br><span class="opacity-70">5분봉 순간 포착이라 대부분 0건입니다 (3시간마다 실행)</span></td></tr>`
+      : '<tr><td colspan="4" class="opacity-60 text-xs">아직 스캔 기록 없음</td></tr>')
     const flowDetail = (flow.picks || []).length
       ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">📊 상세 지표 ${flow.picks.length}개</summary>${flowDetailTable(flow.picks)}</details>`
       : ''
