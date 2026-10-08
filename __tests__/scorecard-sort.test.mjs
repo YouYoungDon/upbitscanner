@@ -29,3 +29,18 @@ describe('sortCoins', () => {
     expect(coins.map((c) => c.market)).toEqual(['A', 'B', 'C', 'D'])
   })
 })
+
+describe('sortCoins 문자열 열', () => {
+  const cs = [
+    { market: 'A', korean_name: '비트코인', lastEntry: '2026-10-03T00:00:00Z' },
+    { market: 'B', korean_name: '가스', lastEntry: '2026-10-08T00:00:00Z' },
+    { market: 'C', korean_name: '도지', lastEntry: null },
+  ]
+  it('이름은 가나다 순(오름차순)·역순(내림차순)', () => {
+    expect(sortCoins(cs, 'korean_name', 'asc').map((c) => c.market)).toEqual(['B', 'C', 'A'])
+    expect(sortCoins(cs, 'korean_name', 'desc').map((c) => c.market)).toEqual(['A', 'C', 'B'])
+  })
+  it('날짜 문자열 정렬, 값 없는 건 맨 아래', () => {
+    expect(sortCoins(cs, 'lastEntry', 'desc').map((c) => c.market)).toEqual(['B', 'A', 'C'])
+  })
+})

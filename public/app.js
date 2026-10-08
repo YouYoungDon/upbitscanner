@@ -52,7 +52,8 @@ function kimchiGauge(k) {
 }
 
 // 코인별 김치 프리미엄 배지 (BTC 대비 상대 플래그 있을 때만)
-// 스코어카드 코인 표 정렬 — key(avg1·avg3·avg7)와 dir('asc'|'desc'). dir 없으면 입력 순서(최근 진입순).
+// 스코어카드 코인 표 정렬 — key(코인 요약 필드)와 dir('asc'|'desc'). dir 없으면 입력 순서(최근 진입순).
+// 숫자는 크기, 문자열(이름·ISO 날짜)은 사전순(한글 가나다)으로 비교한다.
 // 값이 없는(아직 채점 전) 코인은 방향과 무관하게 맨 아래. 입력 배열은 바꾸지 않는다.
 function sortCoins(coins, key, dir) {
   if (!key || !dir) return [...coins]
@@ -62,7 +63,7 @@ function sortCoins(coins, key, dir) {
     if (x == null && y == null) return 0
     if (x == null) return 1
     if (y == null) return -1
-    return sign * (x - y)
+    return sign * (typeof x === 'string' ? x.localeCompare(y, 'ko') : x - y)
   })
 }
 
@@ -604,7 +605,7 @@ const routes = {
     // 정렬 상태: 같은 머리글을 누를 때마다 내림차순 → 오름차순 → 해제(최근 진입순)
     const sort = { key: null, dir: null }
     const arrow = (key) => sort.key !== key ? '⇅' : sort.dir === 'desc' ? '▼' : '▲'
-    const sortTh = (key, label) => `<th><button type="button" class="sc-sort inline-flex items-center gap-1 hover:text-primary" data-key="${key}" title="눌러서 정렬 (내림차순 → 오름차순 → 해제)">${label} <span class="sc-arrow ${sort.key === key ? 'text-primary' : 'opacity-40'}">${arrow(key)}</span></button></th>`
+    const sortTh = (key, label, hint) => `<th><button type="button" class="sc-sort inline-flex items-center gap-1 hover:text-primary" data-key="${key}" title="${hint ? hint + ' · ' : ''}눌러서 정렬 (내림차순 → 오름차순 → 해제)">${label} <span class="sc-arrow ${sort.key === key ? 'text-primary' : 'opacity-40'}">${arrow(key)}</span></button></th>`
     view.innerHTML = `${head}
       <div class="kpi-row mb-4">
         ${hTile('+1일 승률(비용후)', d.horizons.h1)}
@@ -630,7 +631,7 @@ const routes = {
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
       <div class="overflow-x-auto">
         <table class="table table-sm">
-          <thead><tr><th>코인 (누르면 날짜별 픽)</th><th>픽</th><th>최근 진입</th>${sortTh('avg1', '+1일 평균')}${sortTh('avg3', '+3일 평균')}${sortTh('avg7', '+7일 평균')}<th title="+3일 수익이 왕복 비용 0.3%를 넘은 비율">3일 승률(비용후)</th><th title="+3일 픽 수익 − 같은 구간 KRW 전 종목 평균">3일 시장대비</th></tr></thead>
+          <thead><tr>${sortTh('korean_name', '코인', '줄을 누르면 날짜별 픽이 펼쳐집니다')}${sortTh('picks', '픽')}${sortTh('lastEntry', '최근 진입')}${sortTh('avg1', '+1일 평균')}${sortTh('avg3', '+3일 평균')}${sortTh('avg7', '+7일 평균')}${sortTh('win3Net', '3일 승률(비용후)', '+3일 수익이 왕복 비용 0.3%를 넘은 비율')}${sortTh('exc3', '3일 시장대비', '+3일 픽 수익 − 같은 구간 KRW 전 종목 평균')}</tr></thead>
           <tbody id="scRows">${coinRows(d.coins ?? [])}</tbody>
         </table>
       </div>
