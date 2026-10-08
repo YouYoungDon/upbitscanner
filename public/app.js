@@ -48,7 +48,7 @@ function kimchiGauge(k) {
   const pct = (k.btcPremium * 100).toFixed(2)
   const map = { overheat: ['badge-error', '과열'], discount: ['badge-info', '디스카운트'], normal: ['badge-ghost', '보통'] }
   const [cls, label] = map[k.band] || ['badge-ghost', '']
-  return `<span class="badge badge-sm ${cls}" title="BTC 기준 업비트 vs 바이낸스(USDT) 괴리 · 환율=KRW-USDT">${k.btcPremium >= 0 ? '+' : ''}${pct}% ${label}</span>`
+  return `<span class="badge badge-sm ${cls}">${k.btcPremium >= 0 ? '+' : ''}${pct}% ${label}</span>`
 }
 
 // 코인별 김치 프리미엄 배지 (BTC 대비 상대 플래그 있을 때만)
@@ -80,7 +80,7 @@ function fundingGauge(f) {
   if (!f || f.medianRate == null) return '<span class="opacity-40">—</span>'
   const pct = (f.medianRate * 100).toFixed(4)
   const cls = f.medianRate >= 0.0005 ? 'badge-error' : f.medianRate <= -0.0005 ? 'badge-success' : 'badge-ghost'
-  return `<span class="badge badge-sm ${cls}" title="바이낸스 무기한 펀딩비 중앙값(8h) · (+)롱과밀 (−)숏과밀">${f.medianRate >= 0 ? '+' : ''}${pct}%</span>`
+  return `<span class="badge badge-sm ${cls}">${f.medianRate >= 0 ? '+' : ''}${pct}%</span>`
 }
 
 // 코인별 펀딩 배지 (점수 개입했을 때만)
@@ -132,15 +132,22 @@ const routes = {
     const regimeBadge = res.regime
       ? `<span class="badge badge-sm ${res.regime.label === '확장' ? 'badge-success' : res.regime.label === '수축' ? 'badge-error' : 'badge-warning'}">${res.regime.emoji} ${esc(res.regime.label)}</span>`
       : '-'
-    const kpiTile = (label, val, cls = '') => `<div class="kpi-tile"><div class="kpi-label">${label}</div><div class="kpi-val ${cls}">${val}</div></div>`
+    const kpiTile = (label, val, cls = '', tip = '') => `<div class="kpi-tile${tip ? ' sig-tip' : ''}"${tip ? ` title="${esc(tip)}"` : ''}><div class="kpi-label">${label}</div><div class="kpi-val ${cls}">${val}</div></div>`
+    // KPI 타일 설명(마우스 오버). 기준값은 lib/cg-data·lib/regime·lib/kimchi·lib/funding과 맞춘다.
+    const KPI_TIP = {
+      cov: '코인게코 글로벌 데이터를 붙인 종목 비율. 이 데이터가 있어야 업비트 단독 펌프(업비트 비중 50%↑ ×0.9, 80%↑ ×0.8)와 구조 리스크(언락·ATH·순위)를 판단한다. 데이터 없는 코인은 감점 없이 통과(위험이 아니라 미확인).',
+      regime: 'BTC 일봉 추세 + 시장 폭(매수 수 ÷ 매도 수).\n🟢 확장: BTC 20>50>200일 평균 정배열이고 매수÷매도 ≥ 0.5\n🔴 수축: BTC 20일 < 50일 평균이거나 매수÷매도 < 0.3\n🟡 중립: 그 사이\nBTC 20일 < 50일 평균이면 반등 매수 점수 ×0.85.',
+      kimchi: 'BTC 김치 프리미엄 = 업비트 BTC 가격 vs 바이낸스 BTC(USDT) × 업비트 USDT 환율.\n+3%↑ 과열 · −1%↓ 디스카운트 · 그 사이 보통.\n시장 전체 온도계일 뿐 점수엔 안 들어간다. 매수 제외에 쓰는 건 코인별 "BTC 대비" 프리미엄 +3%p↑(국내 과열 카드).',
+      funding: '바이낸스 무기한 선물 펀딩비(8시간) 전 종목 중앙값.\n(+) 롱이 숏에게 돈을 냄 = 롱 쏠림 · (−) 숏이 냄 = 숏 쏠림. 평소 +0.01% 안팎.\n±0.05% 넘으면 색이 바뀐다. 코인별로는 +0.05%↑ ×0.92, +0.10%↑ ×0.82, −0.05%↓ ×1.04, −0.10%↓ ×1.06로 매수 점수에 반영.',
+    }
     const kpiTiles = `<div class="kpi-row">
       ${kpiTile('매수', kpi.buyCount ?? 0, 'up')}
       ${kpiTile('매도', kpi.sellCount ?? 0, 'down')}
       ${kpiTile('누적 스캔', fmt(kpi.totalScans ?? 0))}
-      ${cov ? kpiTile('🌐 커버리지', cov + (res.cgReason ? ' <span class="badge badge-warning badge-xs">' + esc(res.cgReason) + '</span>' : '')) : (res.cgReason ? kpiTile('🌐 글로벌', '<span class="text-base font-semibold">' + esc(res.cgReason) + '</span>') : '')}
-      ${kpiTile('레짐', regimeBadge)}
-      ${res.kimchi ? kpiTile('🇰🇷 김치프', kimchiGauge(res.kimchi)) : ''}
-      ${res.funding ? kpiTile('⚡ 펀딩', fundingGauge(res.funding)) : ''}
+      ${cov ? kpiTile('🌐 커버리지', cov + (res.cgReason ? ' <span class="badge badge-warning badge-xs">' + esc(res.cgReason) + '</span>' : ''), '', KPI_TIP.cov) : (res.cgReason ? kpiTile('🌐 글로벌', '<span class="text-base font-semibold">' + esc(res.cgReason) + '</span>') : '')}
+      ${kpiTile('레짐', regimeBadge, '', KPI_TIP.regime + (res.regime?.ratio != null ? `\n지금 매수÷매도 = ${res.regime.ratio}` : ''))}
+      ${res.kimchi ? kpiTile('🇰🇷 김치프', kimchiGauge(res.kimchi), '', KPI_TIP.kimchi) : ''}
+      ${res.funding ? kpiTile('⚡ 펀딩', fundingGauge(res.funding), '', KPI_TIP.funding) : ''}
       ${stale ? kpiTile('상태', '<span class="badge badge-warning badge-sm">⏰ 지연</span>') : ''}
     </div>`
     const insLine = [
