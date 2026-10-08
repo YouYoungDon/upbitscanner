@@ -76,16 +76,20 @@ Write-Host "registered: UpbitScorecard @ daily 09:10"
 # 상주 텔레그램 봇 — 로그인 시 시작(조회 명령 응답). 스캔 태스크와 독립.
 $botScript = Join-Path $projectRoot 'scripts\telegram-bot.mjs'
 $botAction = New-LoggingAction $botScript 'UpbitTelegramBot'
-$botTrigger = New-ScheduledTaskTrigger -AtLogOn
-$botSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartInterval (New-TimeSpan -Minutes 1) -RestartCount 999
+# 상주 데몬 자동 복구: RestartInterval은 "시작 실패"만 다시 시도하고, 실행 중 죽은 프로세스는 살리지 않는다
+# (2026-10-08 봇·뉴스 데몬이 Ctrl+C 종료 후 3시간 꺼져 있었다). 5분마다 도는 감시 트리거를 더하고
+# IgnoreNew로 두면, 살아 있을 땐 아무 일도 없고 죽어 있으면 5분 안에 다시 켜진다.
+$watchdogTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval (New-TimeSpan -Minutes 5)
+$botTrigger = @((New-ScheduledTaskTrigger -AtLogOn), $watchdogTrigger)
+$botSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartInterval (New-TimeSpan -Minutes 1) -RestartCount 999 -MultipleInstances IgnoreNew
 Register-ScheduledTask -TaskName 'UpbitTelegramBot' -Action $botAction -Trigger $botTrigger -Settings $botSettings -Force | Out-Null
-Write-Host "registered: UpbitTelegramBot (AtLogOn, always-on)"
+Write-Host "registered: UpbitTelegramBot (AtLogOn + 5min watchdog, always-on)"
 
 # 상주 뉴스·공지 감시 데몬 — 로그인 시 시작, 죽으면 1분 뒤 재시작(봇과 같은 설정).
 $newsScript = Join-Path $projectRoot 'scripts\news-watch.mjs'
 $newsAction = New-LoggingAction $newsScript 'UpbitNewsWatch'
-$newsTrigger = New-ScheduledTaskTrigger -AtLogOn
+$newsTrigger = @((New-ScheduledTaskTrigger -AtLogOn), $watchdogTrigger)
 Register-ScheduledTask -TaskName 'UpbitNewsWatch' -Action $newsAction -Trigger $newsTrigger -Settings $botSettings -Force | Out-Null
-Write-Host "registered: UpbitNewsWatch (AtLogOn, always-on)"
+Write-Host "registered: UpbitNewsWatch (AtLogOn + 5min watchdog, always-on)"
 
 Write-Host "`nverify: Get-ScheduledTask -TaskName 'Upbit*'"
