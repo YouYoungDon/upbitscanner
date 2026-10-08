@@ -150,8 +150,11 @@ async function dispatch(cmd, arg) {
   }
 }
 
+// 로그 시각(KST) — 언제 죽었다 살아났는지·명령이 들어왔는지 로그로 확인하기 위해
+const now = () => new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour12: false })
+
 async function loop() {
-  console.log('텔레그램 봇 시작 — 롱폴링')
+  console.log(`${now()} 텔레그램 봇 시작 — 롱폴링`)
   // 시작 시 밀린 메시지 건너뛰기(스팸 방지): 최신 offset 확보
   let offset = 0
   const init = await tg('getUpdates', { timeout: 0, offset: -1 })
@@ -170,6 +173,7 @@ async function loop() {
       if (String(msg.chat.id) !== String(CHAT_ID)) { console.log('무시(비인가 chat):', msg.chat.id); continue }
       const parsed = parseCommand(msg.text)
       if (!parsed) continue
+      console.log(`${now()} 명령 ${parsed.cmd}${parsed.arg ? ' ' + parsed.arg : ''}`)
       try {
         const reply = await dispatch(parsed.cmd, parsed.arg)
         if (reply) await send(reply)

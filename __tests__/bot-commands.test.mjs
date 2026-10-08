@@ -23,6 +23,13 @@ describe('parseCommand', () => {
   it('슬래시 없는 일반 텍스트 → null(무시)', () => {
     expect(parseCommand('안녕')).toBeNull()
     expect(parseCommand('')).toBeNull()
+    expect(parseCommand('코인이 많이 올랐네')).toBeNull()
+  })
+  it('슬래시 없이 첫 단어가 명령어면 명령으로 받는다', () => {
+    expect(parseCommand('help')).toEqual({ cmd: 'help', arg: '' })
+    expect(parseCommand('c SOL')).toEqual({ cmd: 'coin', arg: 'SOL' })
+    expect(parseCommand('코인 솔라나')).toEqual({ cmd: 'coin', arg: '솔라나' })
+    expect(parseCommand('S')).toEqual({ cmd: 'status', arg: '' })
   })
 })
 
