@@ -77,6 +77,7 @@ export function buildResults(log) {
     candleSummary: candleSummary(scan),
     regime: scan.regime || null,
     kimchi: scan.kimchi ?? null,
+    premiumHot: scan.premiumHot ?? [], // 매수 조건은 맞았지만 국내 과열(BTC 대비 +3%p↑)로 뺀 코인
     funding: scan.funding ?? null,
     cgCoverage: scan.cgCoverage ?? null,
     cgReason: scan.cgReason ?? null,
@@ -112,15 +113,6 @@ export function buildScans(scans, { limit = 20, offset = 0 } = {}) {
 
 export function findScanByTimestamp(scans, ts) {
   return scans.find((s) => s.timestamp === ts) || null
-}
-
-// 자금유입 스캔 최신 결과
-export function buildFlow(log) {
-  const scan = log?.scans?.at(-1)
-  if (!scan) return { empty: true, kpi: { strong: 0, attention: 0, watch: 0, totalScans: log?.totalScans || 0 }, picks: [], btc: null }
-  const kpi = { strong: 0, attention: 0, watch: 0, totalScans: log.totalScans || 0 }
-  for (const p of scan.picks || []) if (kpi[p.level] != null) kpi[p.level]++
-  return { empty: false, timestamp: scan.timestamp, btc: scan.btc || null, kpi, picks: scan.picks || [] }
 }
 
 // 신호 통계에 제거됨(removed)·표본 부족(lowSample) 표시를 붙인다. 주간 요약 TOP·가중치 변화에서는

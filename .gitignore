@@ -18,3 +18,4 @@ data/news-log.jsonl
 data/news-state.json
 data/news-watch-health.json
 data/market-baseline.json
+data/premium-alert-state.json

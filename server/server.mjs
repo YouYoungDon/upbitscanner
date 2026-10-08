@@ -8,7 +8,7 @@ import { readBody } from '../lib/http-body.mjs'
 import { confirmedOhlcvByPeriod } from '../lib/ohlcv.mjs'
 import { getMarkets, getDayCandles, getMinuteCandles, getTicker, candlesToOhlcv } from '../lib/upbit.mjs'
 import { analyzeMarket } from '../lib/analyze.mjs'
-import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum, buildFlow, buildRecommendations, buildScorecard } from './api.mjs'
+import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum, buildRecommendations, buildScorecard } from './api.mjs'
 import { createScanRunner } from './scan-job.mjs'
 import { readArchive, coinHistory, ARCHIVE } from '../lib/archive.mjs'
 import { readPositions, evalPositions, validatePosition, upsertPosition, deletePosition, writePositions } from '../lib/positions.mjs'
@@ -65,9 +65,6 @@ const server = createServer(async (req, res) => {
     }
     if (p === '/api/scorecard') {
       return sendJson(res, 200, buildScorecard(await readJson('scorecard.json', { episodes: [] })))
-    }
-    if (p === '/api/flow') {
-      return sendJson(res, 200, buildFlow(await readJson('flow-log.json', { scans: [] })))
     }
     if (p === '/api/positions' && req.method === 'GET') {
       const positions = readPositions()

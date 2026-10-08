@@ -55,6 +55,15 @@ describe('buildResults', () => {
   it('스캔 없으면 empty', () => {
     expect(buildResults({ scans: [] }).empty).toBe(true)
   })
+  it('국내 과열로 빠진 코인과 전 종목 과열 목록을 넘긴다(없으면 빈 배열)', () => {
+    const hotLog = { totalScans: 1, scans: [{ timestamp: 't', buy: [], sell: [],
+      premiumHot: [{ market: 'KRW-H', score: 8, kimchi: { rel: 0.05 } }],
+      kimchi: { btcPremium: 0.01, hot: [{ market: 'KRW-H', rel: 0.05 }] } }] }
+    const r = buildResults(hotLog)
+    expect(r.premiumHot.map((x) => x.market)).toEqual(['KRW-H'])
+    expect(r.kimchi.hot).toHaveLength(1)
+    expect(buildResults(log).premiumHot).toEqual([])
+  })
 })
 
 describe('buildInsights', () => {
@@ -189,25 +198,6 @@ describe('findScanByTimestamp', () => {
     const scans = [{ timestamp: 't1', buy: [], sell: [] }, { timestamp: 't2', buy: [{ market: 'KRW-A' }], sell: [] }]
     expect(findScanByTimestamp(scans, 't2').buy[0].market).toBe('KRW-A')
     expect(findScanByTimestamp(scans, 'nope')).toBeNull()
-  })
-})
-
-import { buildFlow } from '../server/api.mjs'
-
-describe('buildFlow', () => {
-  it('빈 로그 → empty', () => {
-    expect(buildFlow({ scans: [] }).empty).toBe(true)
-  })
-  it('최신 스캔의 picks·btc·레벨 KPI', () => {
-    const log = { totalScans: 2, scans: [{ timestamp: 't', btc: { ret: 0.5, favorable: true }, picks: [
-      { market: 'KRW-A', level: 'strong', score: 80 },
-      { market: 'KRW-B', level: 'watch', score: 30 },
-    ] }] }
-    const r = buildFlow(log)
-    expect(r.empty).toBe(false)
-    expect(r.kpi).toEqual({ strong: 1, attention: 0, watch: 1, totalScans: 2 })
-    expect(r.picks.length).toBe(2)
-    expect(r.btc.favorable).toBe(true)
   })
 })
 

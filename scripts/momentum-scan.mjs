@@ -8,6 +8,7 @@ import { ensureCgData } from '../lib/cg-data.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import { ensureEvents, applyEventDefense } from '../lib/exchange-events.mjs'
 import { readPositions } from '../lib/positions.mjs'
+import { ensureKimchi, splitPremiumHot } from '../lib/kimchi.mjs'
 
 const MAX_SCANS = 30
 
@@ -55,6 +56,12 @@ async function main() {
   const beforeDef = picks.length
   picks = applyEventDefense(picks, events.byMarket)
   console.log(`거래소이벤트 방어: 감시 ${Object.keys(events.byMarket).length}종목${events.reason ? ` (${events.reason})` : ''}, 제외 ${beforeDef - picks.length}건`)
+  // 국내 과열(BTC 대비 프리미엄 +3%p↑) 픽도 추격주의로 — lib/kimchi.mjs splitPremiumHot 근거 주석.
+  // 조회 실패면 아무것도 옮기지 않는다.
+  const kimchi = await ensureKimchi(['KRW-BTC', ...picks.map((p) => p.market)])
+  const split = splitPremiumHot(picks, kimchi)
+  picks = split.keep
+  for (const h of split.hot) chase.push({ ...h, chase: `국내 과열 김치프 BTC 대비 +${(h.kimchi.rel * 100).toFixed(1)}%p` })
   picks.sort((a, b) => b.score - a.score)
 
   // 락 안에서 fresh 재읽기 → 증가 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
@@ -67,7 +74,7 @@ async function main() {
     scanNum = fresh.totalScans
   })
 
-  console.log(`모멘텀 스캔 #${scanNum} 완료 — 추세지속 ${picks.length}종목 (당일과열 추격주의 ${chase.length}종목 제외)`)
+  console.log(`모멘텀 스캔 #${scanNum} 완료 — 추세지속 ${picks.length}종목 (추격주의 ${chase.length}종목 제외 — 당일 과열·국내 과열)`)
   console.log('상위:', picks.slice(0, 5).map((p) => `${p.korean_name}(${p.score})`).join(', ') || '없음')
 
   await notifyTelegram(picks)

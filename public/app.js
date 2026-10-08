@@ -123,10 +123,10 @@ const routes = {
   async home() {
     setActiveTab('home')
     view.innerHTML = '<span class="loading loading-spinner"></span>'
-    let res, mom, flow, pos, ins, rec
+    let res, mom, pos, ins, rec
     try {
-      [res, mom, flow, pos, ins, rec] = await Promise.all([
-        api('/api/results'), api('/api/momentum'), api('/api/flow'), api('/api/positions'), api('/api/insights'), api('/api/recommend'),
+      [res, mom, pos, ins, rec] = await Promise.all([
+        api('/api/results'), api('/api/momentum'), api('/api/positions'), api('/api/insights'), api('/api/recommend'),
       ])
     } catch {
       view.innerHTML = '<div class="alert alert-error">데이터 조회 실패 — 서버 연결을 확인하세요.</div>'
@@ -136,7 +136,7 @@ const routes = {
     const regime = res.regime
       ? `· 레짐 <span class="badge badge-sm ${res.regime.label === '확장' ? 'badge-success' : res.regime.label === '수축' ? 'badge-error' : 'badge-warning'}">${res.regime.emoji} ${esc(res.regime.label)}</span>`
       : ''
-    const lastScans = `반등 ${res.timestamp ? new Date(res.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-'} · 자금 ${flow.timestamp ? new Date(flow.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-'}`
+    const lastScans = `반등 ${res.timestamp ? new Date(res.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-'}`
 
     // KPI 스탯 타일 (매수/매도/누적/커버리지/레짐)
     const kpi = res.kpi || {}
@@ -210,21 +210,17 @@ const routes = {
         <td>${signalTags(x.signals)}</td>
       </tr>`).join('') || '<tr><td colspan="3" class="opacity-60 text-xs">스캔 대기</td></tr>'
 
-    const flowEmoji = { strong: '🔴', attention: '🟠', watch: '🟡' }
-    const pct = (v) => v == null ? '' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${Math.round(v * 10) / 10}%</span>`
-    const flowRows = (flow.picks || []).slice(0, 8).map((x) => `
+    // 국내 과열 코인 — 메인 스캔 때 전 종목의 BTC 대비 코인 프리미엄이 +3%p 이상인 것(높은 순).
+    // 18개월 측정: 이 조건의 코인은 이후 7일 시장 대비 −4~−6.5%p 부진(lib/kimchi.mjs splitPremiumHot 주석).
+    const kp = (v) => `${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}`
+    const hotList = res.kimchi?.hot || []
+    const hotRows = hotList.map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td>${flowEmoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)} ${x.domLabel ? `<span class="badge ${x.domLabel.includes('단독') ? 'badge-error' : 'badge-warning'} badge-xs" title="글로벌 대비 업비트 거래 비중">${esc(x.domLabel.replace('⚠️', '🌐'))}</span>` : cgBadge(x)} ${x.breakout ? '<span class="badge badge-warning badge-xs">돌파</span>' : ''}</td>
-        <td><span class="badge badge-primary badge-sm">${x.score}</span></td>
-        <td class="text-xs opacity-70">${x.ratio == null ? '' : x.ratio + 'x'}</td>
-        <td class="text-xs">${pct(x.ch1m)}</td>
-      </tr>`).join('') || (flow.timestamp
-      // 0건은 '안 돌았다'가 아니라 '그 순간 급변이 없었다'다 — 5분봉 순간 포착이라 대부분의 스캔이 0건이다.
-      ? `<tr><td colspan="4" class="opacity-60 text-xs">${new Date(flow.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 스캔 완료 · 급변 감지 없음<br><span class="opacity-70">5분봉 순간 포착이라 대부분 0건입니다 (3시간마다 실행)</span></td></tr>`
-      : '<tr><td colspan="4" class="opacity-60 text-xs">아직 스캔 기록 없음</td></tr>')
-    const flowDetail = (flow.picks || []).length
-      ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">📊 상세 지표 ${flow.picks.length}개</summary>${flowDetailTable(flow.picks)}</details>`
-      : ''
+        <td><span class="font-medium">${esc(x.korean_name)}</span> <span class="text-xs opacity-60">${esc(x.market.replace('KRW-', ''))}</span></td>
+        <td class="text-error font-bold" title="BTC 김치프 대비 차이">+${(x.rel * 100).toFixed(1)}%p</td>
+        <td class="text-xs opacity-70" title="이 코인의 김치프">${kp(x.premium)}%</td>
+      </tr>`).join('') || `<tr><td colspan="3" class="opacity-60 text-xs">${res.kimchi?.btcPremium == null ? '프리미엄 조회 대기(다음 메인 스캔)' : '국내 과열 코인 없음'}</td></tr>`
+    const premiumHot = res.premiumHot || []
 
     const recRows = (list) => (list || []).map((x) => `
       <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
@@ -262,18 +258,19 @@ const routes = {
             <input id="reboundSearch" class="input input-bordered input-xs w-28" placeholder="🔎 종목">
           </div>
           <div id="reboundBody">${topTable(buyAll.slice(0, 8), 8)}</div>
+          ${premiumHot.length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer" title="매수 조건은 맞았지만 BTC 대비 김치프 +3%p 이상 — 매수 목록에서 뺐습니다">🇰🇷 국내 과열 제외 ${premiumHot.length}개</summary>${topTable(premiumHot, 99)}</details>` : ''}
           ${lowLiq.length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">⚠️ 저유동성 ${lowLiq.length}개</summary>${topTable(lowLiq, 99)}</details>` : ''}
           ${sell.length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer">🔴 매도 ${sell.length}개</summary>${topTable(sell, 99)}</details>` : ''}
         </div></div>
         <div class="card bg-base-200 shadow"><div class="card-body p-3">
           <h3 class="card-title text-sm">🚀 모멘텀 TOP</h3>
           <table class="table table-zebra table-sm"><tbody>${momRows}</tbody></table>
-          ${(mom.chase || []).length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer" title="당일 +2.4%↑ 또는 윗꼬리 5.8%↑ — 18개월 재생상 이런 날 산 모멘텀 픽은 손해였다">⚠️추격주의(당일 과열) ${mom.chase.length}개 — 매수 목록에서 제외</summary><div class="text-xs opacity-70 mt-1">${mom.chase.map((x) => `${esc(x.korean_name)} <span class="opacity-60">(${esc(x.chase)})</span>`).join(' · ')}</div></details>` : ''}
+          ${(mom.chase || []).length ? `<details class="mt-1"><summary class="text-xs opacity-60 cursor-pointer" title="당일 +2.4%↑·윗꼬리 5.8%↑(당일 과열) 또는 BTC 대비 김치프 +3%p↑(국내 과열) — 18개월 측정상 이런 픽은 손해였다">⚠️추격주의(당일·국내 과열) ${mom.chase.length}개 — 매수 목록에서 제외</summary><div class="text-xs opacity-70 mt-1">${mom.chase.map((x) => `${esc(x.korean_name)} <span class="opacity-60">(${esc(x.chase)})</span>`).join(' · ')}</div></details>` : ''}
         </div></div>
         <div class="card bg-base-200 shadow"><div class="card-body p-3">
-          <h3 class="card-title text-sm">💸 자금유입 TOP</h3>
-          <table class="table table-zebra table-sm"><tbody>${flowRows}</tbody></table>
-          ${flowDetail}
+          <h3 class="card-title text-sm">🇰🇷 국내 과열 코인 <span class="text-xs font-normal opacity-50">BTC 대비 김치프 +3%p↑ · 추격 주의</span></h3>
+          <table class="table table-zebra table-sm"><tbody>${hotRows}</tbody></table>
+          <div class="text-xs opacity-60 mt-1">18개월 측정: 이 조건의 코인은 이후 7일 시장 대비 −4~−6%p 부진했습니다. 매수 목록에서 자동 제외됩니다.</div>
         </div></div>
       </div>`
     $('#scanBtn').onclick = runScan
@@ -813,26 +810,6 @@ function scoreBreakdownHtml(r) {
     <div>${side(bd.buy, r.buy, 'text-success', '🟢 매수')}</div>
     <div>${side(bd.sell, r.sell, 'text-error', '🔴 매도')}</div>
   </div>`
-}
-
-// 자금유입 상세 지표 테이블 (구 자금유입 탭의 전체 컬럼)
-function flowDetailTable(picks = []) {
-  if (!picks.length) return '<p class="opacity-60 text-sm">없음</p>'
-  const emoji = { strong: '🔴', attention: '🟠', watch: '🟡' }
-  const pct = (v) => v == null ? '-' : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${Math.round(v * 10) / 10}%</span>`
-  const yn = (b) => b ? '<span class="badge badge-success badge-xs">O</span>' : '<span class="opacity-30">·</span>'
-  return `<div class="overflow-x-auto"><table class="table table-zebra table-xs">
-    <thead><tr><th>종목</th><th>점수</th><th>머니</th><th>가속</th><th>5분대금</th><th>1분</th><th>5분</th><th>30분</th><th>24h</th><th>돌파</th><th>근접</th><th>EMA</th><th>RSI</th></tr></thead>
-    <tbody>${picks.map((x) => `
-      <tr class="hover cursor-pointer" onclick="location.hash='#/analyze?market=${encodeURIComponent(x.market)}'">
-        <td>${emoji[x.level] || ''} <span class="font-medium">${esc(x.korean_name)}</span> ${warnBadge(x)}</td>
-        <td><span class="badge badge-primary badge-xs">${x.score}</span></td>
-        <td>${x.ratio == null ? '-' : x.ratio + 'x'}</td>
-        <td>${x.accel == null ? '-' : x.accel + 'x'}</td>
-        <td>${x.value5m == null ? '-' : fmt(Math.round(x.value5m / 1e6)) + 'M'}</td>
-        <td>${pct(x.ch1m)}</td><td>${pct(x.ch5m)}</td><td>${pct(x.ch30m)}</td><td>${pct(x.ch24h)}</td>
-        <td>${yn(x.breakout)}</td><td>${yn(x.near24h)}</td><td>${yn(x.emaOK)}</td><td>${yn(x.rsi)}</td>
-      </tr>`).join('')}</tbody></table></div>`
 }
 
 async function runScan() {

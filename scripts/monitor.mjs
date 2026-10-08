@@ -13,7 +13,8 @@ import { ensureCgData } from '../lib/cg-data.mjs'
 import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
-import { ensureKimchi, premiumBand, coinFlag } from '../lib/kimchi.mjs'
+import { ensureKimchi, premiumBand, splitPremiumHot, premiumHotList } from '../lib/kimchi.mjs'
+import { selectPremiumAlerts, formatPremiumAlert } from '../lib/premium-alert.mjs'
 import { ensureFunding } from '../lib/funding.mjs'
 import { ensureEvents } from '../lib/exchange-events.mjs'
 import { applyBuyModifiers } from '../lib/buy-modifiers.mjs'
@@ -181,18 +182,18 @@ async function main() {
     await sleep(DELAY)
   }
 
-  buy.sort((a, b) => b.score - a.score)
   sell.sort((a, b) => b.score - a.score)
 
-  // 김치 프리미엄 (라이브 업비트 vs 바이낸스). 표시·경고 전용 — 점수 미개입.
-  const kimchi = await ensureKimchi([...new Set(['KRW-BTC', ...buy.map((b) => b.market)])])
-  for (const b of buy) {
-    const p = kimchi.byMarket[b.market]?.premium
-    if (p == null) continue
-    b.kimchi = { premium: p }
-    const flag = coinFlag(p, kimchi.btcPremium)
-    if (flag) b.kimchi.flag = flag
-  }
+  // 김치 프리미엄 (라이브 업비트 vs 바이낸스) — 스캔 전 종목 + 보유 코인. 티커 1콜 + 바이낸스 1콜.
+  // BTC 대비 +3%p 이상(국내 과열)은 매수 목록에서 분리한다(lib/kimchi.mjs splitPremiumHot 주석의 측정 근거).
+  // 조회 실패면 아무것도 빼지 않는다.
+  const held = readPositions()
+  const kimchi = await ensureKimchi([...new Set(['KRW-BTC', ...Object.keys(candleMap), ...buy.map((b) => b.market), ...held.map((p) => p.market)])])
+  const split = splitPremiumHot(buy, kimchi)
+  buy.length = 0
+  buy.push(...split.keep)
+  buy.sort((a, b) => b.score - a.score)
+  const premiumHot = split.hot.sort((a, b) => b.score - a.score)
 
   const ratio = +(buy.length / Math.max(sell.length, 1)).toFixed(2)
   const regimeInfo = { trend: regime.trend, ratio, ...regimeLabel(ratio, regime.trend) }
@@ -200,7 +201,9 @@ async function main() {
   entry.cgCoverage = cg.coverage
   if (cg.fetchedAt) entry.cgFetchedAt = cg.fetchedAt
   if (cg.reason) entry.cgReason = cg.reason
-  entry.kimchi = { btcPremium: kimchi.btcPremium, band: premiumBand(kimchi.btcPremium), usdtKrw: kimchi.usdtKrw, coverage: kimchi.coverage }
+  entry.kimchi = { btcPremium: kimchi.btcPremium, band: premiumBand(kimchi.btcPremium), usdtKrw: kimchi.usdtKrw, coverage: kimchi.coverage,
+    hot: premiumHotList(kimchi, nameOf) } // 전 종목 국내 과열 목록(대시보드 카드)
+  entry.premiumHot = premiumHot // 매수 조건은 맞았지만 국내 과열로 빠진 코인
   if (kimchi.reason) entry.kimchi.reason = kimchi.reason
   entry.funding = { medianRate: funding.medianRate, coverage: funding.coverage }
   if (funding.reason) entry.funding.reason = funding.reason
@@ -224,12 +227,28 @@ async function main() {
   })
 
   console.log(`스캔 #${scanNum} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
+  if (premiumHot.length) console.log('🇰🇷 국내 과열 제외:', premiumHot.map((b) => `${b.korean_name}(BTC+${(b.kimchi.rel * 100).toFixed(1)}%p)`).join(', '))
   console.log('매수 상위:', buy.slice(0, 5).map((b) => `${b.korean_name}(${b.score})`).join(', ') || '없음')
 
-  await notifyTelegram(buy, { regime: regimeInfo, buyCount: buy.length, sellCount: sell.length, kimchi: entry.kimchi, funding: entry.funding })
+  await notifyTelegram(buy, { regime: regimeInfo, buyCount: buy.length, sellCount: sell.length, kimchi: entry.kimchi, funding: entry.funding, premiumHot })
   await notifyEventAlerts(events)
   await notifyPositionAlerts()
+  await notifyPremiumAlerts(held, kimchi)
   await warnNewsDaemonStale()
+}
+
+// 보유 코인 국내 과열 → 텔레그램(코인당 24시간 1회). 보유가 없으면 조용.
+async function notifyPremiumAlerts(held, kimchi) {
+  if (!held.length) return
+  const prev = await readJson('premium-alert-state.json', {})
+  const { fires, state } = selectPremiumAlerts(held, kimchi, prev, Date.now())
+  if (!fires.length) return
+  const msg = formatPremiumAlert(fires)
+  console.log(msg)
+  const TG_TOKEN = process.env.TELEGRAM_TOKEN, TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID
+  // 전송 실패면 상태를 남기지 않아 다음 스캔에서 다시 시도한다
+  if (TG_TOKEN && TG_CHAT_ID && !(await sendTelegram(msg))) return
+  await writeJson('premium-alert-state.json', state)
 }
 
 // 이번 스캔에서 처음 감지된 거래소 이벤트 → 콘솔 + Telegram 즉시 경보
@@ -320,7 +339,8 @@ async function notifyTelegram(buyList, ctx = {}) {
     ? `\n⚡ 시장 펀딩 ${f.medianRate >= 0 ? '+' : ''}${(f.medianRate * 100).toFixed(4)}% (중앙값)`
     : ''
   const lowN = buyList.length - main.length
-  const lowLine = lowN > 0 ? `\n<i>저유동성 후보 ${lowN}개는 별도(알림 제외)</i>` : ''
+  const lowLine = (lowN > 0 ? `\n<i>저유동성 후보 ${lowN}개는 별도(알림 제외)</i>` : '') +
+    (ctx.premiumHot?.length ? `\n<i>🇰🇷 국내 과열(BTC 대비 +3%p↑) ${ctx.premiumHot.length}개 제외: ${ctx.premiumHot.slice(0, 3).map((b) => esc(b.korean_name)).join(', ')}</i>` : '')
   const tip = readable.some((r) => r.warns.some((w) => w.includes('추격')))
     ? '\n\n💡 ⚠️추격주의는 급등 후 진입 — 통계상 불리(관망 권장)'
     : ''

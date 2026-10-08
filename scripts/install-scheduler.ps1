@@ -1,5 +1,6 @@
 # Upbit scanner Task Scheduler registration -- 3-hour full pipeline (KST)
-# Every 3h (00 03 06 09 12 15 18 21): monitor xx:00 -> momentum xx:02 -> flow xx:05 -> trend xx:17
+# Every 3h (00 03 06 09 12 15 18 21): monitor xx:00 -> momentum xx:02 -> trend xx:17
+# (UpbitFlow 5-minute money-flow scan removed 2026-10-08: no edge as accumulation signal; see scripts/research/accumulation)
 # Daily scorecard batch 09:10 (scores matured pick episodes +1/+3/+7d).
 # Weekly analysis Sun 22:00. WakeToRun + powercfg wake timer wakes PC from sleep (full shutdown still cannot run).
 # Usage:
@@ -18,7 +19,6 @@ $hours = @('00','03','06','09','12','15','18','21')
 $jobs = @(
   @{ Name = 'UpbitMonitor';  Script = 'monitor.mjs';       Min = '00' },
   @{ Name = 'UpbitMomentum'; Script = 'momentum-scan.mjs'; Min = '02' },
-  @{ Name = 'UpbitFlow';     Script = 'flow-scan.mjs';      Min = '05' },
   @{ Name = 'UpbitTrend';    Script = 'trend-journal.mjs';  Min = '17' }
 )
 

@@ -11,7 +11,6 @@
     "backtest": "node scripts/backtest.mjs",
     "backtest:momentum": "node scripts/backtest-momentum.mjs",
     "analyze": "node scripts/analyze.mjs",
-    "flow": "node scripts/flow-scan.mjs",
     "scorecard": "node scripts/scorecard.mjs",
     "strategy-backtest": "node scripts/strategy-backtest.mjs",
     "exit-backtest": "node scripts/exit-backtest.mjs",
