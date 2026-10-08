@@ -1,584 +1,7 @@
 {
   "started": "2026-06-17T11:38:30.091Z",
-  "totalScans": 750,
+  "totalScans": 753,
   "scans": [
-    {
-      "timestamp": "2026-10-04T15:03:50.302Z",
-      "picks": [
-        {
-          "market": "KRW-AAVE",
-          "korean_name": "에이브",
-          "price": 246900,
-          "score": 12.6,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 3봉",
-            "200봉 신고가 근접",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "⚠️유동성 ×0.9"
-          ]
-        },
-        {
-          "market": "KRW-ETH",
-          "korean_name": "이더리움",
-          "price": 3651000,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 매집 (선행)"
-          ]
-        },
-        {
-          "market": "KRW-PUMP",
-          "korean_name": "펌프펀",
-          "price": 8.51,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SOL",
-          "korean_name": "솔라나",
-          "price": 162700,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-BTC",
-          "korean_name": "비트코인",
-          "price": 115183000,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-MON",
-          "korean_name": "모나드",
-          "price": 45.9,
-          "score": 11.2,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.8"
-          ]
-        },
-        {
-          "market": "KRW-SYRUP",
-          "korean_name": "메이플파이낸스",
-          "price": 350,
-          "score": 11.2,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.8"
-          ]
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 139,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SAND",
-          "korean_name": "샌드박스",
-          "price": 102,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SOON",
-          "korean_name": "쑨",
-          "price": 504,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SUI",
-          "korean_name": "수이",
-          "price": 1609,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-WLD",
-          "korean_name": "월드코인",
-          "price": 811,
-          "score": 8.4,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "event": {
-            "mult": 0.7,
-            "label": "⚠️거래소이벤트(입출금중단·업비트)"
-          }
-        },
-        {
-          "market": "KRW-NEAR",
-          "korean_name": "니어프로토콜",
-          "price": 6570,
-          "score": 7,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 매집 (선행)"
-          ],
-          "event": {
-            "mult": 0.7,
-            "label": "⚠️거래소이벤트(입출금중단·업비트)"
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-10-04T18:05:16.946Z",
-      "picks": [
-        {
-          "market": "KRW-AAVE",
-          "korean_name": "에이브",
-          "price": 246900,
-          "score": 12.6,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 3봉",
-            "200봉 신고가 근접",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "⚠️유동성 ×0.9"
-          ]
-        },
-        {
-          "market": "KRW-ETH",
-          "korean_name": "이더리움",
-          "price": 3651000,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 매집 (선행)"
-          ]
-        },
-        {
-          "market": "KRW-PUMP",
-          "korean_name": "펌프펀",
-          "price": 8.51,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SOL",
-          "korean_name": "솔라나",
-          "price": 162700,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-BTC",
-          "korean_name": "비트코인",
-          "price": 115183000,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-MON",
-          "korean_name": "모나드",
-          "price": 45.9,
-          "score": 11.2,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.8"
-          ]
-        },
-        {
-          "market": "KRW-SYRUP",
-          "korean_name": "메이플파이낸스",
-          "price": 350,
-          "score": 11.2,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.8"
-          ]
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 139,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SAND",
-          "korean_name": "샌드박스",
-          "price": 102,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SOON",
-          "korean_name": "쑨",
-          "price": 504,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-STX",
-          "korean_name": "스택스",
-          "price": 522,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "RSI 하락 다이버전스 (-4)"
-          ]
-        },
-        {
-          "market": "KRW-SUI",
-          "korean_name": "수이",
-          "price": 1609,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-WLD",
-          "korean_name": "월드코인",
-          "price": 811,
-          "score": 8.4,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "event": {
-            "mult": 0.7,
-            "label": "⚠️거래소이벤트(입출금중단·업비트)"
-          }
-        },
-        {
-          "market": "KRW-NEAR",
-          "korean_name": "니어프로토콜",
-          "price": 6570,
-          "score": 7,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 매집 (선행)"
-          ],
-          "event": {
-            "mult": 0.7,
-            "label": "⚠️거래소이벤트(입출금중단·업비트)"
-          }
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-10-04T21:05:15.804Z",
-      "picks": [
-        {
-          "market": "KRW-AAVE",
-          "korean_name": "에이브",
-          "price": 246900,
-          "score": 12.6,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 3봉",
-            "200봉 신고가 근접",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "⚠️유동성 ×0.9"
-          ]
-        },
-        {
-          "market": "KRW-ETH",
-          "korean_name": "이더리움",
-          "price": 3651000,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 매집 (선행)"
-          ]
-        },
-        {
-          "market": "KRW-PUMP",
-          "korean_name": "펌프펀",
-          "price": 8.51,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-ORCA",
-          "korean_name": "오르카",
-          "price": 2450,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 4봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SOL",
-          "korean_name": "솔라나",
-          "price": 162700,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-BTC",
-          "korean_name": "비트코인",
-          "price": 115183000,
-          "score": 12,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-MON",
-          "korean_name": "모나드",
-          "price": 45.9,
-          "score": 11.2,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.8"
-          ]
-        },
-        {
-          "market": "KRW-SYRUP",
-          "korean_name": "메이플파이낸스",
-          "price": 350,
-          "score": 11.2,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "연속양봉 3봉",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "BB 스퀴즈 발산",
-            "⚠️유동성 ×0.8"
-          ]
-        },
-        {
-          "market": "KRW-ESP",
-          "korean_name": "에스프레소",
-          "price": 139,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SAND",
-          "korean_name": "샌드박스",
-          "price": 102,
-          "score": 10,
-          "signals": [
-            "EMA 정배열 (20>50)",
-            "연속양봉 5봉",
-            "MACD 히스토 3연속↑",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-SOON",
-          "korean_name": "쑨",
-          "price": 504,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-STX",
-          "korean_name": "스택스",
-          "price": 522,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "200봉 신고가 근접",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인",
-            "RSI 하락 다이버전스 (-4)"
-          ]
-        },
-        {
-          "market": "KRW-SUI",
-          "korean_name": "수이",
-          "price": 1609,
-          "score": 10,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 추세확인"
-          ]
-        },
-        {
-          "market": "KRW-WLD",
-          "korean_name": "월드코인",
-          "price": 811,
-          "score": 8.4,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "MACD 3연속↑ + RSI 골디락스",
-            "OBV 추세확인"
-          ],
-          "event": {
-            "mult": 0.7,
-            "label": "⚠️거래소이벤트(입출금중단·업비트)"
-          }
-        },
-        {
-          "market": "KRW-NEAR",
-          "korean_name": "니어프로토콜",
-          "price": 6570,
-          "score": 7,
-          "signals": [
-            "EMA 완전정배열 (20>50>200)",
-            "EMA20 상승기울기",
-            "RSI 골디락스 (50~75)",
-            "OBV 매집 (선행)"
-          ],
-          "event": {
-            "mult": 0.7,
-            "label": "⚠️거래소이벤트(입출금중단·업비트)"
-          }
-        }
-      ]
-    },
     {
       "timestamp": "2026-10-05T00:05:16.907Z",
       "picks": [
@@ -7933,6 +7356,800 @@
           ],
           "dominance": {
             "share": 0.224,
+            "mult": 1
+          },
+          "warn": "caution",
+          "chase": "윗꼬리 9.5%"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-08T09:02:38.365Z",
+      "picks": [
+        {
+          "market": "KRW-JST",
+          "korean_name": "저스트",
+          "price": 189,
+          "priceBasis": "live",
+          "score": 11.2,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 갱신",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.8"
+          ],
+          "dominance": {
+            "share": 0.01,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-JTO",
+          "korean_name": "지토",
+          "price": 787,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.091,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ADA",
+          "korean_name": "에이다",
+          "price": 344,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.027,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-SOL",
+          "korean_name": "솔라나",
+          "price": 156500,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)"
+          ],
+          "dominance": {
+            "share": 0.007,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-CHIP",
+          "korean_name": "유에스디에이아이",
+          "price": 70.6,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.244,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-BTC",
+          "korean_name": "비트코인",
+          "price": 112846000,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)"
+          ],
+          "dominance": {
+            "share": 0.003,
+            "mult": 1
+          }
+        }
+      ],
+      "chase": [
+        {
+          "market": "KRW-META2",
+          "korean_name": "메타다오",
+          "price": 8050,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "chase": "윗꼬리 5.9%"
+        },
+        {
+          "market": "KRW-BEAM",
+          "korean_name": "빔",
+          "price": 3.35,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "MACD 히스토 3연속↑",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.213,
+            "mult": 1
+          },
+          "chase": "당일 +3.8%"
+        },
+        {
+          "market": "KRW-JUP",
+          "korean_name": "주피터",
+          "price": 511,
+          "priceBasis": "live",
+          "score": 16,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "연속양봉 5봉",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.04,
+            "mult": 1
+          },
+          "chase": "당일 +2.5%"
+        },
+        {
+          "market": "KRW-NEAR",
+          "korean_name": "니어프로토콜",
+          "price": 7080,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.04,
+            "mult": 1
+          },
+          "chase": "당일 +5.9%"
+        },
+        {
+          "market": "KRW-W",
+          "korean_name": "웜홀",
+          "price": 22.1,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.154,
+            "mult": 1
+          },
+          "chase": "당일 +10.0%"
+        },
+        {
+          "market": "KRW-PUMP",
+          "korean_name": "펌프펀",
+          "price": 8.12,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.014,
+            "mult": 1
+          },
+          "chase": "윗꼬리 6.6%"
+        },
+        {
+          "market": "KRW-ORCA",
+          "korean_name": "오르카",
+          "price": 3749,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "MACD 히스토 3연속↑",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산"
+          ],
+          "dominance": {
+            "share": 0.346,
+            "mult": 1
+          },
+          "chase": "윗꼬리 15.8%"
+        },
+        {
+          "market": "KRW-MET2",
+          "korean_name": "메테오라",
+          "price": 719,
+          "priceBasis": "live",
+          "score": 14,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "warn": "caution",
+          "chase": "당일 +36.4% · 윗꼬리 6.4%"
+        },
+        {
+          "market": "KRW-STX",
+          "korean_name": "스택스",
+          "price": 511,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.2,
+            "mult": 1
+          },
+          "warn": "caution",
+          "chase": "윗꼬리 9.5%"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-08T12:02:39.677Z",
+      "picks": [
+        {
+          "market": "KRW-JST",
+          "korean_name": "저스트",
+          "price": 189,
+          "priceBasis": "live",
+          "score": 11.2,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 갱신",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.8"
+          ],
+          "dominance": {
+            "share": 0.01,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-JTO",
+          "korean_name": "지토",
+          "price": 759,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.102,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-ADA",
+          "korean_name": "에이다",
+          "price": 341,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.026,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-SOL",
+          "korean_name": "솔라나",
+          "price": 154400,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)"
+          ],
+          "dominance": {
+            "share": 0.007,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-CHIP",
+          "korean_name": "유에스디에이아이",
+          "price": 67.3,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.267,
+            "mult": 1
+          }
+        },
+        {
+          "market": "KRW-BTC",
+          "korean_name": "비트코인",
+          "price": 112550000,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)"
+          ],
+          "dominance": {
+            "share": 0.003,
+            "mult": 1
+          }
+        }
+      ],
+      "chase": [
+        {
+          "market": "KRW-BEAM",
+          "korean_name": "빔",
+          "price": 3.39,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "MACD 히스토 3연속↑",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.219,
+            "mult": 1
+          },
+          "chase": "당일 +3.8%"
+        },
+        {
+          "market": "KRW-JUP",
+          "korean_name": "주피터",
+          "price": 504,
+          "priceBasis": "live",
+          "score": 16,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "연속양봉 5봉",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.043,
+            "mult": 1
+          },
+          "chase": "당일 +2.5%"
+        },
+        {
+          "market": "KRW-NEAR",
+          "korean_name": "니어프로토콜",
+          "price": 6925,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.041,
+            "mult": 1
+          },
+          "chase": "당일 +5.9%"
+        },
+        {
+          "market": "KRW-W",
+          "korean_name": "웜홀",
+          "price": 21.9,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.123,
+            "mult": 1
+          },
+          "chase": "당일 +10.0%"
+        },
+        {
+          "market": "KRW-PUMP",
+          "korean_name": "펌프펀",
+          "price": 7.77,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.015,
+            "mult": 1
+          },
+          "chase": "윗꼬리 6.6%"
+        },
+        {
+          "market": "KRW-ORCA",
+          "korean_name": "오르카",
+          "price": 3565,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "MACD 히스토 3연속↑",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산"
+          ],
+          "dominance": {
+            "share": 0.398,
+            "mult": 1
+          },
+          "chase": "윗꼬리 15.8%"
+        },
+        {
+          "market": "KRW-MET2",
+          "korean_name": "메테오라",
+          "price": 642,
+          "priceBasis": "live",
+          "score": 14,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "warn": "caution",
+          "chase": "당일 +36.4% · 윗꼬리 6.4%"
+        },
+        {
+          "market": "KRW-STX",
+          "korean_name": "스택스",
+          "price": 518,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.204,
+            "mult": 1
+          },
+          "warn": "caution",
+          "chase": "윗꼬리 9.5%"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-08T12:44:02.957Z",
+      "picks": [
+        {
+          "market": "KRW-JST",
+          "korean_name": "저스트",
+          "price": 190,
+          "priceBasis": "live",
+          "score": 11.2,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 갱신",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.8"
+          ],
+          "dominance": {
+            "share": 0.009,
+            "mult": 1
+          },
+          "kimchi": {
+            "premium": 0.0005329154265325542,
+            "rel": 0.0005108167139800113
+          }
+        },
+        {
+          "market": "KRW-JTO",
+          "korean_name": "지토",
+          "price": 753,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.105,
+            "mult": 1
+          },
+          "kimchi": {
+            "premium": -0.002325695552787277,
+            "rel": -0.00234779426533982
+          }
+        },
+        {
+          "market": "KRW-ADA",
+          "korean_name": "에이다",
+          "price": 339,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.025,
+            "mult": 1
+          },
+          "kimchi": {
+            "premium": 0.0014179369018079147,
+            "rel": 0.0013958381892553717
+          }
+        },
+        {
+          "market": "KRW-SOL",
+          "korean_name": "솔라나",
+          "price": 154100,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)"
+          ],
+          "dominance": {
+            "share": 0.007,
+            "mult": 1
+          },
+          "kimchi": {
+            "premium": 0.00029924591328112093,
+            "rel": 0.000277147200728578
+          }
+        },
+        {
+          "market": "KRW-CHIP",
+          "korean_name": "유에스디에이아이",
+          "price": 66.8,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.274,
+            "mult": 1
+          },
+          "kimchi": {
+            "premium": 0.0015908501377186468,
+            "rel": 0.0015687514251661039
+          }
+        },
+        {
+          "market": "KRW-BTC",
+          "korean_name": "비트코인",
+          "price": 112457000,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)"
+          ],
+          "dominance": {
+            "share": 0.003,
+            "mult": 1
+          },
+          "kimchi": {
+            "premium": 0.00002209871255254292,
+            "rel": 0
+          }
+        }
+      ],
+      "chase": [
+        {
+          "market": "KRW-JUP",
+          "korean_name": "주피터",
+          "price": 502,
+          "priceBasis": "live",
+          "score": 16,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "연속양봉 5봉",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.043,
+            "mult": 1
+          },
+          "chase": "당일 +2.5%"
+        },
+        {
+          "market": "KRW-NEAR",
+          "korean_name": "니어프로토콜",
+          "price": 6905,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.041,
+            "mult": 1
+          },
+          "chase": "당일 +5.9%"
+        },
+        {
+          "market": "KRW-W",
+          "korean_name": "웜홀",
+          "price": 22.8,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.125,
+            "mult": 1
+          },
+          "chase": "당일 +10.0%"
+        },
+        {
+          "market": "KRW-PUMP",
+          "korean_name": "펌프펀",
+          "price": 7.87,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.015,
+            "mult": 1
+          },
+          "chase": "윗꼬리 6.6%"
+        },
+        {
+          "market": "KRW-ORCA",
+          "korean_name": "오르카",
+          "price": 3526,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "MACD 히스토 3연속↑",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산"
+          ],
+          "dominance": {
+            "share": 0.383,
+            "mult": 1
+          },
+          "chase": "윗꼬리 15.8%"
+        },
+        {
+          "market": "KRW-MET2",
+          "korean_name": "메테오라",
+          "price": 635,
+          "priceBasis": "live",
+          "score": 14,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "warn": "caution",
+          "chase": "당일 +36.4% · 윗꼬리 6.4%"
+        },
+        {
+          "market": "KRW-STX",
+          "korean_name": "스택스",
+          "price": 519,
+          "priceBasis": "live",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.202,
             "mult": 1
           },
           "warn": "caution",
