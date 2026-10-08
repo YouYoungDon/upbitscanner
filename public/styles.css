@@ -287,3 +287,7 @@ details > summary:hover { color: hsl(var(--p)); }
 ::-webkit-scrollbar-thumb { background: hsl(var(--p) / 0.35); border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: hsl(var(--p) / 0.6); }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* 신호 배지·라벨 툴팁 — 설명이 있다는 표시 */
+.sig-tip { cursor: help; }
+td.sig-tip, span.sig-tip:not(.badge) { text-decoration: underline dotted; text-underline-offset: 3px; }

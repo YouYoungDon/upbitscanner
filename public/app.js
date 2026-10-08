@@ -101,22 +101,10 @@ function structRiskBadge(x) {
   return `<span class="badge ${cls} badge-xs" title="구조 리스크: ${esc(s.flags.join(' · '))}${multTip}">🏗️리스크</span>`
 }
 
+// 신호 배지 — 모든 라벨을 짧은 이름으로, 마우스를 올리면 원문+설명(public/signal-dict.js).
+const sigTip = (label) => { const i = signalInfo(label); return i ? i.tip : label }
 function signalTags(signals) {
-  return (signals || []).map((s) => {
-    if (s.includes('업비트단독')) return `<span class="badge badge-error badge-sm" title="글로벌 대비 업비트 거래 비중 — 국내 단독 점화 의심, 점수 ×0.8">${esc(s.replace('⚠️', ''))}</span>`
-    if (s.includes('업비트비중')) return `<span class="badge badge-warning badge-sm" title="글로벌 대비 업비트 거래 비중 높음, 점수 ×0.9">${esc(s.replace('⚠️', ''))}</span>`
-    if (s.includes('골든크로스')) return '<span class="badge badge-success badge-sm">GC</span>'
-    if (s.includes('[MTF]')) return '<span class="badge badge-info badge-sm">MTF</span>'
-    if (s.includes('함정')) return '<span class="badge badge-error badge-sm">함정</span>'
-    if (s.includes('떨어지는칼')) return '<span class="badge badge-error badge-sm">🔪칼</span>'
-    if (s.includes('데드크로스')) return '<span class="badge badge-error badge-sm">DC</span>'
-    if (s.includes('거래량')) return '<span class="badge badge-warning badge-sm">VOL</span>'
-    if (s.includes('캔들 강세')) return '<span class="badge badge-success badge-sm">🕯강세</span>'
-    if (s.includes('캔들 약세')) return '<span class="badge badge-error badge-sm">🕯약세</span>'
-    if (s.includes('추격주의')) return '<span class="badge badge-error badge-sm" title="거래량 급등 후 추격 진입 — 통계상 +3일 승률 30%, 평균 -3.4%">⚠️추격주의</span>'
-    if (s.includes('🎯전략')) return '<span class="badge badge-primary badge-sm" title="조용한 바닥 전략 시그니처 (RSI≤26·Stoch K≤15·거래량 조용) — 참고용, 시장 대비 우위 미확인(2026-10-08 재생)">🎯전략</span>'
-    return ''
-  }).join(' ')
+  return (signals || []).map(signalBadge).join(' ')
 }
 
 const routes = {
@@ -272,7 +260,9 @@ const routes = {
           <table class="table table-zebra table-sm"><tbody>${hotRows}</tbody></table>
           <div class="text-xs opacity-60 mt-1">18개월 측정: 이 조건의 코인은 이후 7일 시장 대비 −4~−6%p 부진했습니다. 매수 목록에서 자동 제외됩니다.</div>
         </div></div>
-      </div>`
+      </div>
+      <details class="card bg-base-200 shadow mt-4"><summary class="card-body p-3 cursor-pointer text-sm font-semibold">📖 신호 사전 <span class="text-xs font-normal opacity-60">— 배지에 마우스를 올려도 설명이 나옵니다</span></summary>
+        <div class="px-3 pb-3">${signalDictHtml()}</div></details>`
     $('#scanBtn').onclick = runScan
     // 포지션 편집 버튼 연결
     const addBtn = $('#posAddBtn')
@@ -783,7 +773,7 @@ function scoreBreakdownHtml(r) {
     const extras = (fullLabels || []).filter((l) => !shown.has(l))
     if (!b.items.length && !b.combos.length && !extras.length) return `<div class="text-xs opacity-60">${title}: 없음</div>`
     const rows = b.items.map((it) => `
-      <tr><td>${esc(it.label)}</td>
+      <tr><td class="sig-tip" title="${esc(sigTip(it.label))}">${esc(it.label)}</td>
         <td class="text-right opacity-70">${(+it.base).toFixed(0)}</td>
         <td class="text-center opacity-70">×${(+it.weight).toFixed(2)}</td>
         <td class="text-right font-medium">${(+it.score).toFixed(2)}</td></tr>`).join('')
@@ -791,7 +781,7 @@ function scoreBreakdownHtml(r) {
       <tr class="border-t border-base-300"><td class="opacity-60 text-xs" colspan="3">소계</td>
         <td class="text-right opacity-70">${b.subtotal.toFixed(2)}</td></tr>` : ''
     const comboRows = b.combos.map((c) => `
-      <tr><td class="${c.mult >= 1 ? 'text-success' : 'text-error'}">${esc(c.label)}</td>
+      <tr><td class="${c.mult >= 1 ? 'text-success' : 'text-error'} sig-tip" title="${esc(sigTip(c.label))}">${esc(c.label)}</td>
         <td colspan="2" class="text-center opacity-70">×${c.mult.toFixed(2)}</td>
         <td></td></tr>`).join('')
     const table = !b.items.length && !b.combos.length ? '' : `
@@ -801,7 +791,7 @@ function scoreBreakdownHtml(r) {
         <tfoot><tr class="border-t-2 border-base-300"><td class="font-bold" colspan="3">합계</td>
           <td class="text-right font-bold ${color}">${b.total.toFixed(2)}</td></tr></tfoot>
       </table>`
-    const extrasNote = extras.length ? `<div class="text-xs opacity-50 mt-1">ℹ️ ${extras.map(esc).join(' · ')}</div>` : ''
+    const extrasNote = extras.length ? `<div class="text-xs opacity-50 mt-1">ℹ️ ${extras.map((l) => `<span class="sig-tip" title="${esc(sigTip(l))}">${esc(l)}</span>`).join(' · ')}</div>` : ''
     return `
       <div class="font-semibold text-sm ${color} mb-1">${title} <span class="badge badge-sm ${color === 'text-success' ? 'badge-success' : 'badge-error'}">${b.total.toFixed(1)}</span></div>
       ${table}${extrasNote}`
