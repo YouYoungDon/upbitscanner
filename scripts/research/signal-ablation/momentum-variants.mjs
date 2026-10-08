@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { obs, MID, mean, median, pct } from './lib.mjs'
+import { obs, MID, mean, median, pct, dayT } from './lib.mjs'
 const R = new URL('../../../lib/', import.meta.url).href
 const { scoreMomentum, MIN_MOMENTUM_SCORE } = await import(R + 'momentum.mjs')
 const { liquidityMultiplier } = await import(R + 'scan-universe.mjs')
@@ -27,7 +27,7 @@ console.log(`과열 컷(전반 80분위): 당일상승 ≥${pct(CP1, 1)}% 또는
 for (const [nm, keep] of Object.entries(V)) {
   const line = [nm.padEnd(26)]
   for (const h of ['x1', 'x3', 'x7']) for (const [lab, p] of [['전', (x) => x.d < MID], ['후', (x) => x.d >= MID]]) {
-    const ps = rows.filter((r) => p(r.x) && r.x[h] != null && keep(r)); line.push(`${h}${lab} ${pct(mean(ps.map((r) => r.x[h]))).padStart(5)}`)
+    const ps = rows.filter((r) => p(r.x) && r.x[h] != null && keep(r)); line.push(`${h}${lab} ${pct(mean(ps.map((r) => r.x[h]))).padStart(5)}(t${dayT(ps.map((r) => ({ day: r.x.d, v: r.x[h] })))})`)
   }
   const ps = rows.filter(keep)
   console.log(line.join(' '), `| ${(ps.length / 539).toFixed(1)}/일 승 ${pct(ps.filter((r) => r.x.x3 > 0).length / ps.length, 0)} 중앙 ${pct(median(ps.map((r) => r.x.x3)))}`)

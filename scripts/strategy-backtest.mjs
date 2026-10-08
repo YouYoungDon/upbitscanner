@@ -1,10 +1,15 @@
 // 조용한 바닥 전략 그리드 백테스트.
 // 종목당 일봉 1회 fetch → 지표 시리즈 기반 신호일 추출(검출 8조합) → 청산 27조합 시뮬.
 // 선정: trades >= MIN_TRADES 중 avgRet 최대(동률 시 winRate) → strategy-config.json 기록.
+// 2026-10-08부터 avgRet·winRate는 왕복 비용(ROUND_TRIP_COST) 차감 후 값이고, 진입일 군집 t를 함께 낸다.
+// 주의: 216조합 중 최고를 같은 데이터에서 고르므로 선정값은 낙관적이다(선택 편향). 시장 대비 검증은
+// scripts/research/strategy-check.mjs.
 import { getMarkets, getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcv } from '../lib/ohlcv.mjs'
 import { quietBottomSeries, simulateTrade } from '../lib/strategy.mjs'
 import { writeJson } from '../lib/store.mjs'
+import { ROUND_TRIP_COST } from '../lib/costs.mjs'
+import { clusteredT } from '../lib/perf-metrics.mjs'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const MIN_TRADES = 80
@@ -34,6 +39,7 @@ async function main() {
     const signalSets = histories.map((h) => quietBottomSeries(h, det))
     for (const exit of EXIT) {
       let trades = 0, wins = 0, total = 0, tp = 0, sl = 0, time = 0
+      const byDay = []
       for (let hIdx = 0; hIdx < histories.length; hIdx++) {
         const h = histories[hIdx]
         const sig = signalSets[hIdx]
@@ -42,8 +48,10 @@ async function main() {
           if (sig[i]) {
             const t = simulateTrade(h, i, exit)
             if (t) {
-              trades++; total += t.ret
-              if (t.ret > 0) wins++
+              const net = t.ret - ROUND_TRIP_COST
+              trades++; total += net
+              if (net > 0) wins++
+              byDay.push({ day: Math.floor(h[i + 1].time / 86400), v: net })
               if (t.reason === 'tp') tp++
               else if (t.reason === 'sl') sl++
               else time++
@@ -58,6 +66,7 @@ async function main() {
         ...det, ...exit, trades,
         winRate: trades ? +(wins / trades).toFixed(4) : null,
         avgRet: trades ? +(total / trades).toFixed(5) : null,
+        tDay: clusteredT(byDay).t,
         tpRate: trades ? +(tp / trades).toFixed(3) : null,
         slRate: trades ? +(sl / trades).toFixed(3) : null,
         timeRate: trades ? +(time / trades).toFixed(3) : null,
@@ -71,7 +80,7 @@ async function main() {
   console.log('--- 상위 10 조합 ---')
   for (const r of results.slice(0, 10)) {
     console.log(`RSI<=${r.rsiMax} K<=${r.stochMax} vol<=${r.volMax} SL${r.slPct} TP${r.tpPct} hold${r.holdMax}` +
-      ` | n=${r.trades} 승률 ${(r.winRate * 100).toFixed(1)}% 평균 ${(r.avgRet * 100).toFixed(2)}% (tp ${(r.tpRate * 100).toFixed(0)}/sl ${(r.slRate * 100).toFixed(0)}/time ${(r.timeRate * 100).toFixed(0)}%)`)
+      ` | n=${r.trades} 승률(비용후) ${(r.winRate * 100).toFixed(1)}% 평균(비용후) ${(r.avgRet * 100).toFixed(2)}% 일군집t ${r.tDay?.toFixed(2) ?? '—'} (tp ${(r.tpRate * 100).toFixed(0)}/sl ${(r.slRate * 100).toFixed(0)}/time ${(r.timeRate * 100).toFixed(0)}%)`)
   }
 
   const eligible = results.filter((r) => r.trades >= MIN_TRADES)

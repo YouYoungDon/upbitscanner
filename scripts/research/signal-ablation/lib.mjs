@@ -7,6 +7,10 @@ for (const h of ['r1', 'r3', 'r7']) {
   for (const x of obs) if (x[h] != null) { const a = by.get(x.d) || [0, 0]; a[0] += W(x[h]); a[1]++; by.set(x.d, a) }
   for (const x of obs) x['x' + h.slice(1)] = x[h] == null ? null : W(x[h]) - by.get(x.d)[0] / by.get(x.d)[1]
 }
+// 진입일 군집 t(같은 날 픽을 하루 평균 하나로) — 픽 단위 평균만 보면 신호가 몰린 날에 휘둘린다(2026-10-08 QA).
+// 셀에 평균과 함께 찍는다: |t|<2면 그 칸의 부호는 우연과 구별되지 않는다.
+import { clusteredT } from '../../../lib/perf-metrics.mjs'
+export const dayT = (rows) => { const t = clusteredT(rows).t; return t == null ? '—' : t.toFixed(1) }
 const days = [...new Set(obs.map((x) => x.d))].sort((a, b) => a - b)
 export const MID = days[Math.floor(days.length / 2)]
 // 매수측 피처(존재 여부)
