@@ -1,0 +1,204 @@
+{
+  "version": 1,
+  "startedAt": "2026-10-08T14:02:00.284Z",
+  "params": {
+    "START_CASH": 500000,
+    "POSITION_KRW": 50000,
+    "MAX_OPEN": 10,
+    "MAX_PER_SCAN": 3,
+    "FEE": 0.0005,
+    "STOP_SLIP": 0.002,
+    "MAX_SCAN_AGE_MS": 10800000,
+    "DEFAULT_RULE": {
+      "slPct": 12,
+      "tpPct": 12,
+      "holdMax": 7
+    }
+  },
+  "books": {
+    "main": {
+      "cash": 349925,
+      "open": [
+        {
+          "id": "main:KRW-RAY:1791468120282",
+          "source": "main",
+          "market": "KRW-RAY",
+          "korean_name": "레이디움",
+          "score": 9.4,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 상승",
+            "EMA 상승배열",
+            "캔들 강세형 (상승장악형)",
+            "[콤보] 반등확인 보너스",
+            "⚠️구조리스크(언락오버행(유통 49%)·거래소 주의)"
+          ],
+          "scanAt": 1791463554768,
+          "scanPrice": 3286,
+          "entryAt": 1791468120282,
+          "entryPrice": 3274,
+          "qty": 15.271838729383017,
+          "krw": 50000,
+          "stopLoss": 2881.12,
+          "takeProfit": 3666.8800000000006,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.0006603105665738962
+        },
+        {
+          "id": "main:KRW-MINA:1791468120282",
+          "source": "main",
+          "market": "KRW-MINA",
+          "korean_name": "미나",
+          "score": 8.2,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (17)",
+            "Williams %R 과매도 (-97)",
+            "EMA 상승배열",
+            "⚡펀딩 스퀴즈연료(강)"
+          ],
+          "scanAt": 1791463554768,
+          "scanPrice": 113,
+          "entryAt": 1791468120282,
+          "entryPrice": 115,
+          "qty": 434.7826086956522,
+          "krw": 50000,
+          "stopLoss": 101.2,
+          "takeProfit": 128.8,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.0032884713422749456
+        },
+        {
+          "id": "main:KRW-JUP:1791468120282",
+          "source": "main",
+          "market": "KRW-JUP",
+          "korean_name": "주피터",
+          "score": 7.9,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 상승",
+            "EMA 상승배열",
+            "[콤보] 반등확인 보너스",
+            "⚠️구조리스크(언락오버행(유통 48%))"
+          ],
+          "scanAt": 1791463554768,
+          "scanPrice": 500,
+          "entryAt": 1791468120282,
+          "entryPrice": 499,
+          "qty": 100.20040080160321,
+          "krw": 50000,
+          "stopLoss": 439.12,
+          "takeProfit": 558.8800000000001,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.0006836494603446042
+        }
+      ],
+      "closed": [],
+      "skipped": 2,
+      "lastScan": 1791463554768
+    },
+    "momentum": {
+      "cash": 349925,
+      "open": [
+        {
+          "id": "momentum:KRW-JST:1791468120282",
+          "source": "momentum",
+          "market": "KRW-JST",
+          "korean_name": "저스트",
+          "score": 11.2,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 갱신",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.8"
+          ],
+          "scanAt": 1791463442957,
+          "scanPrice": 190,
+          "entryAt": 1791468120282,
+          "entryPrice": 191,
+          "qty": 261.78010471204186,
+          "krw": 49999.99999999999,
+          "stopLoss": 168.08,
+          "takeProfit": 213.92000000000002,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.0005108167139800113
+        },
+        {
+          "id": "momentum:KRW-JTO:1791468120282",
+          "source": "momentum",
+          "market": "KRW-JTO",
+          "korean_name": "지토",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1791463442957,
+          "scanPrice": 753,
+          "entryAt": 1791468120282,
+          "entryPrice": 767,
+          "qty": 65.1890482398957,
+          "krw": 50000,
+          "stopLoss": 674.96,
+          "takeProfit": 859.0400000000001,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": -0.00234779426533982
+        },
+        {
+          "id": "momentum:KRW-ADA:1791468120282",
+          "source": "momentum",
+          "market": "KRW-ADA",
+          "korean_name": "에이다",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1791463442957,
+          "scanPrice": 339,
+          "entryAt": 1791468120282,
+          "entryPrice": 339,
+          "qty": 147.49262536873155,
+          "krw": 49999.99999999999,
+          "stopLoss": 298.32,
+          "takeProfit": 379.68000000000006,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.0013958381892553717
+        }
+      ],
+      "closed": [],
+      "skipped": 1,
+      "lastScan": 1791463442957
+    }
+  },
+  "equity": [
+    {
+      "at": 1791468120282,
+      "main": 499949,
+      "momentum": 499516
+    },
+    {
+      "at": 1791468120458,
+      "main": 499949,
+      "momentum": 499516
+    },
+    {
+      "at": 1791468180681,
+      "main": 500711,
+      "momentum": 499598
+    }
+  ],
+  "lastRun": "2026-10-08T14:03:00.681Z"
+}

@@ -12,6 +12,8 @@
     "backtest:momentum": "node scripts/backtest-momentum.mjs",
     "analyze": "node scripts/analyze.mjs",
     "scorecard": "node scripts/scorecard.mjs",
+    "paper": "node scripts/paper-trade.mjs",
+    "paper:report": "node scripts/research/paper-report.mjs",
     "strategy-backtest": "node scripts/strategy-backtest.mjs",
     "exit-backtest": "node scripts/exit-backtest.mjs",
     "bot": "node scripts/telegram-bot.mjs",

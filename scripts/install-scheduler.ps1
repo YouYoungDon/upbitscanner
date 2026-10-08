@@ -73,6 +73,13 @@ $scTrigger = New-ScheduledTaskTrigger -Daily -At '09:10'
 Register-ScheduledTask -TaskName 'UpbitScorecard' -Action $scAction -Trigger $scTrigger -Settings $settings -Force | Out-Null
 Write-Host "registered: UpbitScorecard @ daily 09:10"
 
+# paper trading: hourly xx:10 (checks SL/TP on 1h candles, enters the newest scan picks at live orderbook prices)
+$paper = Join-Path $projectRoot 'scriptspaper-trade.mjs'
+$pAction = New-LoggingAction $paper 'UpbitPaper'
+$pTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date.AddMinutes(10) -RepetitionInterval (New-TimeSpan -Hours 1)
+Register-ScheduledTask -TaskName 'UpbitPaper' -Action $pAction -Trigger $pTrigger -Settings $settings -Force | Out-Null
+Write-Host "registered: UpbitPaper @ hourly xx:10"
+
 # 상주 텔레그램 봇 — 로그인 시 시작(조회 명령 응답). 스캔 태스크와 독립.
 $botScript = Join-Path $projectRoot 'scripts\telegram-bot.mjs'
 $botAction = New-LoggingAction $botScript 'UpbitTelegramBot'
