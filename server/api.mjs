@@ -178,6 +178,34 @@ function exitStatsOf(eps) {
   return { live: pick('live'), backfill: pick('backfill') }
 }
 
+// 코인별 묶음 — 에피소드 표가 날짜순으로 수천 줄이 되어 코인당 한 줄로 요약한다(최근 진입순).
+// 평균은 채점된 지평선만, 승률은 비용(ROUND_TRIP_COST) 차감 기준, exc3은 시장 대비 초과 평균.
+function coinsOf(eps) {
+  const by = new Map()
+  for (const e of eps) {
+    const l = by.get(e.market) ?? []
+    l.push(e)
+    by.set(e.market, l)
+  }
+  const avgOf = (l, k) => {
+    const v = l.map((e) => e[k]).filter(Number.isFinite)
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null
+  }
+  return [...by.values()].map((l) => {
+    l.sort((a, b) => String(a.entryTs).localeCompare(String(b.entryTs)))
+    const last = l.at(-1)
+    const s3 = l.filter((e) => Number.isFinite(e.ret3))
+    return {
+      market: last.market, korean_name: last.korean_name, lowLiquidity: !!last.lowLiquidity,
+      picks: l.length, lastEntry: last.entryTs,
+      pending: l.filter((e) => e.status === 'pending' || e.status === 'partial').length,
+      avg1: avgOf(l, 'ret1'), avg3: avgOf(l, 'ret3'), avg7: avgOf(l, 'ret7'),
+      win3Net: s3.length ? s3.filter((e) => e.ret3 > ROUND_TRIP_COST).length / s3.length : null,
+      exc3: avgOf(l, 'exc3'),
+    }
+  }).sort((a, b) => String(b.lastEntry).localeCompare(String(a.lastEntry)))
+}
+
 export function buildScorecard(sc) {
   const eps = sc?.episodes ?? []
   if (!eps.length) return { empty: true }
@@ -250,6 +278,7 @@ export function buildScorecard(sc) {
       live: agg(eps.filter((e) => e.entryBasis === 'live')),
       confirmed: agg(eps.filter((e) => e.entryBasis !== 'live')),
     },
+    coins: coinsOf(eps),
     episodes: [...eps].sort((a, b) => String(b.entryTs).localeCompare(String(a.entryTs))),
   }
 }

@@ -573,6 +573,20 @@ const routes = {
       <td>${pctCell(e.mfe7)}</td>
       <td>${statusBadge(e.status)}</td>
     </tr>`).join('')
+    // 코인별 요약 표 — 줄을 누르면 그 코인의 날짜별 픽이 바로 아래에 펼쳐진다.
+    const coinRows = (coins) => coins.map((c) => `<tr class="hover cursor-pointer sc-coin" data-market="${esc(c.market)}">
+      <td><span class="sc-caret opacity-50">▸</span> <b>${esc(c.korean_name)}</b> <span class="text-xs opacity-60">${esc(c.market)}</span>${c.lowLiquidity ? ' <span class="badge badge-xs badge-warning">저유동</span>' : ''}</td>
+      <td>${c.picks}${c.pending ? ` <span class="text-xs opacity-50">(대기 ${c.pending})</span>` : ''}</td>
+      <td class="text-xs">${esc(String(c.lastEntry).slice(0, 10))}</td>
+      <td>${pctCell(c.avg1)}</td><td>${pctCell(c.avg3)}</td><td>${pctCell(c.avg7)}</td>
+      <td>${c.win3Net == null ? '<span class="opacity-40">—</span>' : Math.round(c.win3Net * 100) + '%'}</td>
+      <td>${c.exc3 == null ? '<span class="opacity-40">—</span>' : `<span class="${c.exc3 >= 0 ? 'text-success' : 'text-error'}">${c.exc3 >= 0 ? '+' : ''}${(c.exc3 * 100).toFixed(1)}%p</span>`}</td>
+    </tr>`).join('')
+    const coinDetail = (market) => `<tr class="sc-detail"><td colspan="8" class="bg-base-200 p-2">
+      <table class="table table-xs">
+        <thead><tr><th>코인</th><th>진입일</th><th>진입가</th><th>점수</th><th>+1일</th><th>+3일</th><th>+7일</th><th>MFE(7일)</th><th>상태</th></tr></thead>
+        <tbody>${rows(d.episodes.filter((e) => e.market === market))}</tbody>
+      </table></td></tr>`
     view.innerHTML = `${head}
       <div class="kpi-row mb-4">
         ${hTile('+1일 승률(비용후)', d.horizons.h1)}
@@ -598,14 +612,24 @@ const routes = {
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
       <div class="overflow-x-auto">
         <table class="table table-sm">
-          <thead><tr><th>코인</th><th>진입일</th><th>진입가</th><th>점수</th><th>+1일</th><th>+3일</th><th>+7일</th><th>MFE(7일)</th><th>상태</th></tr></thead>
-          <tbody id="scRows">${rows(d.episodes)}</tbody>
+          <thead><tr><th>코인 (누르면 날짜별 픽)</th><th>픽</th><th>최근 진입</th><th>+1일 평균</th><th>+3일 평균</th><th>+7일 평균</th><th title="+3일 수익이 왕복 비용 0.3%를 넘은 비율">3일 승률(비용후)</th><th title="+3일 픽 수익 − 같은 구간 KRW 전 종목 평균">3일 시장대비</th></tr></thead>
+          <tbody id="scRows">${coinRows(d.coins ?? [])}</tbody>
         </table>
       </div>
       <div class="text-xs opacity-50 mt-2">채점: ${esc(String(d.updatedAt ?? '-').replace('T', ' ').slice(0, 16))} UTC · 진입 시점 신규등장 기준 · 확정 종가/고가만 사용</div>`
     document.getElementById('scNoLowLiq').addEventListener('change', (ev) => {
-      const list = ev.target.checked ? d.episodes.filter((e) => !e.lowLiquidity) : d.episodes
-      document.getElementById('scRows').innerHTML = rows(list)
+      const list = ev.target.checked ? (d.coins ?? []).filter((c) => !c.lowLiquidity) : (d.coins ?? [])
+      document.getElementById('scRows').innerHTML = coinRows(list)
+    })
+    // 펼침/접힘 — tbody에 위임해서 저유동 필터로 다시 그려도 동작한다
+    document.getElementById('scRows').addEventListener('click', (ev) => {
+      const tr = ev.target.closest('tr.sc-coin')
+      if (!tr) return
+      const next = tr.nextElementSibling
+      const caret = tr.querySelector('.sc-caret')
+      if (next?.classList.contains('sc-detail')) { next.remove(); caret.textContent = '▸'; return }
+      tr.insertAdjacentHTML('afterend', coinDetail(tr.dataset.market))
+      caret.textContent = '▾'
     })
   },
 }

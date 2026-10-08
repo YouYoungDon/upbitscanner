@@ -414,3 +414,29 @@ describe('buildScorecard 비용·시장 기준선', () => {
     expect(r.cost).toBe(0.003)
   })
 })
+
+describe('buildScorecard 코인별 묶음', () => {
+  const ep = (market, ts, over = {}) => ({ id: `${market}@${ts}`, market, korean_name: market.slice(4), entryTs: ts, entryPrice: 10,
+    ret1: null, ret3: null, ret7: null, mfe1: null, status: 'pending', lowLiquidity: false, ...over })
+  const r = buildScorecard({ episodes: [
+    ep('KRW-A', '2026-08-01T00:00:00Z', { ret1: 0.1, ret3: 0.2, exc3: 0.05, status: 'done' }),
+    ep('KRW-A', '2026-08-05T00:00:00Z', { ret1: -0.02, ret3: 0.001, exc3: -0.01, status: 'done' }),
+    ep('KRW-A', '2026-08-09T00:00:00Z'),
+    ep('KRW-B', '2026-08-07T00:00:00Z', { ret1: 0.03, lowLiquidity: true, status: 'partial' }),
+  ] })
+  it('코인당 한 줄, 최근 진입순', () => {
+    expect(r.coins.map((c) => c.market)).toEqual(['KRW-A', 'KRW-B'])
+    const a = r.coins[0]
+    expect(a.picks).toBe(3)
+    expect(a.lastEntry).toBe('2026-08-09T00:00:00Z')
+    expect(a.pending).toBe(1)
+    expect(a.avg1).toBeCloseTo(0.04, 12)
+    expect(a.avg3).toBeCloseTo(0.1005, 12)
+    expect(a.avg7).toBeNull()
+    expect(a.win3Net).toBe(0.5) // 0.001은 비용 0.3% 미만 → 패
+    expect(a.exc3).toBeCloseTo(0.02, 12)
+  })
+  it('저유동 여부는 가장 최근 픽 기준', () => {
+    expect(r.coins[1].lowLiquidity).toBe(true)
+  })
+})
