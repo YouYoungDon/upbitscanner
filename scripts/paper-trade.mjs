@@ -5,11 +5,11 @@
 import '../lib/env.mjs'
 import { existsSync, appendFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { getOrderbook, getMinuteCandles, getTicker, getTickSizes } from '../lib/upbit.mjs'
+import { getOrderbook, getMinuteCandles, getTicker } from '../lib/upbit.mjs'
 import { readJson, writeJson, withLock, DATA_DIR } from '../lib/store.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import {
-  PAPER, newBook, vwapFill, exitRule, scanExit, stopFill, selectEntries, openPosition, closePosition,
+  PAPER, newBook, vwapFill, exitRule, scanExit, stopFill, entryHourExit, selectEntries, openPosition, closePosition,
 } from '../lib/paper.mjs'
 
 const FILE = 'paper-trades.json'
@@ -32,48 +32,68 @@ async function loadState() {
   if (!st || !st.books) throw new Error(`${FILE} 읽기 실패 — 덮어쓰지 않고 중단`)
   for (const k of Object.keys(SOURCES)) st.books[k] ||= newBook()
   st.equity ||= []
-  // 체결 모델이 바뀐 시각을 남긴다 — 리포트가 변경 전/후를 나눠 본다(실험 중간 규칙 변경이라 그대로 섞으면 안 된다).
-  if ((st.fillModel ?? 1) !== PAPER.FILL_MODEL) {
-    st.modelChanges = [...(st.modelChanges || []), { at: Date.now(), fillModel: PAPER.FILL_MODEL }]
+  // 체결 모델이나 실험 설정이 바뀐 시각과 이전 설정을 남긴다 — 리포트가 변경 전/후를 나눠 본다
+  // (실험 중간 규칙 변경이라 그대로 섞으면 안 된다). 포지션마다 fillModel도 따로 기록돼 있다.
+  if ((st.fillModel ?? 1) !== PAPER.FILL_MODEL || JSON.stringify(st.params) !== JSON.stringify(PAPER)) {
+    st.modelChanges = [...(st.modelChanges || []), { at: Date.now(), fillModel: PAPER.FILL_MODEL, prevParams: st.params }]
     st.fillModel = PAPER.FILL_MODEL
+    st.params = PAPER
   }
-  st.params = PAPER
   return st
 }
+
+// 업비트 캔들 원본(최신→오래된) → [{ t(ms 시작), open, high, low, close }] 오래된→최신
+const toBars = (raw) => [...raw].reverse().map((c) => ({
+  t: new Date(c.candle_date_time_utc + 'Z').getTime(), open: c.opening_price, high: c.high_price, low: c.low_price, close: c.trade_price,
+}))
 
 async function hourCandles(market, sinceMs) {
   const hours = Math.min(200, Math.ceil((Date.now() - sinceMs) / 3600_000) + 2)
   const raw = await getMinuteCandles(market, 60, hours)
-  if (!Array.isArray(raw)) return null
-  return [...raw].reverse().map((c) => ({
-    t: new Date(c.candle_date_time_utc + 'Z').getTime(), open: c.opening_price, high: c.high_price, low: c.low_price, close: c.trade_price,
-  }))
+  return Array.isArray(raw) ? toBars(raw) : null
 }
 
-// 봉 안 손절 → 그 시간 1분봉으로 체결가를 다시 잡는다(stopFill). 조회 실패면 손절가(호가 내림).
-async function refineStop(pos, exit, tick) {
-  const raw = await getMinuteCandles(pos.market, 1, 60, new Date(exit.at + 3600_000).toISOString())
+// 시간 [hourStart, hourStart+1h) 의 1분봉. 실패 시 null.
+async function minuteBars(market, hourStart) {
+  const raw = await getMinuteCandles(market, 1, 60, new Date(hourStart + 3600_000).toISOString())
   await sleep(120)
-  const minutes = Array.isArray(raw)
-    ? [...raw].reverse().map((c) => ({ t: new Date(c.candle_date_time_utc + 'Z').getTime(), low: c.low_price, close: c.trade_price }))
-      .filter((m) => m.t >= exit.at && m.t < exit.at + 3600_000)
-    : null
+  return Array.isArray(raw) ? toBars(raw).filter((m) => m.t >= hourStart && m.t < hourStart + 3600_000) : null
+}
+
+const HOUR = 3600_000
+const hourOf = (ms) => Math.floor(ms / HOUR) * HOUR
+
+// 봉 안 손절 → 그 시간 1분봉으로 체결가를 다시 잡는다(stopFill). 조회 실패면 손절가(호가 내림).
+async function refineStop(pos, exit) {
+  const minutes = await minuteBars(pos.market, exit.at)
   const hit = minutes?.find((m) => m.low <= pos.stopLoss)
-  return { ...exit, price: stopFill(pos.stopLoss, minutes, tick), at: hit?.t ?? exit.at, minuteFill: !!hit }
+  return { ...exit, price: stopFill(pos.stopLoss, minutes), at: hit?.t ?? exit.at, minuteFill: !!hit }
+}
+
+// v2: 진입한 시간의 남은 분을 1분봉으로 확인. 그 시간이 다 지나고 아무 일 없으면 다시 보지 않게 표시한다.
+async function checkEntryHour(pos, now) {
+  if (pos.entryHourChecked) return null
+  const h = hourOf(pos.entryAt)
+  const bars = await minuteBars(pos.market, h)
+  if (!bars) return null // 조회 실패 — 다음 회차에 다시
+  const exit = entryHourExit(pos, bars)
+  if (exit) return { ...exit, minuteFill: true }
+  if (now >= h + HOUR && bars.length) pos.entryHourChecked = true
+  return null
 }
 
 async function checkExits(st, now) {
   const closed = []
-  const openMarkets = [...new Set(Object.values(st.books).flatMap((b) => b.open.map((p) => p.market)))]
-  const ticks = (openMarkets.length && await getTickSizes(openMarkets)) || {}
   for (const [src, book] of Object.entries(st.books)) {
     for (const pos of [...book.open]) {
       const candles = await hourCandles(pos.market, pos.entryAt)
       await sleep(120)
       if (!candles) { console.log(`  ${src} ${pos.market} 1시간봉 조회 실패 — 다음 회차에 재확인`); continue }
-      const tick = ticks[pos.market]
-      let exit = scanExit(pos, candles, tick)
-      if (exit?.intraBar) exit = await refineStop(pos, exit, tick)
+      // 체결 모델은 포지션을 산 때의 것을 따른다(v1 포지션에 v2 규칙을 섞지 않는다)
+      const v2 = (pos.fillModel ?? 1) >= 2
+      let exit = v2 ? await checkEntryHour(pos, now) : null
+      if (!exit) exit = scanExit(pos, candles, v2)
+      if (exit?.intraBar) exit = await refineStop(pos, exit)
       if (!exit && now >= pos.entryAt + pos.holdMax * 86400_000) {
         const ob = (await getOrderbook([pos.market]))?.[pos.market]
         const f = ob ? vwapFill(ob.bids, { qty: pos.qty }) : null
@@ -138,23 +158,32 @@ async function markEquity(st, now) {
 }
 
 async function main() {
-  const now = Date.now()
   const i = process.argv.indexOf('--after-scan')
-  if (i >= 0) console.log(`${new Date(now).toISOString()} 스캔 직후 실행 (${process.argv[i + 1] || '?'})`)
-  await withLock('paper-trades', async () => {
-    const st = await loadState()
-    const closed = await checkExits(st, now)
-    const opened = await enterNew(st, now)
-    const eq = await markEquity(st, now)
-    st.lastRun = new Date(now).toISOString()
-    await writeJson(FILE, st)
-    const pct = (v) => `${v >= 0 ? '+' : ''}${(v * 100).toFixed(2)}%`
-    for (const c of closed) console.log(`청산 ${c.source} ${c.korean_name || c.market} ${c.exitType} ${pct(c.net)}`)
-    for (const o of opened) console.log(`진입 ${o.source} ${o.korean_name || o.market} @${o.entryPrice} (스캔가 ${o.scanPrice})`)
-    for (const [src, b] of Object.entries(st.books)) {
-      console.log(`[${src}] 보유 ${b.open.length} · 청산 ${b.closed.length} · 현금 ${Math.round(b.cash)} · 평가 ${eq[src]} (${pct(eq[src] / PAPER.START_CASH - 1)})`)
-    }
-  })
+  if (i >= 0) console.log(`${new Date().toISOString()} 스캔 직후 실행 (${process.argv[i + 1] || '?'})`)
+  // 스캔 직후 실행과 매시 :10 실행이 겹칠 수 있다. 앞 실행이 느려도 강제로 끼어들지 않고(장부 덮어쓰기 방지)
+  // 5분 기다린 뒤에도 바쁘면 이번 회차를 건너뛴다 — 다음 회차가 같은 스캔(3시간 이내)을 이어서 처리한다.
+  try {
+    await withLock('paper-trades', run, { timeoutMs: 5 * 60_000, staleMs: 20 * 60_000, onTimeout: 'throw' })
+  } catch (e) {
+    if (e.code !== 'LOCK_TIMEOUT') throw e
+    console.log(`${new Date().toISOString()} 다른 모의매매 실행이 진행 중 — 이번 회차 건너뜀`)
+  }
+}
+
+async function run() {
+  const now = Date.now() // 잠금을 잡은 뒤의 시각 — 기다린 동안의 시간이 진입 시각에 섞이지 않게
+  const st = await loadState()
+  const closed = await checkExits(st, now)
+  const opened = await enterNew(st, now)
+  const eq = await markEquity(st, now)
+  st.lastRun = new Date(now).toISOString()
+  await writeJson(FILE, st)
+  const pct = (v) => `${v >= 0 ? '+' : ''}${(v * 100).toFixed(2)}%`
+  for (const c of closed) console.log(`청산 ${c.source} ${c.korean_name || c.market} ${c.exitType} ${pct(c.net)}`)
+  for (const o of opened) console.log(`진입 ${o.source} ${o.korean_name || o.market} @${o.entryPrice} (스캔가 ${o.scanPrice})`)
+  for (const [src, b] of Object.entries(st.books)) {
+    console.log(`[${src}] 보유 ${b.open.length} · 청산 ${b.closed.length} · 현금 ${Math.round(b.cash)} · 평가 ${eq[src]} (${pct(eq[src] / PAPER.START_CASH - 1)})`)
+  }
 }
 
 main().catch(async (e) => { console.error(e); await sendTelegram(`❌ 모의매매 실패: ${e.message}`); process.exit(1) })

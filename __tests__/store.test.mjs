@@ -26,6 +26,18 @@ describe('withLock', () => {
     await withLock('__t_throw__', async () => { ran = true })
     expect(ran).toBe(true)
   })
+
+  it('onTimeout: throw면 시간 안에 못 잡을 때 강제 진입하지 않고 LOCK_TIMEOUT으로 실패한다', async () => {
+    let release
+    const holder = withLock('__t_busy__', () => new Promise((r) => { release = r }))
+    await new Promise((r) => setTimeout(r, 20))
+    let entered = false
+    await expect(withLock('__t_busy__', async () => { entered = true }, { timeoutMs: 100, onTimeout: 'throw' }))
+      .rejects.toMatchObject({ code: 'LOCK_TIMEOUT' })
+    expect(entered).toBe(false)
+    release()
+    await holder
+  })
 })
 
 describe('writeJson (원자적)', () => {

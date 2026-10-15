@@ -3,7 +3,8 @@
 // 예전엔 cmd /c "node ... 1>> log 2>&1"로 돌렸는데, Windows 11에선 그게 Windows Terminal 창으로 떠서
 // 창을 닫으면 상주 봇이 Ctrl+C 종료(0xC000013A)로 죽었다(2026-10-08). install-scheduler.ps1이
 // conhost.exe --headless로 이 실행기를 띄워 창 없이 돌린다. conhost는 cmd의 이중 따옴표를 깨뜨려서
-// 리다이렉트를 cmd 대신 여기서 한다.
+// 리다이렉트를 cmd 대신 여기서 한다. 자식은 windowsHide — 스캔 직후 트리거처럼 콘솔 없이(detached) 뜬 실행기의
+// 자식은 Windows가 새 콘솔 창을 만들어 주기 때문이다(닫으면 그 실행이 죽는다).
 import { spawn } from 'node:child_process'
 import { openSync } from 'node:fs'
 
@@ -14,6 +15,6 @@ if (!script || !log) {
 }
 
 const fd = openSync(log, 'a')
-const child = spawn(process.execPath, [script, ...args], { stdio: ['ignore', fd, fd] })
+const child = spawn(process.execPath, [script, ...args], { stdio: ['ignore', fd, fd], windowsHide: true })
 child.on('error', (e) => { console.error(e); process.exit(1) })
 child.on('exit', (code, signal) => process.exit(code ?? (signal ? 1 : 0)))

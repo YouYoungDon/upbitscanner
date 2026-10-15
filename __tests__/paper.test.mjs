@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   vwapFill, exitRule, scanExit, netReturn, selectEntries, newBook, openPosition, closePosition, PAPER,
-  tickFloor, tickCeil, stopFill,
+  tickFloor, tickCeil, stopFill, upbitTick, entryHourExit,
 } from '../lib/paper.mjs'
 
 const H = 3600_000
@@ -120,7 +120,21 @@ describe('장부', () => {
 })
 
 describe("호가 단위 (체결 모델 v2)", () => {
-  it("tickFloor/tickCeil은 업비트 호가 단위로 내림/올림한다", () => {
+  it("upbitTick은 가격대별 업비트 호가 단위(2026-10-15 전 종목 296개 API 값과 일치 확인)", () => {
+    expect(upbitTick(110727000)).toBe(1000)
+    expect(upbitTick(3193000)).toBe(1000)
+    expect(upbitTick(138100)).toBe(100)
+    expect(upbitTick(10410)).toBe(10)
+    expect(upbitTick(5355)).toBe(5)
+    expect(upbitTick(2519)).toBe(1)
+    expect(upbitTick(103)).toBe(1)
+    expect(upbitTick(95)).toBe(0.1)
+    expect(upbitTick(1.05)).toBe(0.01)
+    expect(upbitTick(0.139)).toBe(0.001)
+    expect(upbitTick(0.00529)).toBe(0.00001)
+    expect(upbitTick(0.000477)).toBe(0.000001)
+  })
+  it("tickFloor/tickCeil은 주어진 호가 단위로 내림/올림한다", () => {
     expect(tickFloor(1.0472, 0.01)).toBe(1.04)
     expect(tickCeil(1.0472, 0.01)).toBe(1.05)
     expect(tickFloor(128.84, 0.1)).toBe(128.8)
@@ -132,35 +146,55 @@ describe("호가 단위 (체결 모델 v2)", () => {
     expect(tickFloor(0.3, 0.1)).toBe(0.3)
     expect(tickFloor(110727000, 1000)).toBe(110727000)
   })
-  it("tick이 없으면 값을 그대로 둔다(호가 단위 조회 실패 시 v1과 같은 동작)", () => {
-    expect(tickFloor(1.0472, null)).toBe(1.0472)
-    expect(tickCeil(1.0472, undefined)).toBe(1.0472)
-  })
 })
 
-describe("scanExit + tick", () => {
+describe("scanExit v2", () => {
   const pos = { entryAt: 10 * H + 30 * 60_000, stopLoss: 90, takeProfit: 110.3 }
   const c = (hour, o, h, l) => ({ t: hour * H, open: o, high: h, low: l, close: o })
-  it("익절선은 호가 단위로 올려서 판정·체결한다", () => {
-    expect(scanExit(pos, [c(11, 100, 110.5, 95)], 1)).toBeNull()
-    expect(scanExit(pos, [c(11, 100, 111, 95)], 1)).toEqual({ type: "tp", price: 111, at: 11 * H })
+  it("익절선은 그 가격대의 호가 단위로 올려서 판정·체결한다", () => {
+    expect(scanExit(pos, [c(11, 100, 110.5, 95)], true)).toBeNull()
+    expect(scanExit(pos, [c(11, 100, 111, 95)], true)).toEqual({ type: "tp", price: 111, at: 11 * H })
   })
-  it("봉 안에서 손절선을 건드리면 intraBar 표시(1분봉으로 체결가를 다시 잡기 위해)", () => {
-    expect(scanExit(pos, [c(11, 100, 101, 85)], 1)).toEqual({ type: "sl", price: 90, at: 11 * H, intraBar: true })
+  it("호가 단위는 현재가가 아니라 그 선의 가격대 기준(950원 코인의 익절선 1064는 5원 단위 아님 → 1원대가 아니라 1,000원대 1원)", () => {
+    expect(scanExit({ entryAt: 0, stopLoss: 836, takeProfit: 5003.2 }, [c(1, 4000, 5004, 4000)], true)).toBeNull()
+    expect(scanExit({ entryAt: 0, stopLoss: 836, takeProfit: 5003.2 }, [c(1, 4000, 5005, 4000)], true)).toEqual({ type: "tp", price: 5005, at: H })
+  })
+  it("v1(기본)은 호가 단위 없이 예전 그대로", () => {
+    expect(scanExit(pos, [c(11, 100, 110.5, 95)])).toEqual({ type: "tp", price: 110.3, at: 11 * H })
+    expect(scanExit(pos, [c(11, 100, 101, 85)])).toEqual({ type: "sl", price: 90, at: 11 * H })
+  })
+  it("v2 봉 안 손절은 intraBar 표시(1분봉으로 체결가를 다시 잡기 위해)", () => {
+    expect(scanExit(pos, [c(11, 100, 101, 85)], true)).toEqual({ type: "sl", price: 90, at: 11 * H, intraBar: true })
   })
 })
 
 describe("stopFill", () => {
   const m = (min, low, close) => ({ t: 11 * H + min * 60_000, low, close })
   it("손절선을 처음 건드린 1분봉의 종가와 손절가(호가 내림) 중 낮은 값", () => {
-    expect(stopFill(1.0472, [m(0, 1.06, 1.06), m(1, 1.04, 1.04), m(2, 1.0, 1.0)], 0.01)).toBe(1.04)
+    expect(stopFill(1.0472, [m(0, 1.06, 1.06), m(1, 1.04, 1.04), m(2, 1.0, 1.0)])).toBe(1.04)
   })
   it("그 1분 안에 되돌아 올라갔으면 손절가(호가 내림)로", () => {
-    expect(stopFill(1.0472, [m(0, 1.03, 1.06)], 0.01)).toBe(1.04)
+    expect(stopFill(1.0472, [m(0, 1.03, 1.06)])).toBe(1.04)
   })
   it("1분봉이 없거나 터치가 안 보이면 손절가(호가 내림)", () => {
-    expect(stopFill(1.0472, [], 0.01)).toBe(1.04)
-    expect(stopFill(1.0472, [m(0, 1.06, 1.06)], 0.01)).toBe(1.04)
-    expect(stopFill(90, null, null)).toBe(90)
+    expect(stopFill(1.0472, [])).toBe(1.04)
+    expect(stopFill(1.0472, [m(0, 1.06, 1.06)])).toBe(1.04)
+    expect(stopFill(90, null)).toBe(90)
+  })
+})
+
+describe("entryHourExit — 진입한 시간의 남은 분을 1분봉으로 확인", () => {
+  const pos = { entryAt: 12 * H + 3 * 60_000 + 20_000, stopLoss: 90, takeProfit: 110 } // 12:03:20 진입
+  const m = (min, o, h, l, cl) => ({ t: 12 * H + min * 60_000, open: o, high: h, low: l, close: cl })
+  it("진입이 포함된 분(12:03)은 건너뛰고, 그 뒤 손절 터치는 그 분 종가와 손절가 중 낮은 값", () => {
+    const bars = [m(3, 100, 100, 80, 100), m(10, 100, 100, 95, 98), m(20, 95, 95, 88, 89), m(21, 89, 92, 85, 91)]
+    expect(entryHourExit(pos, bars)).toEqual({ type: "sl", price: 89, at: 12 * H + 20 * 60_000 })
+  })
+  it("익절 터치는 익절선(호가 올림)에", () => {
+    expect(entryHourExit(pos, [m(30, 100, 111, 99, 110)])).toEqual({ type: "tp", price: 110, at: 12 * H + 30 * 60_000 })
+  })
+  it("아무것도 안 닿으면 null", () => {
+    expect(entryHourExit(pos, [m(30, 100, 105, 95, 100)])).toBeNull()
+    expect(entryHourExit(pos, null)).toBeNull()
   })
 })
