@@ -15,6 +15,7 @@ describe('resolveRoute', () => {
     expect(resolveRoute('home')).toBe('home')
     expect(resolveRoute('analyze')).toBe('analyze')
     expect(resolveRoute('review')).toBe('review')
+    expect(resolveRoute('paper')).toBe('paper')
   })
   it('미지/빈 값 → home', () => {
     expect(resolveRoute('nonsense')).toBe('home')

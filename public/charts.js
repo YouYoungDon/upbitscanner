@@ -41,6 +41,27 @@ window.Charts = {
     s.setData(closes.map((v, i) => ({ time: Math.floor((base + i * 86400000) / 1000), value: v })))
     chart.timeScale().fitContent()
   },
+  // 여러 선을 실제 시각(ms)으로 겹쳐 그린다. series: [{ name, color, points: [{ at, value }] }]
+  multiLine(el, series, { height = 260 } = {}) {
+    el.innerHTML = ''
+    if (!window.LightweightCharts) { el.textContent = '차트 로드 실패'; return }
+    const chart = LightweightCharts.createChart(el, {
+      layout: { background: { color: 'transparent' }, textColor: '#c7d2e6', fontFamily: 'Pretendard Variable, sans-serif' },
+      grid: { vertLines: { color: 'rgba(150,170,220,0.05)' }, horzLines: { color: 'rgba(150,170,220,0.05)' } },
+      rightPriceScale: { borderColor: 'rgba(150,170,220,0.1)' },
+      timeScale: { borderColor: 'rgba(150,170,220,0.1)', timeVisible: true },
+      localization: { locale: 'ko-KR', priceFormatter: (v) => Math.round(v).toLocaleString('ko-KR') },
+      width: el.clientWidth, height,
+    })
+    for (const s of series) {
+      const line = chart.addLineSeries({ color: s.color, lineWidth: 2, title: s.name })
+      // lightweight-charts는 초 단위 UTC를 받는다 — KST로 보이게 9시간을 더하고, 같은 초 중복은 마지막 값만
+      const pts = new Map()
+      for (const p of s.points) if (Number.isFinite(p.value)) pts.set(Math.floor(p.at / 1000) + 9 * 3600, p.value)
+      line.setData([...pts].sort((a, b) => a[0] - b[0]).map(([time, value]) => ({ time, value })))
+    }
+    chart.timeScale().fitContent()
+  },
   // 작은 추이 스파크라인 (SVG 문자열 반환). values: number[]
   sparkline(values, color) {
     const w = 240, h = 40, pad = 2

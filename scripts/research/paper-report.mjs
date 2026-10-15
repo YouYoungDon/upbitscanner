@@ -4,7 +4,8 @@
 // 시장 수익은 data/market-baseline.json(UTC 일 단위, 09:00 KST 종가 기준)으로 진입일 종가→청산일 종가를
 // 근사한다 — 진입·청산이 장중이라 하루 안쪽 오차가 있다.
 import { readJson } from '../../lib/store.mjs'
-import { clusteredT, maxDrawdown } from '../../lib/perf-metrics.mjs'
+import { maxDrawdown } from '../../lib/perf-metrics.mjs'
+import { summarizeTrades } from '../../lib/paper-summary.mjs'
 import { baselineReturn } from '../../lib/market-baseline.mjs'
 import { PAPER } from '../../lib/paper.mjs'
 
@@ -21,21 +22,10 @@ console.log(`모의매매 시작 ${st.startedAt} · 마지막 실행 ${st.lastRu
 console.log(`규칙: 장부별 ${PAPER.START_CASH.toLocaleString()}원, 건당 ${PAPER.POSITION_KRW.toLocaleString()}원, 최대 ${PAPER.MAX_OPEN}건, 스캔당 ${PAPER.MAX_PER_SCAN}건, 수수료 ${PAPER.FEE * 100}%×2, 손절 슬리피지 ${PAPER.STOP_SLIP * 100}%`)
 
 function summarize(name, trades) {
-  const rows = trades.map((c) => {
-    const d0 = utcDay(c.entryAt), n = utcDay(c.exitAt) - d0
-    const m = n === 0 ? 0 : baselineReturn(daily, d0, n)
-    return { ...c, day: d0, mkt: m, exc: m == null ? null : c.net - m }
-  })
-  const n = rows.length
-  if (!n) { console.log(`  ${name}: 청산 0건`); return }
-  const nets = rows.map((r) => r.net).sort((a, b) => a - b)
-  const net = clusteredT(rows.map((r) => ({ day: r.day, v: r.net })))
-  const exc = clusteredT(rows.filter((r) => r.exc != null).map((r) => ({ day: r.day, v: r.exc })))
-  const win = rows.filter((r) => r.net > 0).length / n
-  const byType = rows.reduce((a, r) => ({ ...a, [r.exitType]: (a[r.exitType] || 0) + 1 }), {})
-  const pnl = rows.reduce((s, r) => s + r.pnl, 0)
-  console.log(`  ${name}: ${n}건 · 승률 ${(win * 100).toFixed(0)}% · 평균 ${pct(net.mean)} (진입일 t ${tStr(net)}, ${net.days}일) · 중앙값 ${pct(nets[Math.floor(n / 2)])} · 손익 ${Math.round(pnl).toLocaleString()}원`)
-  console.log(`     시장 대비 초과 ${pct(exc.mean)} (t ${tStr(exc)}, ${exc.days}일) · 청산 ${Object.entries(byType).map(([k, v]) => `${k} ${v}`).join(' / ')}`)
+  const s = summarizeTrades(trades, daily)
+  if (!s.n) { console.log(`  ${name}: 청산 0건`); return }
+  console.log(`  ${name}: ${s.n}건 · 승률 ${(s.win * 100).toFixed(0)}% · 거래 평균 ${pct(s.tradeMean)} · 진입일 평균 ${pct(s.dayMean)} (t ${tStr({ t: s.dayT })}, ${s.days}일) · 중앙값 ${pct(s.median)} · 손익 ${Math.round(s.pnl).toLocaleString()}원`)
+  console.log(`     시장 대비 초과 ${pct(s.excMean)} (t ${tStr({ t: s.excT })}, ${s.excDays}일) · 청산 ${Object.entries(s.byType).map(([k, v]) => `${k} ${v}`).join(' / ')}`)
 }
 
 for (const [src, book] of Object.entries(st.books)) {

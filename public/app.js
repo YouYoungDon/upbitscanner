@@ -508,6 +508,110 @@ const routes = {
     $('#rSegHistory').onclick = () => { $('#rSegHistory').classList.add('btn-active'); $('#rSegVerify').classList.remove('btn-active'); showHistory() }
     showVerify()
   },
+  async paper() {
+    setActiveTab('paper')
+    view.innerHTML = '<span class="loading loading-spinner"></span>'
+    let d
+    try {
+      d = await api('/api/paper')
+    } catch {
+      view.innerHTML = '<div class="alert alert-error">데이터 조회 실패 — 서버 연결을 확인하세요.</div>'
+      return
+    }
+    const head = '<h2 class="text-2xl font-bold mb-1">🧪 모의매매</h2>'
+    if (d.empty || !d.books) {
+      view.innerHTML = `${head}<div class="alert">아직 모의매매 기록이 없습니다 — 매시 :10 작업(UpbitPaper)이 돌면 표시됩니다.</div>`
+      return
+    }
+    const pc = (v, digits = 1) => v == null ? '<span class="opacity-40">—</span>'
+      : `<span class="${v >= 0 ? 'text-success' : 'text-error'}">${v >= 0 ? '+' : ''}${(v * 100).toFixed(digits)}%</span>`
+    const won = (v) => `${v >= 0 ? '+' : ''}${fmt(Math.round(v))}원`
+    const kst = (ms) => new Date(ms).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+    const tTxt = (t) => t == null ? 't —' : `t ${t.toFixed(2)}`
+    const LABEL = { main: '메인 (반등)', momentum: '모멘텀' }
+    const COLOR = { main: '#8b6cff', momentum: '#26e0a3' }
+    const P = d.params || {}
+
+    const card = (src, b) => {
+      const s = b.summary || { n: 0 }
+      const vsMkt = b.market == null ? null : b.ret - b.market
+      return `<div class="card bg-base-200 p-4">
+        <div class="flex items-baseline justify-between gap-2">
+          <h3 class="font-bold text-lg" style="color:${COLOR[src] || 'inherit'}">${esc(LABEL[src] || src)}</h3>
+          <span class="text-xs opacity-60">현금 ${fmt(Math.round(b.cash))}원 · 보유 ${b.open.length}/${P.MAX_OPEN ?? '-'}건</span>
+        </div>
+        <div class="text-3xl font-bold mt-1">${fmt(Math.round(b.equity))}원 <span class="text-xl">${pc(b.ret, 2)}</span></div>
+        <div class="text-sm mt-1">같은 기간 시장 ${pc(b.market, 2)} · 시장 대비 ${pc(vsMkt, 2)} · MDD ${pc(b.mdd, 1)}</div>
+        <div class="divider my-2"></div>
+        ${s.n ? `<div class="text-sm leading-6">
+          종료 <b>${s.n}건</b> · 승률 <b>${Math.round(s.win * 100)}%</b> (익절 ${s.byType.tp || 0} · 손절 ${s.byType.sl || 0}${s.byType.time ? ` · 기한 ${s.byType.time}` : ''}) · 실현 손익 <b>${won(s.pnl)}</b><br>
+          거래 평균 ${pc(s.tradeMean, 2)} · <span title="같은 날 진입한 거래를 하나로 묶은 평균. 판정은 이 값과 t로 합니다(|t|≥2일 때만 의미).">진입일 평균 ${pc(s.dayMean, 2)} <span class="opacity-60">(${tTxt(s.dayT)}, ${s.days}일)</span></span><br>
+          시장 대비 초과 ${pc(s.excMean, 2)} <span class="opacity-60">(${tTxt(s.excT)}, ${s.excDays}일)</span>
+        </div>` : '<div class="text-sm opacity-60">아직 종료된 거래가 없습니다.</div>'}
+      </div>`
+    }
+
+    const openRows = (src, b) => b.open.map((p) => {
+      const near = p.toStop != null && p.toStop > -0.02
+      return `<tr${near ? ' class="bg-error/10"' : ''}>
+        <td><a class="link link-hover" href="#/analyze?market=${encodeURIComponent(p.market)}"><b>${esc(p.name)}</b></a> <span class="text-xs opacity-50">${esc(p.market.replace('KRW-', ''))}</span></td>
+        <td class="text-xs">${esc(LABEL[src] || src)}</td>
+        <td class="text-xs">${kst(p.entryAt)}</td>
+        <td>${fmtPrice(p.entryPrice)}</td>
+        <td>${fmtPrice(p.price)}</td>
+        <td>${pc(p.ret)}</td>
+        <td class="${near ? 'text-error font-bold' : ''}">${p.toStop == null ? '—' : `${(p.toStop * 100).toFixed(1)}%`} <span class="text-xs opacity-50">(${fmtPrice(p.stopLoss)})</span></td>
+        <td>${p.toTake == null ? '—' : `+${(p.toTake * 100).toFixed(1)}%`} <span class="text-xs opacity-50">(${fmtPrice(p.takeProfit)})</span></td>
+        <td class="text-xs">${p.heldDays.toFixed(1)} / ${p.holdMax}일</td>
+      </tr>`
+    })
+    const allOpen = Object.entries(d.books).flatMap(([src, b]) => b.open.map((p, i) => ({ p, html: openRows(src, b)[i] })))
+      .sort((a, b) => (b.p.toStop ?? -Infinity) - (a.p.toStop ?? -Infinity)).map((x) => x.html).join('')
+
+    const EXIT = { sl: '<span class="badge badge-sm badge-error">손절</span>', tp: '<span class="badge badge-sm badge-success">익절</span>', time: '<span class="badge badge-sm badge-info">기한</span>' }
+    const closedRows = Object.entries(d.books).flatMap(([src, b]) => b.closed.map((c) => ({ src, c })))
+      .sort((a, b) => b.c.exitAt - a.c.exitAt).map(({ src, c }) => {
+        // 청산 뒤 가격이 청산가보다 낮으면(손절 후 더 빠짐 / 익절 후 되밀림) 청산이 도움이 된 것
+        const helped = c.afterExit == null ? null : c.afterExit < 0
+        return `<tr>
+        <td><b>${esc(c.name)}</b> <span class="text-xs opacity-50">${esc(c.market.replace('KRW-', ''))}</span></td>
+        <td class="text-xs">${esc(LABEL[src] || src)}</td>
+        <td>${EXIT[c.exitType] || esc(c.exitType)}</td>
+        <td class="text-xs">${kst(c.entryAt)} → ${kst(c.exitAt)}</td>
+        <td>${pc(c.net)} <span class="text-xs opacity-60">${won(c.pnl)}</span></td>
+        <td>${pc(c.holdNow)}</td>
+        <td>${helped == null ? '<span class="opacity-40">—</span>' : helped ? '<span class="text-success">✔ 도움</span>' : '<span class="text-warning">✖ 아쉬움</span>'}</td>
+      </tr>`
+      }).join('')
+
+    view.innerHTML = `${head}
+      <div class="text-xs opacity-70 mb-4">실제 업비트 호가로 가상 체결 · 장부별 ${fmt(P.START_CASH)}원, 건당 ${fmt(P.POSITION_KRW)}원, 수수료 ${(P.FEE ?? 0) * 100}%×2, 손절 슬리피지 ${(P.STOP_SLIP ?? 0) * 100}% ·
+        시작 ${kst(new Date(d.startedAt).getTime())} · 마지막 실행 ${kst(new Date(d.lastRun).getTime())}. 판정은 11-05 점검 때 진입일 t로 합니다(표본이 적을 땐 방향만 참고).</div>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">${Object.entries(d.books).map(([src, b]) => card(src, b)).join('')}</div>
+      <div class="card bg-base-200 p-4 mb-4">
+        <h3 class="font-bold mb-2">평가금 추이</h3>
+        <div id="paper-equity"></div>
+      </div>
+      <div class="card bg-base-200 p-4 mb-4">
+        <h3 class="font-bold mb-1">보유 중 <span class="text-sm font-normal opacity-60">— 손절선에 가까운 순, 2% 안쪽은 빨간색</span></h3>
+        <div class="overflow-x-auto"><table class="table table-sm">
+          <thead><tr><th>코인</th><th>장부</th><th>진입</th><th>진입가</th><th>현재가</th><th>수익률</th><th>손절선까지</th><th>익절선까지</th><th>보유</th></tr></thead>
+          <tbody>${allOpen || '<tr><td colspan="9" class="opacity-60">보유 없음</td></tr>'}</tbody>
+        </table></div>
+      </div>
+      <div class="card bg-base-200 p-4">
+        <h3 class="font-bold mb-1">종료 거래 <span class="text-sm font-normal opacity-60">— '계속 들고 있었다면'은 진입가 대비 지금 가격. 청산 뒤 가격이 청산가보다 낮으면 ✔ 도움</span></h3>
+        <div class="overflow-x-auto"><table class="table table-sm">
+          <thead><tr><th>코인</th><th>장부</th><th>청산</th><th>진입 → 청산</th><th>수익</th><th>계속 들고 있었다면</th><th>청산 판단</th></tr></thead>
+          <tbody>${closedRows || '<tr><td colspan="7" class="opacity-60">종료 거래 없음</td></tr>'}</tbody>
+        </table></div>
+      </div>`
+    Charts.multiLine($('#paper-equity'), Object.keys(d.books).map((src) => ({
+      name: LABEL[src] || src, color: COLOR[src] || '#c7d2e6',
+      points: d.equity.map((e) => ({ at: e.at, value: e[src] })),
+    })))
+  },
+
   async scorecard() {
     setActiveTab('scorecard')
     view.innerHTML = '<span class="loading loading-spinner"></span>'

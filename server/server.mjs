@@ -11,6 +11,7 @@ import { analyzeMarket } from '../lib/analyze.mjs'
 import { buildResults, buildInsights, buildVerify, buildHistory, buildScans, findScanByTimestamp, buildMomentum, buildRecommendations, buildScorecard } from './api.mjs'
 import { createScanRunner } from './scan-job.mjs'
 import { readArchive, coinHistory, ARCHIVE } from '../lib/archive.mjs'
+import { buildPaperView } from '../lib/paper-summary.mjs'
 import { readPositions, evalPositions, validatePosition, upsertPosition, deletePosition, writePositions } from '../lib/positions.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -65,6 +66,18 @@ const server = createServer(async (req, res) => {
     }
     if (p === '/api/scorecard') {
       return sendJson(res, 200, buildScorecard(await readJson('scorecard.json', { episodes: [] })))
+    }
+    if (p === '/api/paper') {
+      const state = await readJson('paper-trades.json', null)
+      if (!state) return sendJson(res, 200, { empty: true })
+      const daily = (await readJson('market-baseline.json', { daily: {} })).daily || {}
+      // 상장 폐지된 마켓이 하나라도 섞이면 업비트 ticker 요청 전체가 실패하므로 현재 상장 목록으로 거른다
+      const listed = new Set((await cachedMarkets()).map((m) => m.market))
+      const wanted = [...new Set(Object.values(state.books).flatMap((b) => [...b.open, ...b.closed].map((x) => x.market)))]
+        .filter((m) => listed.has(m))
+      const tickers = wanted.length ? await getTicker(wanted) || [] : []
+      const priceOf = Object.fromEntries(tickers.map((t) => [t.market, t.trade_price]))
+      return sendJson(res, 200, buildPaperView(state, daily, priceOf))
     }
     if (p === '/api/positions' && req.method === 'GET') {
       const positions = readPositions()
