@@ -3,6 +3,7 @@ import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcvAsOf, ensureMinConfirmed } from '../lib/ohlcv.mjs'
 import { scoreMomentum, MIN_MOMENTUM_SCORE, sameDayOverheat } from '../lib/momentum.mjs'
 import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
+import { triggerPaper } from '../lib/paper-trigger.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
@@ -73,6 +74,7 @@ async function main() {
     await writeJson('momentum-log.json', fresh)
     scanNum = fresh.totalScans
   })
+  triggerPaper({ reason: 'momentum' }) // 모의매매 진입을 스캔 직후 바로(기다리지 않음)
 
   console.log(`모멘텀 스캔 #${scanNum} 완료 — 추세지속 ${picks.length}종목 (추격주의 ${chase.length}종목 제외 — 당일 과열·국내 과열)`)
   console.log('상위:', picks.slice(0, 5).map((p) => `${p.korean_name}(${p.score})`).join(', ') || '없음')

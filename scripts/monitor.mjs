@@ -13,6 +13,7 @@ import { ensureCgData } from '../lib/cg-data.mjs'
 import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
+import { triggerPaper } from '../lib/paper-trigger.mjs'
 import { ensureKimchi, premiumBand, splitPremiumHot, premiumHotList } from '../lib/kimchi.mjs'
 import { selectPremiumAlerts, formatPremiumAlert } from '../lib/premium-alert.mjs'
 import { ensureFunding } from '../lib/funding.mjs'
@@ -225,6 +226,7 @@ async function main() {
     appendScan(entry)
     scanNum = fresh.totalScans
   })
+  triggerPaper({ reason: 'main' }) // 모의매매 진입을 스캔 직후 바로(기다리지 않음)
 
   console.log(`스캔 #${scanNum} 완료 — 매수 ${buy.length} / 매도 ${sell.length}`)
   if (premiumHot.length) console.log('🇰🇷 국내 과열 제외:', premiumHot.map((b) => `${b.korean_name}(BTC+${(b.kimchi.rel * 100).toFixed(1)}%p)`).join(', '))

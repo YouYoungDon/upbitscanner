@@ -32,6 +32,12 @@ for (const [src, book] of Object.entries(st.books)) {
   console.log(`\n[${src}] 현금 ${Math.round(book.cash).toLocaleString()}원 · 보유 ${book.open.length}건 · 건너뛴 스캔 ${book.skipped}`)
   const closed = [...book.closed].sort((a, b) => a.entryAt - b.entryAt)
   summarize('전체', closed)
+  // 체결 모델 변경(lib/paper.mjs FILL_MODEL) 전후는 규칙이 달라 진입 시각 기준으로 나눠 본다
+  const cut = st.modelChanges?.at(-1)
+  if (cut) {
+    summarize(`모델 v${cut.fillModel} 전 진입`, closed.filter((c) => c.entryAt < cut.at))
+    summarize(`모델 v${cut.fillModel} 후 진입`, closed.filter((c) => c.entryAt >= cut.at))
+  }
   if (closed.length >= 4) {
     const mid = utcDay(closed[Math.floor(closed.length / 2)].entryAt)
     summarize('전반', closed.filter((c) => utcDay(c.entryAt) < mid))

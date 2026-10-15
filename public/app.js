@@ -586,7 +586,8 @@ const routes = {
 
     view.innerHTML = `${head}
       <div class="text-xs opacity-70 mb-4">실제 업비트 호가로 가상 체결 · 장부별 ${fmt(P.START_CASH)}원, 건당 ${fmt(P.POSITION_KRW)}원, 수수료 ${(P.FEE ?? 0) * 100}%×2, 손절 슬리피지 ${(P.STOP_SLIP ?? 0) * 100}% ·
-        시작 ${kst(new Date(d.startedAt).getTime())} · 마지막 실행 ${kst(new Date(d.lastRun).getTime())}. 판정은 11-05 점검 때 진입일 t로 합니다(표본이 적을 땐 방향만 참고).</div>
+        시작 ${kst(new Date(d.startedAt).getTime())} · 마지막 실행 ${kst(new Date(d.lastRun).getTime())}. 판정은 11-05 점검 때 진입일 t로 합니다(표본이 적을 땐 방향만 참고).
+        ${(d.modelChanges || []).map((m) => `<br>⚙️ 체결 모델 v${m.fillModel} 적용 ${kst(m.at)} — 스캔 직후 매수 · 호가 단위 반영 · 손절은 1분봉 체결가. 이전 진입과 섞어 비교하지 마세요(터미널 리포트가 전/후를 나눠 보여 줍니다).`).join('')}</div>
       <div class="grid md:grid-cols-2 gap-4 mb-4">${Object.entries(d.books).map(([src, b]) => card(src, b)).join('')}</div>
       <div class="card bg-base-200 p-4 mb-4">
         <h3 class="font-bold mb-2">평가금 추이</h3>

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   vwapFill, exitRule, scanExit, netReturn, selectEntries, newBook, openPosition, closePosition, PAPER,
+  tickFloor, tickCeil, stopFill,
 } from '../lib/paper.mjs'
 
 const H = 3600_000
@@ -115,5 +116,51 @@ describe('장부', () => {
     })
     closePosition(book, pos, { type: 'sl', price: 88, at: H })
     expect(book.closed[0].exitPrice).toBeCloseTo(88 * (1 - PAPER.STOP_SLIP), 9)
+  })
+})
+
+describe("호가 단위 (체결 모델 v2)", () => {
+  it("tickFloor/tickCeil은 업비트 호가 단위로 내림/올림한다", () => {
+    expect(tickFloor(1.0472, 0.01)).toBe(1.04)
+    expect(tickCeil(1.0472, 0.01)).toBe(1.05)
+    expect(tickFloor(128.84, 0.1)).toBe(128.8)
+    expect(tickCeil(128.81, 0.1)).toBe(128.9)
+    expect(tickCeil(612.64, 1)).toBe(613)
+  })
+  it("이미 호가 단위 위에 있는 값은 그대로(부동소수 오차로 한 칸 밀리지 않음)", () => {
+    expect(tickCeil(128.8, 0.1)).toBe(128.8)
+    expect(tickFloor(0.3, 0.1)).toBe(0.3)
+    expect(tickFloor(110727000, 1000)).toBe(110727000)
+  })
+  it("tick이 없으면 값을 그대로 둔다(호가 단위 조회 실패 시 v1과 같은 동작)", () => {
+    expect(tickFloor(1.0472, null)).toBe(1.0472)
+    expect(tickCeil(1.0472, undefined)).toBe(1.0472)
+  })
+})
+
+describe("scanExit + tick", () => {
+  const pos = { entryAt: 10 * H + 30 * 60_000, stopLoss: 90, takeProfit: 110.3 }
+  const c = (hour, o, h, l) => ({ t: hour * H, open: o, high: h, low: l, close: o })
+  it("익절선은 호가 단위로 올려서 판정·체결한다", () => {
+    expect(scanExit(pos, [c(11, 100, 110.5, 95)], 1)).toBeNull()
+    expect(scanExit(pos, [c(11, 100, 111, 95)], 1)).toEqual({ type: "tp", price: 111, at: 11 * H })
+  })
+  it("봉 안에서 손절선을 건드리면 intraBar 표시(1분봉으로 체결가를 다시 잡기 위해)", () => {
+    expect(scanExit(pos, [c(11, 100, 101, 85)], 1)).toEqual({ type: "sl", price: 90, at: 11 * H, intraBar: true })
+  })
+})
+
+describe("stopFill", () => {
+  const m = (min, low, close) => ({ t: 11 * H + min * 60_000, low, close })
+  it("손절선을 처음 건드린 1분봉의 종가와 손절가(호가 내림) 중 낮은 값", () => {
+    expect(stopFill(1.0472, [m(0, 1.06, 1.06), m(1, 1.04, 1.04), m(2, 1.0, 1.0)], 0.01)).toBe(1.04)
+  })
+  it("그 1분 안에 되돌아 올라갔으면 손절가(호가 내림)로", () => {
+    expect(stopFill(1.0472, [m(0, 1.03, 1.06)], 0.01)).toBe(1.04)
+  })
+  it("1분봉이 없거나 터치가 안 보이면 손절가(호가 내림)", () => {
+    expect(stopFill(1.0472, [], 0.01)).toBe(1.04)
+    expect(stopFill(1.0472, [m(0, 1.06, 1.06)], 0.01)).toBe(1.04)
+    expect(stopFill(90, null, null)).toBe(90)
   })
 })

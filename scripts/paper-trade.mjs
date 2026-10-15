@@ -1,14 +1,15 @@
-// 모의매매 1회 실행 — 매시 :10 스케줄(UpbitPaper). 순서: 청산 확인 → 새 스캔 진입 → 평가금 기록.
+// 모의매매 1회 실행 — 매시 :10 스케줄(UpbitPaper) + 스캔 직후(lib/paper-trigger.mjs, 인자 --after-scan <소스>).
+// 순서: 청산 확인 → 새 스캔 진입 → 평가금 기록.
 // 장부: data/paper-trades.json (git 추적 — 스냅샷 커밋으로 백업), 이벤트 원장: data/paper-trades-log.jsonl(추가 전용).
 // 규칙·체결 모델은 lib/paper.mjs 주석. 판정은 scripts/research/paper-report.mjs.
 import '../lib/env.mjs'
 import { existsSync, appendFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { getOrderbook, getMinuteCandles, getTicker } from '../lib/upbit.mjs'
+import { getOrderbook, getMinuteCandles, getTicker, getTickSizes } from '../lib/upbit.mjs'
 import { readJson, writeJson, withLock, DATA_DIR } from '../lib/store.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import {
-  PAPER, newBook, vwapFill, exitRule, scanExit, selectEntries, openPosition, closePosition,
+  PAPER, newBook, vwapFill, exitRule, scanExit, stopFill, selectEntries, openPosition, closePosition,
 } from '../lib/paper.mjs'
 
 const FILE = 'paper-trades.json'
@@ -24,13 +25,19 @@ const SOURCES = {
 }
 
 async function loadState() {
-  const fresh = { version: 1, startedAt: new Date().toISOString(), params: PAPER, books: { main: newBook(), momentum: newBook() }, equity: [] }
+  const fresh = { version: 1, fillModel: PAPER.FILL_MODEL, startedAt: new Date().toISOString(), params: PAPER, books: { main: newBook(), momentum: newBook() }, equity: [] }
   if (!existsSync(join(DATA_DIR, FILE))) return fresh
   const st = await readJson(FILE, null)
   // 파일이 있는데 못 읽으면 덮어쓰지 않고 멈춘다(기록 유실 방지).
   if (!st || !st.books) throw new Error(`${FILE} 읽기 실패 — 덮어쓰지 않고 중단`)
   for (const k of Object.keys(SOURCES)) st.books[k] ||= newBook()
   st.equity ||= []
+  // 체결 모델이 바뀐 시각을 남긴다 — 리포트가 변경 전/후를 나눠 본다(실험 중간 규칙 변경이라 그대로 섞으면 안 된다).
+  if ((st.fillModel ?? 1) !== PAPER.FILL_MODEL) {
+    st.modelChanges = [...(st.modelChanges || []), { at: Date.now(), fillModel: PAPER.FILL_MODEL }]
+    st.fillModel = PAPER.FILL_MODEL
+  }
+  st.params = PAPER
   return st
 }
 
@@ -43,14 +50,30 @@ async function hourCandles(market, sinceMs) {
   }))
 }
 
+// 봉 안 손절 → 그 시간 1분봉으로 체결가를 다시 잡는다(stopFill). 조회 실패면 손절가(호가 내림).
+async function refineStop(pos, exit, tick) {
+  const raw = await getMinuteCandles(pos.market, 1, 60, new Date(exit.at + 3600_000).toISOString())
+  await sleep(120)
+  const minutes = Array.isArray(raw)
+    ? [...raw].reverse().map((c) => ({ t: new Date(c.candle_date_time_utc + 'Z').getTime(), low: c.low_price, close: c.trade_price }))
+      .filter((m) => m.t >= exit.at && m.t < exit.at + 3600_000)
+    : null
+  const hit = minutes?.find((m) => m.low <= pos.stopLoss)
+  return { ...exit, price: stopFill(pos.stopLoss, minutes, tick), at: hit?.t ?? exit.at, minuteFill: !!hit }
+}
+
 async function checkExits(st, now) {
   const closed = []
+  const openMarkets = [...new Set(Object.values(st.books).flatMap((b) => b.open.map((p) => p.market)))]
+  const ticks = (openMarkets.length && await getTickSizes(openMarkets)) || {}
   for (const [src, book] of Object.entries(st.books)) {
     for (const pos of [...book.open]) {
       const candles = await hourCandles(pos.market, pos.entryAt)
       await sleep(120)
       if (!candles) { console.log(`  ${src} ${pos.market} 1시간봉 조회 실패 — 다음 회차에 재확인`); continue }
-      let exit = scanExit(pos, candles)
+      const tick = ticks[pos.market]
+      let exit = scanExit(pos, candles, tick)
+      if (exit?.intraBar) exit = await refineStop(pos, exit, tick)
       if (!exit && now >= pos.entryAt + pos.holdMax * 86400_000) {
         const ob = (await getOrderbook([pos.market]))?.[pos.market]
         const f = ob ? vwapFill(ob.bids, { qty: pos.qty }) : null
@@ -61,6 +84,7 @@ async function checkExits(st, now) {
       if (!exit) continue
       const c = closePosition(book, pos, exit)
       if (exit.thinBook) c.thinBook = true
+      if (exit.minuteFill != null) c.minuteFill = exit.minuteFill
       closed.push(c)
       log({ ev: 'close', ...c })
     }
@@ -115,6 +139,8 @@ async function markEquity(st, now) {
 
 async function main() {
   const now = Date.now()
+  const i = process.argv.indexOf('--after-scan')
+  if (i >= 0) console.log(`${new Date(now).toISOString()} 스캔 직후 실행 (${process.argv[i + 1] || '?'})`)
   await withLock('paper-trades', async () => {
     const st = await loadState()
     const closed = await checkExits(st, now)
