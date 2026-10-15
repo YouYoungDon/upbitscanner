@@ -118,4 +118,12 @@ $newsTrigger = @((New-ScheduledTaskTrigger -AtStartup), $watchdogTrigger)
 Register-ScheduledTask -TaskName 'UpbitNewsWatch' -Action $newsAction -Trigger $newsTrigger -Settings $botSettings -Principal $principal -Force | Out-Null
 Write-Host "registered: UpbitNewsWatch (AtStartup + 5min watchdog, always-on)"
 
+# always-on dashboard web server (http://127.0.0.1:8787): same boot start + watchdog as the daemons.
+# Runs in session 0 under S4U; loopback is shared across sessions so the browser still reaches it.
+$dashScript = Join-Path $projectRoot 'server\server.mjs'
+$dashAction = New-LoggingAction $dashScript 'UpbitDashboard'
+$dashTrigger = @((New-ScheduledTaskTrigger -AtStartup), $watchdogTrigger)
+Register-ScheduledTask -TaskName 'UpbitDashboard' -Action $dashAction -Trigger $dashTrigger -Settings $botSettings -Principal $principal -Force | Out-Null
+Write-Host "registered: UpbitDashboard (AtStartup + 5min watchdog, always-on)"
+
 Write-Host "`nverify: Get-ScheduledTask -TaskName 'Upbit*'"
