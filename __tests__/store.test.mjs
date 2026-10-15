@@ -38,6 +38,15 @@ describe('withLock', () => {
     release()
     await holder
   })
+
+  it('heartbeatMs: 작업이 길어도 락 mtime을 갱신해 staleMs로 탈취되지 않는다', async () => {
+    let entered = false
+    const long = withLock('__t_hb__', () => new Promise((r) => setTimeout(r, 400)), { heartbeatMs: 50 })
+    await new Promise((r) => setTimeout(r, 250))
+    await withLock('__t_hb__', async () => { entered = true }, { staleMs: 150, timeoutMs: 100, onTimeout: 'throw' }).catch(() => {})
+    expect(entered).toBe(false) // 하트비트 덕분에 150ms stale 판정을 받지 않음
+    await long
+  })
 })
 
 describe('writeJson (원자적)', () => {

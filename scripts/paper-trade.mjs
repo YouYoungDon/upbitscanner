@@ -71,14 +71,16 @@ async function refineStop(pos, exit) {
 }
 
 // v2: 진입한 시간의 남은 분을 1분봉으로 확인. 그 시간이 다 지나고 아무 일 없으면 다시 보지 않게 표시한다.
+// 조회에 실패하면 { pending: true } — 그 뒤 시간봉으로 넘어가면 진입 시간의 손절을 놓치고 더 늦은(좋은) 청산이
+// 기록될 수 있어서, 이 포지션은 이번 회차를 통째로 건너뛰고 다음 회차에 다시 본다.
 async function checkEntryHour(pos, now) {
   if (pos.entryHourChecked) return null
   const h = hourOf(pos.entryAt)
   const bars = await minuteBars(pos.market, h)
-  if (!bars) return null // 조회 실패 — 다음 회차에 다시
+  if (!bars) return { pending: true }
   const exit = entryHourExit(pos, bars)
   if (exit) return { ...exit, minuteFill: true }
-  if (now >= h + HOUR && bars.length) pos.entryHourChecked = true
+  if (now >= h + HOUR) pos.entryHourChecked = true // 거래 없는 분은 1분봉이 없다 — 빈 결과도 "아무 일 없음"
   return null
 }
 
@@ -92,6 +94,7 @@ async function checkExits(st, now) {
       // 체결 모델은 포지션을 산 때의 것을 따른다(v1 포지션에 v2 규칙을 섞지 않는다)
       const v2 = (pos.fillModel ?? 1) >= 2
       let exit = v2 ? await checkEntryHour(pos, now) : null
+      if (exit?.pending) { console.log(`  ${src} ${pos.market} 진입 시간 1분봉 조회 실패 — 다음 회차에 재확인`); continue }
       if (!exit) exit = scanExit(pos, candles, v2)
       if (exit?.intraBar) exit = await refineStop(pos, exit)
       if (!exit && now >= pos.entryAt + pos.holdMax * 86400_000) {
@@ -131,12 +134,13 @@ async function enterNew(st, now) {
       const want = selectEntries(book, scan.picks)
       if (!want.length) continue
       const books = await getOrderbook(want.map((p) => p.market))
+      const fillAt = Date.now() // 진입 시각은 호가를 받은 순간 — 청산 확인이 오래 걸려도 진입 전 분이 진입 뒤로 세지지 않게
       for (const pick of want) {
         const ob = books?.[pick.market]
         const fill = ob ? vwapFill(ob.asks, { krw: PAPER.POSITION_KRW }) : null
         if (!fill?.filled) { log({ ev: 'no-fill', src, market: pick.market }); continue }
         if (book.cash < fill.krw * (1 + PAPER.FEE)) { log({ ev: 'no-cash', src, market: pick.market }); continue }
-        const pos = openPosition(book, pick, { source: src, fill, at: now, scanAt: scan.at, rule: exitRule(pick, src, fill.price) })
+        const pos = openPosition(book, pick, { source: src, fill, at: fillAt, scanAt: scan.at, rule: exitRule(pick, src, fill.price) })
         opened.push(pos)
         log({ ev: 'open', ...pos })
       }
@@ -162,8 +166,9 @@ async function main() {
   if (i >= 0) console.log(`${new Date().toISOString()} 스캔 직후 실행 (${process.argv[i + 1] || '?'})`)
   // 스캔 직후 실행과 매시 :10 실행이 겹칠 수 있다. 앞 실행이 느려도 강제로 끼어들지 않고(장부 덮어쓰기 방지)
   // 5분 기다린 뒤에도 바쁘면 이번 회차를 건너뛴다 — 다음 회차가 같은 스캔(3시간 이내)을 이어서 처리한다.
+  // 하트비트(1분)로 락을 갱신해서, API가 느려 20분(staleMs)을 넘겨도 살아 있는 실행의 락은 탈취되지 않는다.
   try {
-    await withLock('paper-trades', run, { timeoutMs: 5 * 60_000, staleMs: 20 * 60_000, onTimeout: 'throw' })
+    await withLock('paper-trades', run, { timeoutMs: 5 * 60_000, staleMs: 20 * 60_000, onTimeout: 'throw', heartbeatMs: 60_000 })
   } catch (e) {
     if (e.code !== 'LOCK_TIMEOUT') throw e
     console.log(`${new Date().toISOString()} 다른 모의매매 실행이 진행 중 — 이번 회차 건너뜀`)

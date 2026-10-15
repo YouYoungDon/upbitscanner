@@ -155,7 +155,7 @@ describe("scanExit v2", () => {
     expect(scanExit(pos, [c(11, 100, 110.5, 95)], true)).toBeNull()
     expect(scanExit(pos, [c(11, 100, 111, 95)], true)).toEqual({ type: "tp", price: 111, at: 11 * H })
   })
-  it("호가 단위는 현재가가 아니라 그 선의 가격대 기준(950원 코인의 익절선 1064는 5원 단위 아님 → 1원대가 아니라 1,000원대 1원)", () => {
+  it("호가 단위는 현재가가 아니라 그 선의 가격대 기준(4,000원대 코인의 익절선 5,003.2원은 5원 단위 구간 → 5,005원)", () => {
     expect(scanExit({ entryAt: 0, stopLoss: 836, takeProfit: 5003.2 }, [c(1, 4000, 5004, 4000)], true)).toBeNull()
     expect(scanExit({ entryAt: 0, stopLoss: 836, takeProfit: 5003.2 }, [c(1, 4000, 5005, 4000)], true)).toEqual({ type: "tp", price: 5005, at: H })
   })
@@ -196,5 +196,23 @@ describe("entryHourExit — 진입한 시간의 남은 분을 1분봉으로 확�
   it("아무것도 안 닿으면 null", () => {
     expect(entryHourExit(pos, [m(30, 100, 105, 95, 100)])).toBeNull()
     expect(entryHourExit(pos, null)).toBeNull()
+  })
+})
+
+describe("v2 리뷰 반영 (2026-10-15)", () => {
+  const c = (hour, o, h, l) => ({ t: hour * H, open: o, high: h, low: l, close: o })
+  it("v2 갭 상승으로 익절선 위에서 시작해도 걸어 둔 지정가 익절은 익절선 가격에 체결", () => {
+    const pos = { entryAt: 0, stopLoss: 90, takeProfit: 110 }
+    expect(scanExit(pos, [c(1, 115, 120, 112)], true)).toEqual({ type: "tp", price: 110, at: H })
+    expect(scanExit(pos, [c(1, 115, 120, 112)])).toEqual({ type: "tp", price: 115, at: H }) // v1은 예전 그대로
+  })
+  it("stopFill: 1분봉이 손절선 아래에서 갭으로 시작하면 그 시가(더 낮은 값)로", () => {
+    expect(stopFill(100, [{ t: 0, open: 96, low: 95, close: 101 }])).toBe(96)
+  })
+  it("upbitTick은 비정상 값에 null, 호가 반올림은 그 값을 그대로 둔다(한 포지션 때문에 전체 실행이 죽지 않게)", () => {
+    expect(upbitTick(NaN)).toBeNull()
+    expect(upbitTick(undefined)).toBeNull()
+    expect(upbitTick(-1)).toBeNull()
+    expect(scanExit({ entryAt: 0, stopLoss: 90, takeProfit: NaN }, [c(1, 100, 101, 95)], true)).toBeNull()
   })
 })
