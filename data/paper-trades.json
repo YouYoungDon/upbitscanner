@@ -13,37 +13,288 @@
       "slPct": 12,
       "tpPct": 12,
       "holdMax": 7
-    }
+    },
+    "FILL_MODEL": 2
   },
   "books": {
     "main": {
-      "cash": 349925,
+      "cash": 10432.853968036536,
       "open": [
         {
-          "id": "main:KRW-RAY:1791468120282",
+          "id": "main:KRW-SOL:1791990601732",
           "source": "main",
-          "market": "KRW-RAY",
-          "korean_name": "레이디움",
-          "score": 9.4,
+          "market": "KRW-SOL",
+          "korean_name": "솔라나",
+          "score": 10.7,
           "signals": [
-            "MACD 골든크로스",
-            "MACD 상승",
+            "BB 하단 지지",
+            "Stoch 과매도 (15)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 3.5%)"
+          ],
+          "scanAt": 1791990054285,
+          "scanPrice": 141400,
+          "entryAt": 1791990601732,
+          "entryPrice": 140900,
+          "qty": 0.35486160397445,
+          "krw": 50000.00000000001,
+          "stopLoss": 123992,
+          "takeProfit": 157808.00000000003,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.00048319360710391557
+        },
+        {
+          "id": "main:KRW-SHIB:1792033801918",
+          "source": "main",
+          "market": "KRW-SHIB",
+          "korean_name": "시바이누",
+          "score": 10.7,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (8)",
+            "Williams %R 과매도 (-92)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 0.59%)",
+            "지속 매수권 (2일)"
+          ],
+          "scanAt": 1792033236759,
+          "scanPrice": 0.00672,
+          "entryAt": 1792033801918,
+          "entryPrice": 0.00674,
+          "qty": 7418397.626112759,
+          "krw": 50000,
+          "stopLoss": 0.0059312,
+          "takeProfit": 0.007548800000000001,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": 0.0016450670111667343
+        },
+        {
+          "id": "main:KRW-MINA:1792033801918",
+          "source": "main",
+          "market": "KRW-MINA",
+          "korean_name": "미나",
+          "score": 10.4,
+          "signals": [
+            "Stoch 과매도 (2)",
+            "Williams %R 과매도 (-97)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 1.62%)",
+            "⚠️유동성 ×0.9",
+            "⚡펀딩 스퀴즈연료",
+            "🔥지속 매수권 (3일+)"
+          ],
+          "scanAt": 1792033236759,
+          "scanPrice": 97.8,
+          "entryAt": 1792033801918,
+          "entryPrice": 97.7,
+          "qty": 511.77072671443193,
+          "krw": 50000,
+          "stopLoss": 85.976,
+          "takeProfit": 109.424,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.0020581919990365627
+        },
+        {
+          "id": "main:KRW-AVAX:1792087261136",
+          "source": "main",
+          "market": "KRW-AVAX",
+          "korean_name": "아발란체",
+          "score": 9.7,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (14)",
+            "Williams %R 과매도 (-90)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 0.38%)"
+          ],
+          "scanAt": 1792087258703,
+          "scanPrice": 13450,
+          "entryAt": 1792087261136,
+          "entryPrice": 13460,
+          "qty": 3.7147102526002973,
+          "krw": 50000,
+          "stopLoss": 11844.8,
+          "takeProfit": 15075.2,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": 0.00021554763510311936,
+          "fillModel": 2,
+          "entryHourChecked": true
+        },
+        {
+          "id": "main:KRW-VIRTUAL:1792162851029",
+          "source": "main",
+          "market": "KRW-VIRTUAL",
+          "korean_name": "버추얼프로토콜",
+          "score": 14.4,
+          "signals": [
+            "Stoch 과매도 골든크로스 (15)",
+            "EMA 상승배열",
+            "캔들 강세형 (망치형)",
+            "[콤보] 반등확인 보너스",
+            "유동성 스윕 (깊이 3.37%)",
+            "⚠️유동성 ×0.9",
+            "🔥지속 매수권 (3일+)"
+          ],
+          "scanAt": 1792162848972,
+          "scanPrice": 919,
+          "entryAt": 1792162851029,
+          "entryPrice": 918,
+          "qty": 54.46623093681917,
+          "krw": 50000,
+          "stopLoss": 807.84,
+          "takeProfit": 1028.16,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": 0.000317279719267205,
+          "fillModel": 2,
+          "entryHourChecked": true
+        },
+        {
+          "id": "main:KRW-B3:1792216841999",
+          "source": "main",
+          "market": "KRW-B3",
+          "korean_name": "비쓰리",
+          "score": 9.3,
+          "signals": [
+            "Stoch 과매도 골든크로스 (17)",
             "EMA 상승배열",
             "캔들 강세형 (상승장악형)",
             "[콤보] 반등확인 보너스",
-            "⚠️구조리스크(언락오버행(유통 49%)·거래소 주의)"
+            "⚠️업비트비중 70%",
+            "⚠️구조리스크(언락오버행(유통 46%)·거래소 주의·ATH -97%·저순위 649위)",
+            "🔥지속 매수권 (3일+)"
           ],
-          "scanAt": 1791463554768,
-          "scanPrice": 3286,
-          "entryAt": 1791468120282,
-          "entryPrice": 3274,
-          "qty": 15.271838729383017,
+          "scanAt": 1792216839883,
+          "scanPrice": 0.885,
+          "entryAt": 1792216841999,
+          "entryPrice": 0.886,
+          "qty": 56433.4085778781,
           "krw": 50000,
-          "stopLoss": 2881.12,
-          "takeProfit": 3666.8800000000006,
+          "stopLoss": 0.77968,
+          "takeProfit": 0.9923200000000001,
           "holdMax": 7,
           "rule": "exit",
-          "kimchiRel": -0.0006603105665738962
+          "kimchiRel": null,
+          "fillModel": 2,
+          "entryHourChecked": true
+        },
+        {
+          "id": "main:KRW-MBL:1792249241022",
+          "source": "main",
+          "market": "KRW-MBL",
+          "korean_name": "무비블록",
+          "score": 8.9,
+          "signals": [
+            "Stoch 과매도 골든크로스 (6)",
+            "Williams %R 과매도 (-94)",
+            "EMA 상승배열",
+            "캔들 강세형 (역망치)",
+            "[콤보] 반등확인 보너스",
+            "⚠️유동성 ×0.8"
+          ],
+          "scanAt": 1792249239094,
+          "scanPrice": 0.954,
+          "entryAt": 1792249241022,
+          "entryPrice": 0.9544440400550721,
+          "qty": 52386.518121182846,
+          "krw": 50000,
+          "stopLoss": 0.8399107552484635,
+          "takeProfit": 1.068977324861681,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": 0.0027012637610237533,
+          "fillModel": 2,
+          "entryHourChecked": true
+        },
+        {
+          "id": "main:KRW-ADA:1792335654319",
+          "source": "main",
+          "market": "KRW-ADA",
+          "korean_name": "에이다",
+          "score": 10.9,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (13)",
+            "Williams %R 과매도 (-92)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 1.36%)"
+          ],
+          "scanAt": 1792335651678,
+          "scanPrice": 293,
+          "entryAt": 1792335654319,
+          "entryPrice": 294,
+          "qty": 170.06802721088437,
+          "krw": 50000.00000000001,
+          "stopLoss": 258.72,
+          "takeProfit": 329.28000000000003,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.0015640071247362552,
+          "fillModel": 2,
+          "entryHourChecked": true
+        },
+        {
+          "id": "main:KRW-ENA:1792378839613",
+          "source": "main",
+          "market": "KRW-ENA",
+          "korean_name": "에테나",
+          "score": 10.5,
+          "signals": [
+            "Stoch 과매도 (12)",
+            "Williams %R 과매도 (-91)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 1.21%)",
+            "🔥지속 매수권 (3일+)"
+          ],
+          "scanAt": 1792378837404,
+          "scanPrice": 258,
+          "entryAt": 1792378839613,
+          "entryPrice": 258,
+          "qty": 193.7984496124031,
+          "krw": 50000,
+          "stopLoss": 227.04,
+          "takeProfit": 288.96000000000004,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": 0.0012236567657585296,
+          "fillModel": 2,
+          "entryHourChecked": true
+        }
+      ],
+      "closed": [
+        {
+          "id": "main:KRW-ARB:1791483001424",
+          "source": "main",
+          "market": "KRW-ARB",
+          "korean_name": "아비트럼",
+          "score": 7.7,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (18)",
+            "Williams %R 과매도 (-88)",
+            "EMA 상승배열"
+          ],
+          "scanAt": 1791482443889,
+          "scanPrice": 226,
+          "entryAt": 1791483001424,
+          "entryPrice": 226,
+          "qty": 221.23893805309734,
+          "krw": 50000,
+          "stopLoss": 198.88,
+          "takeProfit": 253.12000000000003,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.00022871592764006632,
+          "exitType": "tp",
+          "exitAt": 1791594000000,
+          "exitPrice": 253.12000000000003,
+          "gross": 0.1200000000000001,
+          "net": 0.11888055972014011,
+          "pnl": 5947.000000000007
         },
         {
           "id": "main:KRW-MINA:1791468120282",
@@ -68,7 +319,140 @@
           "takeProfit": 128.8,
           "holdMax": 7,
           "rule": "exit",
-          "kimchiRel": -0.0032884713422749456
+          "kimchiRel": -0.0032884713422749456,
+          "exitType": "tp",
+          "exitAt": 1791608400000,
+          "exitPrice": 128.8,
+          "gross": 0.1200000000000001,
+          "net": 0.11888055972014011,
+          "pnl": 5947.000000000007
+        },
+        {
+          "id": "main:KRW-MOODENG:1791483001424",
+          "source": "main",
+          "market": "KRW-MOODENG",
+          "korean_name": "무뎅",
+          "score": 8.2,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (16)",
+            "Williams %R 과매도 (-90)",
+            "EMA 상승배열",
+            "⚠️유동성 ×0.8",
+            "🔥지속 매수권 (3일+)"
+          ],
+          "scanAt": 1791482443889,
+          "scanPrice": 54,
+          "entryAt": 1791483001424,
+          "entryPrice": 54,
+          "qty": 925.925925925926,
+          "krw": 50000,
+          "stopLoss": 47.52,
+          "takeProfit": 60.480000000000004,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": null,
+          "exitType": "tp",
+          "exitAt": 1791666000000,
+          "exitPrice": 60.480000000000004,
+          "gross": 0.1200000000000001,
+          "net": 0.11888055972014011,
+          "pnl": 5947.000000000007
+        },
+        {
+          "id": "main:KRW-MINA:1791612601615",
+          "source": "main",
+          "market": "KRW-MINA",
+          "korean_name": "미나",
+          "score": 9.2,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (3)",
+            "Williams %R 과매도 (-96)",
+            "EMA 상승배열",
+            "⚡펀딩 스퀴즈연료(강)",
+            "지속 매수권 (2일)"
+          ],
+          "scanAt": 1791612044940,
+          "scanPrice": 123,
+          "entryAt": 1791612601615,
+          "entryPrice": 124,
+          "qty": 403.2258064516129,
+          "krw": 50000,
+          "stopLoss": 109.12,
+          "takeProfit": 138.88000000000002,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.0037730361532635204,
+          "exitType": "sl",
+          "exitAt": 1791774000000,
+          "exitPrice": 108.90176000000001,
+          "gross": -0.12175999999999987,
+          "net": -0.1226378010994501,
+          "pnl": -6134.955999999991
+        },
+        {
+          "id": "main:KRW-MET2:1791472201380",
+          "source": "main",
+          "market": "KRW-MET2",
+          "korean_name": "메테오라",
+          "score": 7.7,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 상승",
+            "EMA 상승배열",
+            "[콤보] 반등확인 보너스",
+            "⚠️구조리스크(거래소 주의)"
+          ],
+          "scanAt": 1791471644618,
+          "scanPrice": 596,
+          "entryAt": 1791472201380,
+          "entryPrice": 607,
+          "qty": 82.37232289950576,
+          "krw": 50000,
+          "stopLoss": 534.16,
+          "takeProfit": 679.84,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": null,
+          "exitType": "sl",
+          "exitAt": 1791795600000,
+          "exitPrice": 533.09168,
+          "gross": -0.12175999999999998,
+          "net": -0.1226378010994501,
+          "pnl": -6134.955999999998
+        },
+        {
+          "id": "main:KRW-RAY:1791468120282",
+          "source": "main",
+          "market": "KRW-RAY",
+          "korean_name": "레이디움",
+          "score": 9.4,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 상승",
+            "EMA 상승배열",
+            "캔들 강세형 (상승장악형)",
+            "[콤보] 반등확인 보너스",
+            "⚠️구조리스크(언락오버행(유통 49%)·거래소 주의)"
+          ],
+          "scanAt": 1791463554768,
+          "scanPrice": 3286,
+          "entryAt": 1791468120282,
+          "entryPrice": 3274,
+          "qty": 15.271838729383017,
+          "krw": 50000,
+          "stopLoss": 2881.12,
+          "takeProfit": 3666.8800000000006,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.0006603105665738962,
+          "exitType": "sl",
+          "exitAt": 1791849600000,
+          "exitPrice": 2875.35776,
+          "gross": -0.12176000000000009,
+          "net": -0.12263780109945022,
+          "pnl": -6134.956000000006
         },
         {
           "id": "main:KRW-JUP:1791468120282",
@@ -93,16 +477,914 @@
           "takeProfit": 558.8800000000001,
           "holdMax": 7,
           "rule": "exit",
-          "kimchiRel": -0.0006836494603446042
+          "kimchiRel": -0.0006836494603446042,
+          "exitType": "sl",
+          "exitAt": 1791849600000,
+          "exitPrice": 438.24176,
+          "gross": -0.12175999999999998,
+          "net": -0.12263780109945022,
+          "pnl": -6134.955999999998
+        },
+        {
+          "id": "main:KRW-APT:1791807002017",
+          "source": "main",
+          "market": "KRW-APT",
+          "korean_name": "앱토스",
+          "score": 7.9,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 상승",
+            "EMA 상승배열",
+            "[콤보] 반등확인 보너스"
+          ],
+          "scanAt": 1791806471358,
+          "scanPrice": 1176,
+          "entryAt": 1791807002017,
+          "entryPrice": 1178,
+          "qty": 42.444821731748725,
+          "krw": 50000,
+          "stopLoss": 1036.64,
+          "takeProfit": 1319.3600000000001,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.0009155434655523376,
+          "exitType": "sl",
+          "exitAt": 1791849600000,
+          "exitPrice": 1034.56672,
+          "gross": -0.12175999999999998,
+          "net": -0.12263780109945022,
+          "pnl": -6134.955999999998
+        },
+        {
+          "id": "main:KRW-SAFE:1791861001123",
+          "source": "main",
+          "market": "KRW-SAFE",
+          "korean_name": "세이프",
+          "score": 9.4,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 상승",
+            "EMA 상승배열",
+            "캔들 강세형 (상승장악형)",
+            "[콤보] 반등확인 보너스",
+            "⚠️구조리스크(거래소 주의·ATH -97%)"
+          ],
+          "scanAt": 1791860444662,
+          "scanPrice": 168,
+          "entryAt": 1791861001123,
+          "entryPrice": 166,
+          "qty": 301.2048192771084,
+          "krw": 50000,
+          "stopLoss": 146.08,
+          "takeProfit": 185.92000000000002,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": null,
+          "exitType": "tp",
+          "exitAt": 1791903600000,
+          "exitPrice": 185.92000000000002,
+          "gross": 0.1200000000000001,
+          "net": 0.11888055972014011,
+          "pnl": 5947
+        },
+        {
+          "id": "main:KRW-SAFE:1791904201224",
+          "source": "main",
+          "market": "KRW-SAFE",
+          "korean_name": "세이프",
+          "score": 9.4,
+          "signals": [
+            "MACD 골든크로스",
+            "MACD 상승",
+            "EMA 상승배열",
+            "캔들 강세형 (상승장악형)",
+            "[콤보] 반등확인 보너스",
+            "⚠️구조리스크(거래소 주의·ATH -96%)"
+          ],
+          "scanAt": 1791903657386,
+          "scanPrice": 185,
+          "entryAt": 1791904201224,
+          "entryPrice": 184,
+          "qty": 271.7391304347826,
+          "krw": 50000,
+          "stopLoss": 161.92,
+          "takeProfit": 206.08,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": null,
+          "exitType": "sl",
+          "exitAt": 1791982800000,
+          "exitPrice": 161.59616,
+          "gross": -0.12175999999999998,
+          "net": -0.12263780109945022,
+          "pnl": -6134.955999999998
+        },
+        {
+          "id": "main:KRW-DOOD:1791483001424",
+          "source": "main",
+          "market": "KRW-DOOD",
+          "korean_name": "두들즈",
+          "score": 7.8,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (7)",
+            "Williams %R 과매도 (-92)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 0.46%)",
+            "⚠️유동성 ×0.8"
+          ],
+          "scanAt": 1791482443889,
+          "scanPrice": 2.07,
+          "entryAt": 1791483001424,
+          "entryPrice": 2.08,
+          "qty": 24038.46153846154,
+          "krw": 50000,
+          "stopLoss": 1.8304,
+          "takeProfit": 2.3296,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": null,
+          "exitType": "sl",
+          "exitAt": 1792029600000,
+          "exitPrice": 1.8267392,
+          "gross": -0.12175999999999998,
+          "net": -0.1226378010994501,
+          "pnl": -6134.955999999998
+        },
+        {
+          "id": "main:KRW-IOST:1791666601708",
+          "source": "main",
+          "market": "KRW-IOST",
+          "korean_name": "아이오에스티",
+          "score": 8.7,
+          "signals": [
+            "Stoch 과매도 골든크로스 (18)",
+            "EMA 상승배열",
+            "캔들 강세형 (샛별)",
+            "[콤보] 반등확인 보너스",
+            "⚠️유동성 ×0.8"
+          ],
+          "scanAt": 1791666056098,
+          "scanPrice": 1.18,
+          "entryAt": 1791666601708,
+          "entryPrice": 1.19,
+          "qty": 42016.80672268908,
+          "krw": 50000,
+          "stopLoss": 1.0472,
+          "takeProfit": 1.3328,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.0027701774695572112,
+          "exitType": "sl",
+          "exitAt": 1792029600000,
+          "exitPrice": 1.0451055999999999,
+          "gross": -0.12176000000000009,
+          "net": -0.12263780109945022,
+          "pnl": -6134.955999999998
+        },
+        {
+          "id": "main:KRW-HBAR:1791774601985",
+          "source": "main",
+          "market": "KRW-HBAR",
+          "korean_name": "헤데라",
+          "score": 13.1,
+          "signals": [
+            "Stoch 과매도 골든크로스 (11)",
+            "Williams %R 과매도 (-88)",
+            "EMA 상승배열",
+            "캔들 강세형 (망치형)",
+            "[콤보] 반등확인 보너스",
+            "🔥지속 매수권 (3일+)"
+          ],
+          "scanAt": 1791774044574,
+          "scanPrice": 126,
+          "entryAt": 1791774601985,
+          "entryPrice": 127,
+          "qty": 393.7007874015748,
+          "krw": 50000,
+          "stopLoss": 111.76,
+          "takeProfit": 142.24,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.004524396759353899,
+          "exitType": "sl",
+          "exitAt": 1792029600000,
+          "exitPrice": 111.53648000000001,
+          "gross": -0.12175999999999987,
+          "net": -0.1226378010994501,
+          "pnl": -6134.955999999991
+        },
+        {
+          "id": "main:KRW-UNI:1791472201380",
+          "source": "main",
+          "market": "KRW-UNI",
+          "korean_name": "유니스왑",
+          "score": 7.7,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (12)",
+            "Williams %R 과매도 (-91)",
+            "EMA 상승배열"
+          ],
+          "scanAt": 1791471644618,
+          "scanPrice": 10400,
+          "entryAt": 1791472201380,
+          "entryPrice": 10320,
+          "qty": 4.844961240310077,
+          "krw": 50000,
+          "stopLoss": 9081.6,
+          "takeProfit": 11558.400000000001,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.00015713353628932225,
+          "exitType": "time",
+          "exitAt": 1792077001448,
+          "exitPrice": 10060,
+          "gross": -0.025193798449612448,
+          "net": -0.026168117491641607,
+          "pnl": -1309.0600775193816
+        },
+        {
+          "id": "main:KRW-FF:1791472201380",
+          "source": "main",
+          "market": "KRW-FF",
+          "korean_name": "팔콘파이낸스",
+          "score": 7.2,
+          "signals": [
+            "Stoch 과매도 (9)",
+            "Williams %R 과매도 (-90)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 0.68%)",
+            "⚠️유동성 ×0.8",
+            "⚠️구조리스크(언락오버행(유통 33%))",
+            "🔥지속 매수권 (3일+)"
+          ],
+          "scanAt": 1791471644618,
+          "scanPrice": 146,
+          "entryAt": 1791472201380,
+          "entryPrice": 145,
+          "qty": 344.82758620689657,
+          "krw": 50000,
+          "stopLoss": 127.6,
+          "takeProfit": 162.4,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.000401309433873287,
+          "exitType": "time",
+          "exitAt": 1792077001448,
+          "exitPrice": 155,
+          "gross": 0.06896551724137923,
+          "net": 0.06789708593978894,
+          "pnl": 3396.551724137942
+        },
+        {
+          "id": "main:KRW-ANIME:1792087261136",
+          "source": "main",
+          "market": "KRW-ANIME",
+          "korean_name": "애니메코인",
+          "score": 10.1,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (13)",
+            "Williams %R 과매도 (-95)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 0.25%)",
+            "⚡펀딩 스퀴즈연료"
+          ],
+          "scanAt": 1792087258703,
+          "scanPrice": 4.11,
+          "entryAt": 1792087261136,
+          "entryPrice": 4.12,
+          "qty": 12135.922330097086,
+          "krw": 49999.99999999999,
+          "stopLoss": 3.6256,
+          "takeProfit": 4.614400000000001,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": 0.0027860208072177928,
+          "fillModel": 2,
+          "exitType": "tp",
+          "exitAt": 1792090020000,
+          "exitPrice": 4.62,
+          "gross": 0.12135922330097082,
+          "net": 0.120238424477082,
+          "pnl": 6014.927184466025,
+          "minuteFill": true
+        },
+        {
+          "id": "main:KRW-ANIME:1792098045331",
+          "source": "main",
+          "market": "KRW-ANIME",
+          "korean_name": "애니메코인",
+          "score": 10.3,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 (13)",
+            "Williams %R 과매도 (-95)",
+            "EMA 상승배열",
+            "유동성 스윕 (깊이 0.25%)",
+            "⚡펀딩 스퀴즈연료(강)"
+          ],
+          "scanAt": 1792098043305,
+          "scanPrice": 4.64,
+          "entryAt": 1792098045331,
+          "entryPrice": 4.57,
+          "qty": 10940.919037199124,
+          "krw": 50000,
+          "stopLoss": 4.0216,
+          "takeProfit": 5.118400000000001,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": 0.0026420773513716744,
+          "fillModel": 2,
+          "entryHourChecked": true,
+          "exitType": "sl",
+          "exitAt": 1792158240000,
+          "exitPrice": 4.011959999999999,
+          "gross": -0.12210940919037216,
+          "net": -0.12298686105524925,
+          "pnl": -6152.41772428884,
+          "minuteFill": true
+        },
+        {
+          "id": "main:KRW-XRP:1791601801806",
+          "source": "main",
+          "market": "KRW-XRP",
+          "korean_name": "엑스알피(리플)",
+          "score": 11.9,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 골든크로스 (18)",
+            "EMA 상승배열",
+            "[콤보] 반등확인 보너스"
+          ],
+          "scanAt": 1791601256657,
+          "scanPrice": 1918,
+          "entryAt": 1791601801806,
+          "entryPrice": 1917,
+          "qty": 26.082420448617633,
+          "krw": 50000,
+          "stopLoss": 1686.96,
+          "takeProfit": 2147.0400000000004,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": -0.000524047604546718,
+          "exitType": "time",
+          "exitAt": 1792210201738,
+          "exitPrice": 1762.9999999999998,
+          "gross": -0.08033385498174239,
+          "net": -0.08125306152348977,
+          "pnl": -4064.68440271257
+        },
+        {
+          "id": "main:KRW-ARB:1791601801806",
+          "source": "main",
+          "market": "KRW-ARB",
+          "korean_name": "아비트럼",
+          "score": 9.3,
+          "signals": [
+            "Stoch 과매도 골든크로스 (18)",
+            "EMA 상승배열",
+            "[콤보] 반등확인 보너스",
+            "⚠️유동성 ×0.9",
+            "🔥지속 매수권 (3일+)"
+          ],
+          "scanAt": 1791601256657,
+          "scanPrice": 252,
+          "entryAt": 1791601801806,
+          "entryPrice": 252,
+          "qty": 198.4126984126984,
+          "krw": 50000,
+          "stopLoss": 221.76,
+          "takeProfit": 282.24,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": 0.0006511727730584838,
+          "exitType": "time",
+          "exitAt": 1792210201738,
+          "exitPrice": 255,
+          "gross": 0.011904761904761862,
+          "net": 0.010893362842388399,
+          "pnl": 544.9404761904734
+        },
+        {
+          "id": "main:KRW-LSK:1792033801918",
+          "source": "main",
+          "market": "KRW-LSK",
+          "korean_name": "리스크",
+          "score": 10.1,
+          "signals": [
+            "Stoch 과매도 골든크로스 (8)",
+            "Williams %R 과매도 (-91)",
+            "EMA 상승배열",
+            "[콤보] 반등확인 보너스",
+            "유동성 스윕 (깊이 1.49%)",
+            "⚠️유동성 ×0.8"
+          ],
+          "scanAt": 1792033236759,
+          "scanPrice": 266,
+          "entryAt": 1792033801918,
+          "entryPrice": 262,
+          "qty": 190.83969465648855,
+          "krw": 50000,
+          "stopLoss": 230.56,
+          "takeProfit": 293.44000000000005,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": 0.006514969336822718,
+          "exitType": "tp",
+          "exitAt": 1792238400000,
+          "exitPrice": 293.44000000000005,
+          "gross": 0.1200000000000001,
+          "net": 0.11888055972014033,
+          "pnl": 5947.000000000007
+        },
+        {
+          "id": "main:KRW-DKA:1792216841999",
+          "source": "main",
+          "market": "KRW-DKA",
+          "korean_name": "디카르고",
+          "score": 8.9,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 골든크로스 (8)",
+            "Williams %R 과매도 (-90)",
+            "[콤보] 반등확인 보너스",
+            "⚠️업비트비중 75%"
+          ],
+          "scanAt": 1792216839883,
+          "scanPrice": 5.22,
+          "entryAt": 1792216841999,
+          "entryPrice": 5.23,
+          "qty": 9560.229445506691,
+          "krw": 50000,
+          "stopLoss": 4.6024,
+          "takeProfit": 5.8576000000000015,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": null,
+          "fillModel": 2,
+          "entryHourChecked": true,
+          "exitType": "sl",
+          "exitAt": 1792332840000,
+          "exitPrice": 4.5908,
+          "gross": -0.12221797323135764,
+          "net": -0.12309531658644857,
+          "pnl": -6157.843212237094,
+          "minuteFill": true
+        },
+        {
+          "id": "main:KRW-CTC:1791861001123",
+          "source": "main",
+          "market": "KRW-CTC",
+          "korean_name": "크레딧코인",
+          "score": 10.8,
+          "signals": [
+            "BB 하단 지지",
+            "Stoch 과매도 골든크로스 (11)",
+            "EMA 상승배열",
+            "캔들 강세형 (역망치)",
+            "[콤보] 반등확인 보너스",
+            "⚠️유동성 ×0.8",
+            "⚠️구조리스크(거래소 주의·ATH -99%)",
+            "지속 매수권 (2일)"
+          ],
+          "scanAt": 1791860444662,
+          "scanPrice": 134,
+          "entryAt": 1791861001123,
+          "entryPrice": 135,
+          "qty": 370.3703703703704,
+          "krw": 50000,
+          "stopLoss": 118.8,
+          "takeProfit": 151.20000000000002,
+          "holdMax": 7,
+          "rule": "exit",
+          "kimchiRel": null,
+          "exitType": "sl",
+          "exitAt": 1792371600000,
+          "exitPrice": 118.5624,
+          "gross": -0.12175999999999998,
+          "net": -0.12263780109945022,
+          "pnl": -6134.955999999998
         }
       ],
-      "closed": [],
       "skipped": 2,
-      "lastScan": 1791463554768
+      "lastScan": 1792400436939
     },
     "momentum": {
-      "cash": 349925,
+      "cash": 217347.5631280421,
       "open": [
+        {
+          "id": "momentum:KRW-CKB:1792023001884",
+          "source": "momentum",
+          "market": "KRW-CKB",
+          "korean_name": "너보스",
+          "score": 10.8,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "scanAt": 1792022558046,
+          "scanPrice": 2.13,
+          "entryAt": 1792023001884,
+          "entryPrice": 2.14,
+          "qty": 23364.48598130841,
+          "krw": 50000,
+          "stopLoss": 1.8832000000000002,
+          "takeProfit": 2.3968000000000003,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": -0.001483766993687019
+        },
+        {
+          "id": "momentum:KRW-FIL:1792206590797",
+          "source": "momentum",
+          "market": "KRW-FIL",
+          "korean_name": "파일코인",
+          "score": 7.56,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "scanAt": 1792206589016,
+          "scanPrice": 1542,
+          "entryAt": 1792206590797,
+          "entryPrice": 1544,
+          "qty": 32.38341968911917,
+          "krw": 50000,
+          "stopLoss": 1358.72,
+          "takeProfit": 1729.2800000000002,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": -0.00008603857809197368,
+          "fillModel": 2,
+          "entryHourChecked": true
+        },
+        {
+          "id": "momentum:KRW-INJ:1792282210524",
+          "source": "momentum",
+          "market": "KRW-INJ",
+          "korean_name": "인젝티브",
+          "score": 12.8,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.8"
+          ],
+          "scanAt": 1792282207665,
+          "scanPrice": 11670,
+          "entryAt": 1792282210524,
+          "entryPrice": 11650,
+          "qty": 4.291845493562231,
+          "krw": 49999.99999999999,
+          "stopLoss": 10252,
+          "takeProfit": 13048.000000000002,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": -0.0007790994081672276,
+          "fillModel": 2,
+          "entryHourChecked": true
+        },
+        {
+          "id": "momentum:KRW-KAVA:1792336211409",
+          "source": "momentum",
+          "market": "KRW-KAVA",
+          "korean_name": "카바",
+          "score": 10.8,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "scanAt": 1792336209129,
+          "scanPrice": 96.4,
+          "entryAt": 1792336211409,
+          "entryPrice": 96.5,
+          "qty": 518.1347150259068,
+          "krw": 50000,
+          "stopLoss": 84.92,
+          "takeProfit": 108.08000000000001,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.0003497128952176798,
+          "fillModel": 2,
+          "entryHourChecked": true
+        },
+        {
+          "id": "momentum:KRW-ELSA:1792336211409",
+          "source": "momentum",
+          "market": "KRW-ELSA",
+          "korean_name": "헤이엘사",
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 4봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1792336209129,
+          "scanPrice": 90.4,
+          "entryAt": 1792336211409,
+          "entryPrice": 90.7,
+          "qty": 551.2679162072767,
+          "krw": 50000,
+          "stopLoss": 79.816,
+          "takeProfit": 101.58400000000002,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": null,
+          "fillModel": 2,
+          "entryHourChecked": true
+        }
+      ],
+      "closed": [
+        {
+          "id": "momentum:KRW-SENT:1791486601429",
+          "source": "momentum",
+          "market": "KRW-SENT",
+          "korean_name": "센티언트",
+          "score": 11.2,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "연속양봉 5봉",
+            "200봉 신고가 근접",
+            "MACD 히스토 3연속↑",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.8"
+          ],
+          "scanAt": 1791483011779,
+          "scanPrice": 32.9,
+          "entryAt": 1791486601429,
+          "entryPrice": 32.9,
+          "qty": 1519.756838905775,
+          "krw": 50000,
+          "stopLoss": 28.951999999999998,
+          "takeProfit": 36.848,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": -0.002309605502932799,
+          "exitType": "sl",
+          "exitAt": 1791565200000,
+          "exitPrice": 28.894095999999998,
+          "gross": -0.12176000000000009,
+          "net": -0.12263780109945022,
+          "pnl": -6134.955999999998
+        },
+        {
+          "id": "momentum:KRW-CHIP:1791497401455",
+          "source": "momentum",
+          "market": "KRW-CHIP",
+          "korean_name": "유에스디에이아이",
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1791493811584,
+          "scanPrice": 66.6,
+          "entryAt": 1791497401455,
+          "entryPrice": 66.8,
+          "qty": 748.502994011976,
+          "krw": 50000,
+          "stopLoss": 58.784,
+          "takeProfit": 74.816,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": -0.0020144196073056397,
+          "exitType": "tp",
+          "exitAt": 1791648000000,
+          "exitPrice": 74.816,
+          "gross": 0.1200000000000001,
+          "net": 0.11888055972014011,
+          "pnl": 5947
+        },
+        {
+          "id": "momentum:KRW-FIL:1791645001671",
+          "source": "momentum",
+          "market": "KRW-FIL",
+          "korean_name": "파일코인",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1791644653847,
+          "scanPrice": 1539,
+          "entryAt": 1791645001671,
+          "entryPrice": 1537,
+          "qty": 32.53090435914118,
+          "krw": 50000,
+          "stopLoss": 1352.56,
+          "takeProfit": 1721.44,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.0023662451885911873,
+          "exitType": "tp",
+          "exitAt": 1791748800000,
+          "exitPrice": 1721.44,
+          "gross": 0.1200000000000001,
+          "net": 0.11888055972014011,
+          "pnl": 5947
+        },
+        {
+          "id": "momentum:KRW-STX:1791681001748",
+          "source": "momentum",
+          "market": "KRW-STX",
+          "korean_name": "스택스",
+          "score": 14,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "연속양봉 3봉",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1791677412953,
+          "scanPrice": 551,
+          "entryAt": 1791681001748,
+          "entryPrice": 547,
+          "qty": 91.40767824497257,
+          "krw": 50000,
+          "stopLoss": 481.36,
+          "takeProfit": 612.6400000000001,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.0017418255748904432,
+          "exitType": "tp",
+          "exitAt": 1791835200000,
+          "exitPrice": 612.6400000000001,
+          "gross": 0.1200000000000001,
+          "net": 0.11888055972014033,
+          "pnl": 5947.000000000007
+        },
+        {
+          "id": "momentum:KRW-JTO:1791468120282",
+          "source": "momentum",
+          "market": "KRW-JTO",
+          "korean_name": "지토",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1791463442957,
+          "scanPrice": 753,
+          "entryAt": 1791468120282,
+          "entryPrice": 767,
+          "qty": 65.1890482398957,
+          "krw": 50000,
+          "stopLoss": 674.96,
+          "takeProfit": 859.0400000000001,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": -0.00234779426533982,
+          "exitType": "sl",
+          "exitAt": 1791849600000,
+          "exitPrice": 673.61008,
+          "gross": -0.12175999999999998,
+          "net": -0.1226378010994501,
+          "pnl": -6134.955999999998
+        },
+        {
+          "id": "momentum:KRW-LPT:1791627001627",
+          "source": "momentum",
+          "market": "KRW-LPT",
+          "korean_name": "라이브피어",
+          "score": 10,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1791623412142,
+          "scanPrice": 2514,
+          "entryAt": 1791627001627,
+          "entryPrice": 2519,
+          "qty": 19.849146486701073,
+          "krw": 50000.00000000001,
+          "stopLoss": 2216.72,
+          "takeProfit": 2821.28,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.00280871732533039,
+          "exitType": "sl",
+          "exitAt": 1791849600000,
+          "exitPrice": 2212.28656,
+          "gross": -0.12175999999999998,
+          "net": -0.1226378010994501,
+          "pnl": -6134.956000000006
+        },
+        {
+          "id": "momentum:KRW-WLD:1791767401954",
+          "source": "momentum",
+          "market": "KRW-WLD",
+          "korean_name": "월드코인",
+          "score": 12,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "연속양봉 3봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1791763815254,
+          "scanPrice": 758,
+          "entryAt": 1791767401954,
+          "entryPrice": 745,
+          "qty": 67.11409395973155,
+          "krw": 50000,
+          "stopLoss": 655.6,
+          "takeProfit": 834.4000000000001,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.00042957961290679414,
+          "exitType": "sl",
+          "exitAt": 1791849600000,
+          "exitPrice": 654.2888,
+          "gross": -0.12175999999999998,
+          "net": -0.1226378010994501,
+          "pnl": -6134.955999999991
+        },
+        {
+          "id": "momentum:KRW-CHIP:1791843002067",
+          "source": "momentum",
+          "market": "KRW-CHIP",
+          "korean_name": "유에스디에이아이",
+          "score": 12,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "EMA20 상승기울기",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산"
+          ],
+          "scanAt": 1791839414746,
+          "scanPrice": 79.2,
+          "entryAt": 1791843002067,
+          "entryPrice": 80.1,
+          "qty": 624.2197253433209,
+          "krw": 50000,
+          "stopLoss": 70.488,
+          "takeProfit": 89.712,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": -0.0021362134449384174,
+          "exitType": "sl",
+          "exitAt": 1792015200000,
+          "exitPrice": 70.347024,
+          "gross": -0.12175999999999987,
+          "net": -0.1226378010994501,
+          "pnl": -6134.955999999991
+        },
+        {
+          "id": "momentum:KRW-ADA:1791468120282",
+          "source": "momentum",
+          "market": "KRW-ADA",
+          "korean_name": "에이다",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인"
+          ],
+          "scanAt": 1791463442957,
+          "scanPrice": 339,
+          "entryAt": 1791468120282,
+          "entryPrice": 339,
+          "qty": 147.49262536873155,
+          "krw": 49999.99999999999,
+          "stopLoss": 298.32,
+          "takeProfit": 379.68000000000006,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.0013958381892553717,
+          "exitType": "sl",
+          "exitAt": 1792029600000,
+          "exitPrice": 297.72336,
+          "gross": -0.12175999999999998,
+          "net": -0.1226378010994501,
+          "pnl": -6134.955999999991
+        },
         {
           "id": "momentum:KRW-JST:1791468120282",
           "source": "momentum",
@@ -127,13 +1409,19 @@
           "takeProfit": 213.92000000000002,
           "holdMax": 7,
           "rule": "default",
-          "kimchiRel": 0.0005108167139800113
+          "kimchiRel": 0.0005108167139800113,
+          "exitType": "time",
+          "exitAt": 1792073401452,
+          "exitPrice": 179,
+          "gross": -0.06282722513089001,
+          "net": -0.0637639295535477,
+          "pnl": -3189.790575916224
         },
         {
-          "id": "momentum:KRW-JTO:1791468120282",
+          "id": "momentum:KRW-VIRTUAL:1791486601429",
           "source": "momentum",
-          "market": "KRW-JTO",
-          "korean_name": "지토",
+          "market": "KRW-VIRTUAL",
+          "korean_name": "버추얼프로토콜",
           "score": 10,
           "signals": [
             "EMA 완전정배열 (20>50>200)",
@@ -141,23 +1429,123 @@
             "RSI 골디락스 (50~75)",
             "OBV 추세확인"
           ],
-          "scanAt": 1791463442957,
-          "scanPrice": 753,
-          "entryAt": 1791468120282,
-          "entryPrice": 767,
-          "qty": 65.1890482398957,
+          "scanAt": 1791483011779,
+          "scanPrice": 937,
+          "entryAt": 1791486601429,
+          "entryPrice": 952,
+          "qty": 52.52100840336134,
           "krw": 50000,
-          "stopLoss": 674.96,
-          "takeProfit": 859.0400000000001,
+          "stopLoss": 837.76,
+          "takeProfit": 1066.24,
           "holdMax": 7,
           "rule": "default",
-          "kimchiRel": -0.00234779426533982
+          "kimchiRel": 0.0006236129354979525,
+          "exitType": "time",
+          "exitAt": 1792091401484,
+          "exitPrice": 923,
+          "gross": -0.030462184873949583,
+          "net": -0.03143123816243143,
+          "pnl": -1572.3476890756283
         },
         {
-          "id": "momentum:KRW-ADA:1791468120282",
+          "id": "momentum:KRW-SOL:1791486601429",
           "source": "momentum",
-          "market": "KRW-ADA",
-          "korean_name": "에이다",
+          "market": "KRW-SOL",
+          "korean_name": "솔라나",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)"
+          ],
+          "scanAt": 1791483011779,
+          "scanPrice": 146300,
+          "entryAt": 1791486601429,
+          "entryPrice": 148700,
+          "qty": 0.3362474781439139,
+          "krw": 50000,
+          "stopLoss": 130856,
+          "takeProfit": 166544.00000000003,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.0008666890064823463,
+          "exitType": "time",
+          "exitAt": 1792091401484,
+          "exitPrice": 142700,
+          "gross": -0.04034969737726968,
+          "net": -0.041308868094533824,
+          "pnl": -2066.47612642905
+        },
+        {
+          "id": "momentum:KRW-BTC:1791497401455",
+          "source": "momentum",
+          "market": "KRW-BTC",
+          "korean_name": "비트코인",
+          "score": 10,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "RSI 골디락스 (50~75)"
+          ],
+          "scanAt": 1791493811584,
+          "scanPrice": 111955000,
+          "entryAt": 1791497401455,
+          "entryPrice": 112050000,
+          "qty": 0.0004462293618920125,
+          "krw": 50000,
+          "stopLoss": 98604000,
+          "takeProfit": 125496000.00000001,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0,
+          "exitType": "time",
+          "exitAt": 1792102201498,
+          "exitPrice": 111209000,
+          "gross": -0.007505577867023661,
+          "net": -0.008497576289945186,
+          "pnl": -425.0912539045021
+        },
+        {
+          "id": "momentum:KRW-TIA:1792098613840",
+          "source": "momentum",
+          "market": "KRW-TIA",
+          "korean_name": "셀레스티아",
+          "score": 7.56,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "RSI 골디락스 (50~75)",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "scanAt": 1792098611673,
+          "scanPrice": 778,
+          "entryAt": 1792098613840,
+          "entryPrice": 781,
+          "qty": 64.02048655569783,
+          "krw": 50000.00000000001,
+          "stopLoss": 687.28,
+          "takeProfit": 874.72,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": -0.0030087588465700366,
+          "fillModel": 2,
+          "entryHourChecked": true,
+          "exitType": "tp",
+          "exitAt": 1792130400000,
+          "exitPrice": 875,
+          "gross": 0.12035851472471193,
+          "net": 0.11923871610929493,
+          "pnl": 5964.916773367477
+        },
+        {
+          "id": "momentum:KRW-STX:1792023001884",
+          "source": "momentum",
+          "market": "KRW-STX",
+          "korean_name": "스택스",
           "score": 10,
           "signals": [
             "EMA 완전정배열 (20>50>200)",
@@ -165,22 +1553,59 @@
             "RSI 골디락스 (50~75)",
             "OBV 추세확인"
           ],
-          "scanAt": 1791463442957,
-          "scanPrice": 339,
-          "entryAt": 1791468120282,
-          "entryPrice": 339,
-          "qty": 147.49262536873155,
-          "krw": 49999.99999999999,
-          "stopLoss": 298.32,
-          "takeProfit": 379.68000000000006,
+          "scanAt": 1792022558046,
+          "scanPrice": 573,
+          "entryAt": 1792023001884,
+          "entryPrice": 575,
+          "qty": 86.95652173913044,
+          "krw": 50000,
+          "stopLoss": 506,
+          "takeProfit": 644.0000000000001,
           "holdMax": 7,
           "rule": "default",
-          "kimchiRel": 0.0013958381892553717
+          "kimchiRel": -0.001076679692830651,
+          "exitType": "sl",
+          "exitAt": 1792202400000,
+          "exitPrice": 504.988,
+          "gross": -0.12175999999999998,
+          "net": -0.12263780109945022,
+          "pnl": -6134.955999999998
+        },
+        {
+          "id": "momentum:KRW-A:1791756601939",
+          "source": "momentum",
+          "market": "KRW-A",
+          "korean_name": "볼타",
+          "score": 11.2,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "⚠️유동성 ×0.8"
+          ],
+          "scanAt": 1791753013115,
+          "scanPrice": 140,
+          "entryAt": 1791756601939,
+          "entryPrice": 141,
+          "qty": 354.6099290780142,
+          "krw": 50000,
+          "stopLoss": 124.08,
+          "takeProfit": 157.92000000000002,
+          "holdMax": 7,
+          "rule": "default",
+          "kimchiRel": 0.0006857221441185501,
+          "exitType": "sl",
+          "exitAt": 1792339200000,
+          "exitPrice": 123.83184,
+          "gross": -0.12175999999999998,
+          "net": -0.1226378010994501,
+          "pnl": -6134.955999999998
         }
       ],
-      "closed": [],
       "skipped": 1,
-      "lastScan": 1791463442957
+      "lastScan": 1792401002690
     }
   },
   "equity": [
@@ -198,7 +1623,1649 @@
       "at": 1791468180681,
       "main": 500711,
       "momentum": 499598
+    },
+    {
+      "at": 1791468601267,
+      "main": 500386,
+      "momentum": 499468
+    },
+    {
+      "at": 1791472201380,
+      "main": 497412,
+      "momentum": 497427
+    },
+    {
+      "at": 1791475801396,
+      "main": 491764,
+      "momentum": 492558
+    },
+    {
+      "at": 1791479401409,
+      "main": 491333,
+      "momentum": 491805
+    },
+    {
+      "at": 1791483001424,
+      "main": 484653,
+      "momentum": 489862
+    },
+    {
+      "at": 1791486601429,
+      "main": 491997,
+      "momentum": 491211
+    },
+    {
+      "at": 1791490201435,
+      "main": 493584,
+      "momentum": 492976
+    },
+    {
+      "at": 1791493801458,
+      "main": 496623,
+      "momentum": 494943
+    },
+    {
+      "at": 1791497401455,
+      "main": 495833,
+      "momentum": 496835
+    },
+    {
+      "at": 1791501001464,
+      "main": 495698,
+      "momentum": 497497
+    },
+    {
+      "at": 1791504601480,
+      "main": 495436,
+      "momentum": 496697
+    },
+    {
+      "at": 1791508201507,
+      "main": 497431,
+      "momentum": 496114
+    },
+    {
+      "at": 1791511801489,
+      "main": 501921,
+      "momentum": 498271
+    },
+    {
+      "at": 1791515401504,
+      "main": 503443,
+      "momentum": 500122
+    },
+    {
+      "at": 1791519001488,
+      "main": 502819,
+      "momentum": 502153
+    },
+    {
+      "at": 1791522601491,
+      "main": 503112,
+      "momentum": 501017
+    },
+    {
+      "at": 1791526201510,
+      "main": 504375,
+      "momentum": 500401
+    },
+    {
+      "at": 1791529801507,
+      "main": 504198,
+      "momentum": 500205
+    },
+    {
+      "at": 1791533401512,
+      "main": 505331,
+      "momentum": 501073
+    },
+    {
+      "at": 1791537001524,
+      "main": 501577,
+      "momentum": 498701
+    },
+    {
+      "at": 1791540601527,
+      "main": 501148,
+      "momentum": 496976
+    },
+    {
+      "at": 1791544201542,
+      "main": 498305,
+      "momentum": 494058
+    },
+    {
+      "at": 1791547801610,
+      "main": 505795,
+      "momentum": 497711
+    },
+    {
+      "at": 1791551401570,
+      "main": 503969,
+      "momentum": 494446
+    },
+    {
+      "at": 1791555001569,
+      "main": 501241,
+      "momentum": 490697
+    },
+    {
+      "at": 1791558601716,
+      "main": 501766,
+      "momentum": 490529
+    },
+    {
+      "at": 1791562201709,
+      "main": 501670,
+      "momentum": 491443
+    },
+    {
+      "at": 1791565801722,
+      "main": 500421,
+      "momentum": 490378
+    },
+    {
+      "at": 1791569401731,
+      "main": 502357,
+      "momentum": 491190
+    },
+    {
+      "at": 1791573001732,
+      "main": 500486,
+      "momentum": 489786
+    },
+    {
+      "at": 1791576601739,
+      "main": 497556,
+      "momentum": 488846
+    },
+    {
+      "at": 1791580201740,
+      "main": 497792,
+      "momentum": 491776
+    },
+    {
+      "at": 1791583801747,
+      "main": 496666,
+      "momentum": 492969
+    },
+    {
+      "at": 1791587401749,
+      "main": 498397,
+      "momentum": 495215
+    },
+    {
+      "at": 1791591001758,
+      "main": 500323,
+      "momentum": 496113
+    },
+    {
+      "at": 1791594601786,
+      "main": 503326,
+      "momentum": 496857
+    },
+    {
+      "at": 1791598201784,
+      "main": 506771,
+      "momentum": 500520
+    },
+    {
+      "at": 1791601801806,
+      "main": 505242,
+      "momentum": 498424
+    },
+    {
+      "at": 1791605406595,
+      "main": 506161,
+      "momentum": 498792
+    },
+    {
+      "at": 1791609001600,
+      "main": 510848,
+      "momentum": 498425
+    },
+    {
+      "at": 1791612601615,
+      "main": 513777,
+      "momentum": 499446
+    },
+    {
+      "at": 1791616201619,
+      "main": 513360,
+      "momentum": 499324
+    },
+    {
+      "at": 1791619801622,
+      "main": 511909,
+      "momentum": 499712
+    },
+    {
+      "at": 1791623401623,
+      "main": 512521,
+      "momentum": 499456
+    },
+    {
+      "at": 1791627001627,
+      "main": 510165,
+      "momentum": 497317
+    },
+    {
+      "at": 1791630601639,
+      "main": 511934,
+      "momentum": 496936
+    },
+    {
+      "at": 1791634201643,
+      "main": 512777,
+      "momentum": 497799
+    },
+    {
+      "at": 1791637801651,
+      "main": 510517,
+      "momentum": 495689
+    },
+    {
+      "at": 1791641401660,
+      "main": 511735,
+      "momentum": 496134
+    },
+    {
+      "at": 1791645001671,
+      "main": 514887,
+      "momentum": 498047
+    },
+    {
+      "at": 1791648601674,
+      "main": 512044,
+      "momentum": 495648
+    },
+    {
+      "at": 1791652201683,
+      "main": 512660,
+      "momentum": 500315
+    },
+    {
+      "at": 1791655801689,
+      "main": 510288,
+      "momentum": 500076
+    },
+    {
+      "at": 1791659401697,
+      "main": 510813,
+      "momentum": 500018
+    },
+    {
+      "at": 1791663001709,
+      "main": 512615,
+      "momentum": 500024
+    },
+    {
+      "at": 1791666601708,
+      "main": 513865,
+      "momentum": 501138
+    },
+    {
+      "at": 1791670201716,
+      "main": 515300,
+      "momentum": 500314
+    },
+    {
+      "at": 1791673801726,
+      "main": 513482,
+      "momentum": 499575
+    },
+    {
+      "at": 1791677401737,
+      "main": 513935,
+      "momentum": 498908
+    },
+    {
+      "at": 1791681001748,
+      "main": 515326,
+      "momentum": 497702
+    },
+    {
+      "at": 1791684601760,
+      "main": 516867,
+      "momentum": 499507
+    },
+    {
+      "at": 1791688201801,
+      "main": 514174,
+      "momentum": 498758
+    },
+    {
+      "at": 1791691801796,
+      "main": 506512,
+      "momentum": 493367
+    },
+    {
+      "at": 1791695401784,
+      "main": 511367,
+      "momentum": 496952
+    },
+    {
+      "at": 1791699001803,
+      "main": 510606,
+      "momentum": 496371
+    },
+    {
+      "at": 1791702601810,
+      "main": 514062,
+      "momentum": 498393
+    },
+    {
+      "at": 1791706201825,
+      "main": 512421,
+      "momentum": 496480
+    },
+    {
+      "at": 1791709801836,
+      "main": 516111,
+      "momentum": 498977
+    },
+    {
+      "at": 1791713401837,
+      "main": 515322,
+      "momentum": 495109
+    },
+    {
+      "at": 1791717001851,
+      "main": 514022,
+      "momentum": 494294
+    },
+    {
+      "at": 1791720601867,
+      "main": 516767,
+      "momentum": 495689
+    },
+    {
+      "at": 1791724201908,
+      "main": 514003,
+      "momentum": 495389
+    },
+    {
+      "at": 1791727801891,
+      "main": 512886,
+      "momentum": 493770
+    },
+    {
+      "at": 1791731401892,
+      "main": 516977,
+      "momentum": 496102
+    },
+    {
+      "at": 1791735001898,
+      "main": 522356,
+      "momentum": 501886
+    },
+    {
+      "at": 1791738601893,
+      "main": 522888,
+      "momentum": 501715
+    },
+    {
+      "at": 1791742201904,
+      "main": 522205,
+      "momentum": 502910
+    },
+    {
+      "at": 1791745801907,
+      "main": 521377,
+      "momentum": 502653
+    },
+    {
+      "at": 1791749401912,
+      "main": 520272,
+      "momentum": 502799
+    },
+    {
+      "at": 1791753001926,
+      "main": 521309,
+      "momentum": 506195
+    },
+    {
+      "at": 1791756601939,
+      "main": 521301,
+      "momentum": 504871
+    },
+    {
+      "at": 1791760201939,
+      "main": 522398,
+      "momentum": 506559
+    },
+    {
+      "at": 1791763801945,
+      "main": 521143,
+      "momentum": 507360
+    },
+    {
+      "at": 1791767401954,
+      "main": 520494,
+      "momentum": 503829
+    },
+    {
+      "at": 1791771001968,
+      "main": 517961,
+      "momentum": 500816
+    },
+    {
+      "at": 1791774601985,
+      "main": 515679,
+      "momentum": 502952
+    },
+    {
+      "at": 1791778201980,
+      "main": 517984,
+      "momentum": 502752
+    },
+    {
+      "at": 1791781801989,
+      "main": 519413,
+      "momentum": 505415
+    },
+    {
+      "at": 1791785401987,
+      "main": 512704,
+      "momentum": 502197
+    },
+    {
+      "at": 1791789001979,
+      "main": 511294,
+      "momentum": 502001
+    },
+    {
+      "at": 1791792601994,
+      "main": 508973,
+      "momentum": 501591
+    },
+    {
+      "at": 1791796202013,
+      "main": 509493,
+      "momentum": 500920
+    },
+    {
+      "at": 1791799802012,
+      "main": 505834,
+      "momentum": 500199
+    },
+    {
+      "at": 1791803402020,
+      "main": 504525,
+      "momentum": 498055
+    },
+    {
+      "at": 1791807002017,
+      "main": 502830,
+      "momentum": 496563
+    },
+    {
+      "at": 1791810602028,
+      "main": 499706,
+      "momentum": 494934
+    },
+    {
+      "at": 1791814202029,
+      "main": 497653,
+      "momentum": 493646
+    },
+    {
+      "at": 1791817802041,
+      "main": 492208,
+      "momentum": 491838
+    },
+    {
+      "at": 1791821402040,
+      "main": 493283,
+      "momentum": 492209
+    },
+    {
+      "at": 1791825002040,
+      "main": 489329,
+      "momentum": 490218
+    },
+    {
+      "at": 1791828602039,
+      "main": 488287,
+      "momentum": 492015
+    },
+    {
+      "at": 1791832202044,
+      "main": 488712,
+      "momentum": 493297
+    },
+    {
+      "at": 1791835802053,
+      "main": 491668,
+      "momentum": 498417
+    },
+    {
+      "at": 1791839402059,
+      "main": 489051,
+      "momentum": 497344
+    },
+    {
+      "at": 1791843002067,
+      "main": 487154,
+      "momentum": 494475
+    },
+    {
+      "at": 1791846602081,
+      "main": 480458,
+      "momentum": 489943
+    },
+    {
+      "at": 1791850202101,
+      "main": 471483,
+      "momentum": 483910
+    },
+    {
+      "at": 1791853801095,
+      "main": 466806,
+      "momentum": 476727
+    },
+    {
+      "at": 1791857401108,
+      "main": 472001,
+      "momentum": 481212
+    },
+    {
+      "at": 1791861001123,
+      "main": 475798,
+      "momentum": 485731
+    },
+    {
+      "at": 1791864601118,
+      "main": 479526,
+      "momentum": 486711
+    },
+    {
+      "at": 1791868201129,
+      "main": 481992,
+      "momentum": 488819
+    },
+    {
+      "at": 1791871801147,
+      "main": 485161,
+      "momentum": 488732
+    },
+    {
+      "at": 1791875401151,
+      "main": 483473,
+      "momentum": 489682
+    },
+    {
+      "at": 1791879001161,
+      "main": 483969,
+      "momentum": 489205
+    },
+    {
+      "at": 1791882601175,
+      "main": 482661,
+      "momentum": 487247
+    },
+    {
+      "at": 1791886201180,
+      "main": 479379,
+      "momentum": 486000
+    },
+    {
+      "at": 1791889801204,
+      "main": 473319,
+      "momentum": 483121
+    },
+    {
+      "at": 1791893401207,
+      "main": 474522,
+      "momentum": 482652
+    },
+    {
+      "at": 1791897001212,
+      "main": 476937,
+      "momentum": 483648
+    },
+    {
+      "at": 1791900601214,
+      "main": 482934,
+      "momentum": 485097
+    },
+    {
+      "at": 1791904201224,
+      "main": 484577,
+      "momentum": 483569
+    },
+    {
+      "at": 1791907801231,
+      "main": 482721,
+      "momentum": 483223
+    },
+    {
+      "at": 1791911401232,
+      "main": 483377,
+      "momentum": 482629
+    },
+    {
+      "at": 1791915001237,
+      "main": 483687,
+      "momentum": 483842
+    },
+    {
+      "at": 1791918601243,
+      "main": 486874,
+      "momentum": 485120
+    },
+    {
+      "at": 1791922201248,
+      "main": 485672,
+      "momentum": 485126
+    },
+    {
+      "at": 1791925801254,
+      "main": 485217,
+      "momentum": 485284
+    },
+    {
+      "at": 1791929401258,
+      "main": 485091,
+      "momentum": 484843
+    },
+    {
+      "at": 1791933001275,
+      "main": 485038,
+      "momentum": 484146
+    },
+    {
+      "at": 1791936601280,
+      "main": 487018,
+      "momentum": 485100
+    },
+    {
+      "at": 1791940201283,
+      "main": 488596,
+      "momentum": 484724
+    },
+    {
+      "at": 1791943801297,
+      "main": 485908,
+      "momentum": 484703
+    },
+    {
+      "at": 1791947401311,
+      "main": 487325,
+      "momentum": 485183
+    },
+    {
+      "at": 1791951001329,
+      "main": 486562,
+      "momentum": 486149
+    },
+    {
+      "at": 1791954601343,
+      "main": 483658,
+      "momentum": 484654
+    },
+    {
+      "at": 1791958201361,
+      "main": 479876,
+      "momentum": 483660
+    },
+    {
+      "at": 1791961801350,
+      "main": 480347,
+      "momentum": 485110
+    },
+    {
+      "at": 1791965401367,
+      "main": 483996,
+      "momentum": 488301
+    },
+    {
+      "at": 1791969001374,
+      "main": 478397,
+      "momentum": 484998
+    },
+    {
+      "at": 1791972601411,
+      "main": 476418,
+      "momentum": 482848
+    },
+    {
+      "at": 1791976201422,
+      "main": 475826,
+      "momentum": 483489
+    },
+    {
+      "at": 1791979801397,
+      "main": 478594,
+      "momentum": 486833
+    },
+    {
+      "at": 1791983401391,
+      "main": 470959,
+      "momentum": 481369
+    },
+    {
+      "at": 1791987001420,
+      "main": 465858,
+      "momentum": 480681
+    },
+    {
+      "at": 1791990601732,
+      "main": 466369,
+      "momentum": 479299
+    },
+    {
+      "at": 1791994201746,
+      "main": 467289,
+      "momentum": 478031
+    },
+    {
+      "at": 1791997801746,
+      "main": 470430,
+      "momentum": 481963
+    },
+    {
+      "at": 1792023001884,
+      "main": 463986,
+      "momentum": 477774
+    },
+    {
+      "at": 1792026601889,
+      "main": 464341,
+      "momentum": 477024
+    },
+    {
+      "at": 1792030201931,
+      "main": 460463,
+      "momentum": 473421
+    },
+    {
+      "at": 1792033801918,
+      "main": 452759,
+      "momentum": 468206
+    },
+    {
+      "at": 1792037401360,
+      "main": 453328,
+      "momentum": 464850
+    },
+    {
+      "at": 1792041001352,
+      "main": 454600,
+      "momentum": 465441
+    },
+    {
+      "at": 1792044601383,
+      "main": 449758,
+      "momentum": 462623
+    },
+    {
+      "at": 1792048201390,
+      "main": 449016,
+      "momentum": 463546
+    },
+    {
+      "at": 1792048295081,
+      "main": 449135,
+      "momentum": 462823
+    },
+    {
+      "at": 1792048304327,
+      "main": 448703,
+      "momentum": 462789
+    },
+    {
+      "at": 1792051801400,
+      "main": 451979,
+      "momentum": 464186
+    },
+    {
+      "at": 1792054863566,
+      "main": 456205,
+      "momentum": 464276
+    },
+    {
+      "at": 1792055401026,
+      "main": 455516,
+      "momentum": 462673
+    },
+    {
+      "at": 1792055401404,
+      "main": 455797,
+      "momentum": 462673
+    },
+    {
+      "at": 1792059001421,
+      "main": 454815,
+      "momentum": 458348
+    },
+    {
+      "at": 1792062601438,
+      "main": 453935,
+      "momentum": 458217
+    },
+    {
+      "at": 1792063700422,
+      "main": 454020,
+      "momentum": 459413
+    },
+    {
+      "at": 1792063778469,
+      "main": 453950,
+      "momentum": 459394
+    },
+    {
+      "at": 1792063780881,
+      "main": 453773,
+      "momentum": 459394
+    },
+    {
+      "at": 1792065662572,
+      "main": 454748,
+      "momentum": 459103
+    },
+    {
+      "at": 1792065758821,
+      "main": 454629,
+      "momentum": 459139
+    },
+    {
+      "at": 1792066201433,
+      "main": 452355,
+      "momentum": 458245
+    },
+    {
+      "at": 1792068210249,
+      "main": 452311,
+      "momentum": 457798
+    },
+    {
+      "at": 1792069801438,
+      "main": 450130,
+      "momentum": 456481
+    },
+    {
+      "at": 1792073401452,
+      "main": 455531,
+      "momentum": 458453
+    },
+    {
+      "at": 1792076457283,
+      "main": 464792,
+      "momentum": 463742
+    },
+    {
+      "at": 1792076989530,
+      "main": 469418,
+      "momentum": 465563
+    },
+    {
+      "at": 1792077001448,
+      "main": 469441,
+      "momentum": 465568
+    },
+    {
+      "at": 1792080601473,
+      "main": 471814,
+      "momentum": 467912
+    },
+    {
+      "at": 1792084201463,
+      "main": 469919,
+      "momentum": 464203
+    },
+    {
+      "at": 1792087258911,
+      "main": 471722,
+      "momentum": 466253
+    },
+    {
+      "at": 1792087801473,
+      "main": 471924,
+      "momentum": 465147
+    },
+    {
+      "at": 1792087811810,
+      "main": 471924,
+      "momentum": 465149
+    },
+    {
+      "at": 1792091401484,
+      "main": 477459,
+      "momentum": 465918
+    },
+    {
+      "at": 1792095001487,
+      "main": 478380,
+      "momentum": 465958
+    },
+    {
+      "at": 1792098043510,
+      "main": 475992,
+      "momentum": 466683
+    },
+    {
+      "at": 1792098601495,
+      "main": 476565,
+      "momentum": 466308
+    },
+    {
+      "at": 1792098611756,
+      "main": 476565,
+      "momentum": 466165
+    },
+    {
+      "at": 1792102201498,
+      "main": 477857,
+      "momentum": 470241
+    },
+    {
+      "at": 1792105801507,
+      "main": 478433,
+      "momentum": 470120
+    },
+    {
+      "at": 1792108851667,
+      "main": 477228,
+      "momentum": 470060
+    },
+    {
+      "at": 1792109401510,
+      "main": 477144,
+      "momentum": 469888
+    },
+    {
+      "at": 1792109413341,
+      "main": 477144,
+      "momentum": 469801
+    },
+    {
+      "at": 1792113001526,
+      "main": 479041,
+      "momentum": 471272
+    },
+    {
+      "at": 1792116601543,
+      "main": 476626,
+      "momentum": 467446
+    },
+    {
+      "at": 1792119666368,
+      "main": 475936,
+      "momentum": 467374
+    },
+    {
+      "at": 1792119757711,
+      "main": 475725,
+      "momentum": 467140
+    },
+    {
+      "at": 1792120201558,
+      "main": 476150,
+      "momentum": 467310
+    },
+    {
+      "at": 1792123801545,
+      "main": 473089,
+      "momentum": 466738
+    },
+    {
+      "at": 1792127401558,
+      "main": 477778,
+      "momentum": 468196
+    },
+    {
+      "at": 1792130449054,
+      "main": 475513,
+      "momentum": 469642
+    },
+    {
+      "at": 1792131001571,
+      "main": 474670,
+      "momentum": 469110
+    },
+    {
+      "at": 1792131013863,
+      "main": 474670,
+      "momentum": 469110
+    },
+    {
+      "at": 1792134601602,
+      "main": 476341,
+      "momentum": 471531
+    },
+    {
+      "at": 1792138201599,
+      "main": 474290,
+      "momentum": 471773
+    },
+    {
+      "at": 1792141268272,
+      "main": 475654,
+      "momentum": 472583
+    },
+    {
+      "at": 1792141801596,
+      "main": 475004,
+      "momentum": 472963
+    },
+    {
+      "at": 1792141812691,
+      "main": 475004,
+      "momentum": 472963
+    },
+    {
+      "at": 1792145401596,
+      "main": 475539,
+      "momentum": 473203
+    },
+    {
+      "at": 1792149001603,
+      "main": 476426,
+      "momentum": 474494
+    },
+    {
+      "at": 1792152048570,
+      "main": 478919,
+      "momentum": 475931
+    },
+    {
+      "at": 1792152601619,
+      "main": 478034,
+      "momentum": 475817
+    },
+    {
+      "at": 1792152611149,
+      "main": 478597,
+      "momentum": 475817
+    },
+    {
+      "at": 1792156201623,
+      "main": 475051,
+      "momentum": 475998
+    },
+    {
+      "at": 1792159801645,
+      "main": 474377,
+      "momentum": 476098
+    },
+    {
+      "at": 1792162849284,
+      "main": 473214,
+      "momentum": 477285
+    },
+    {
+      "at": 1792163401653,
+      "main": 469311,
+      "momentum": 474168
+    },
+    {
+      "at": 1792163412164,
+      "main": 469247,
+      "momentum": 474168
+    },
+    {
+      "at": 1792167001659,
+      "main": 468879,
+      "momentum": 472415
+    },
+    {
+      "at": 1792170601665,
+      "main": 466869,
+      "momentum": 470831
+    },
+    {
+      "at": 1792173647604,
+      "main": 466295,
+      "momentum": 472683
+    },
+    {
+      "at": 1792174201672,
+      "main": 466474,
+      "momentum": 472362
+    },
+    {
+      "at": 1792174208996,
+      "main": 466474,
+      "momentum": 472362
+    },
+    {
+      "at": 1792177801680,
+      "main": 463510,
+      "momentum": 471479
+    },
+    {
+      "at": 1792181401686,
+      "main": 467529,
+      "momentum": 472569
+    },
+    {
+      "at": 1792184447001,
+      "main": 467636,
+      "momentum": 473478
+    },
+    {
+      "at": 1792185001691,
+      "main": 467371,
+      "momentum": 473739
+    },
+    {
+      "at": 1792185007419,
+      "main": 467423,
+      "momentum": 473739
+    },
+    {
+      "at": 1792188601715,
+      "main": 468989,
+      "momentum": 473410
+    },
+    {
+      "at": 1792192201706,
+      "main": 468326,
+      "momentum": 473764
+    },
+    {
+      "at": 1792195261056,
+      "main": 470180,
+      "momentum": 475295
+    },
+    {
+      "at": 1792195801712,
+      "main": 469084,
+      "momentum": 475035
+    },
+    {
+      "at": 1792195808302,
+      "main": 469084,
+      "momentum": 475035
+    },
+    {
+      "at": 1792199401739,
+      "main": 464803,
+      "momentum": 473069
+    },
+    {
+      "at": 1792203001743,
+      "main": 467093,
+      "momentum": 472392
+    },
+    {
+      "at": 1792206054714,
+      "main": 466472,
+      "momentum": 470858
+    },
+    {
+      "at": 1792206589109,
+      "main": 466615,
+      "momentum": 471590
+    },
+    {
+      "at": 1792206601730,
+      "main": 466615,
+      "momentum": 471590
+    },
+    {
+      "at": 1792210201738,
+      "main": 468055,
+      "momentum": 471512
+    },
+    {
+      "at": 1792213801747,
+      "main": 468715,
+      "momentum": 474631
+    },
+    {
+      "at": 1792216840127,
+      "main": 468586,
+      "momentum": 475910
+    },
+    {
+      "at": 1792217401746,
+      "main": 467515,
+      "momentum": 476498
+    },
+    {
+      "at": 1792217408054,
+      "main": 467515,
+      "momentum": 476401
+    },
+    {
+      "at": 1792221001768,
+      "main": 467003,
+      "momentum": 476423
+    },
+    {
+      "at": 1792224601816,
+      "main": 466395,
+      "momentum": 476082
+    },
+    {
+      "at": 1792227641500,
+      "main": 465305,
+      "momentum": 475735
+    },
+    {
+      "at": 1792227754296,
+      "main": 465060,
+      "momentum": 475960
+    },
+    {
+      "at": 1792228201786,
+      "main": 465078,
+      "momentum": 477322
+    },
+    {
+      "at": 1792231801799,
+      "main": 469384,
+      "momentum": 476006
+    },
+    {
+      "at": 1792235401808,
+      "main": 468826,
+      "momentum": 473998
+    },
+    {
+      "at": 1792238440809,
+      "main": 468717,
+      "momentum": 473554
+    },
+    {
+      "at": 1792238554446,
+      "main": 468610,
+      "momentum": 473006
+    },
+    {
+      "at": 1792239001806,
+      "main": 468020,
+      "momentum": 473585
+    },
+    {
+      "at": 1792242601823,
+      "main": 467933,
+      "momentum": 471826
+    },
+    {
+      "at": 1792246201827,
+      "main": 466280,
+      "momentum": 472521
+    },
+    {
+      "at": 1792249239317,
+      "main": 467358,
+      "momentum": 472833
+    },
+    {
+      "at": 1792249451702,
+      "main": 466282,
+      "momentum": 472477
+    },
+    {
+      "at": 1792249801840,
+      "main": 466587,
+      "momentum": 471921
+    },
+    {
+      "at": 1792253401849,
+      "main": 465113,
+      "momentum": 471855
+    },
+    {
+      "at": 1792257001850,
+      "main": 464071,
+      "momentum": 470916
+    },
+    {
+      "at": 1792260056586,
+      "main": 464733,
+      "momentum": 470883
+    },
+    {
+      "at": 1792260601859,
+      "main": 465360,
+      "momentum": 470431
+    },
+    {
+      "at": 1792260606905,
+      "main": 465360,
+      "momentum": 470431
+    },
+    {
+      "at": 1792264201867,
+      "main": 466500,
+      "momentum": 472329
+    },
+    {
+      "at": 1792267801874,
+      "main": 466889,
+      "momentum": 472983
+    },
+    {
+      "at": 1792270839296,
+      "main": 466665,
+      "momentum": 471887
+    },
+    {
+      "at": 1792271401888,
+      "main": 466460,
+      "momentum": 473145
+    },
+    {
+      "at": 1792271405924,
+      "main": 466460,
+      "momentum": 473145
+    },
+    {
+      "at": 1792275001902,
+      "main": 461049,
+      "momentum": 469891
+    },
+    {
+      "at": 1792278601912,
+      "main": 461627,
+      "momentum": 470777
+    },
+    {
+      "at": 1792281658425,
+      "main": 463044,
+      "momentum": 470585
+    },
+    {
+      "at": 1792282201917,
+      "main": 463631,
+      "momentum": 470946
+    },
+    {
+      "at": 1792282207748,
+      "main": 462946,
+      "momentum": 470793
+    },
+    {
+      "at": 1792285801926,
+      "main": 465903,
+      "momentum": 469225
+    },
+    {
+      "at": 1792289401931,
+      "main": 461372,
+      "momentum": 469494
+    },
+    {
+      "at": 1792292438111,
+      "main": 460127,
+      "momentum": 469108
+    },
+    {
+      "at": 1792292553056,
+      "main": 459865,
+      "momentum": 469162
+    },
+    {
+      "at": 1792293001945,
+      "main": 460168,
+      "momentum": 468958
+    },
+    {
+      "at": 1792296601941,
+      "main": 461044,
+      "momentum": 468612
+    },
+    {
+      "at": 1792300201941,
+      "main": 458803,
+      "momentum": 467377
+    },
+    {
+      "at": 1792303238468,
+      "main": 457292,
+      "momentum": 465050
+    },
+    {
+      "at": 1792303801955,
+      "main": 457775,
+      "momentum": 464953
+    },
+    {
+      "at": 1792303806742,
+      "main": 457775,
+      "momentum": 464953
+    },
+    {
+      "at": 1792307401959,
+      "main": 458950,
+      "momentum": 465176
+    },
+    {
+      "at": 1792311001966,
+      "main": 457705,
+      "momentum": 465123
+    },
+    {
+      "at": 1792314040169,
+      "main": 457418,
+      "momentum": 464610
+    },
+    {
+      "at": 1792314601986,
+      "main": 460388,
+      "momentum": 465866
+    },
+    {
+      "at": 1792314605914,
+      "main": 460353,
+      "momentum": 465511
+    },
+    {
+      "at": 1792318201976,
+      "main": 460873,
+      "momentum": 465822
+    },
+    {
+      "at": 1792321801983,
+      "main": 459625,
+      "momentum": 463842
+    },
+    {
+      "at": 1792324857402,
+      "main": 458922,
+      "momentum": 463939
+    },
+    {
+      "at": 1792325401998,
+      "main": 459788,
+      "momentum": 464288
+    },
+    {
+      "at": 1792325409015,
+      "main": 459788,
+      "momentum": 464288
+    },
+    {
+      "at": 1792329002030,
+      "main": 458689,
+      "momentum": 462464
+    },
+    {
+      "at": 1792332602012,
+      "main": 453512,
+      "momentum": 457088
+    },
+    {
+      "at": 1792335651901,
+      "main": 452589,
+      "momentum": 456916
+    },
+    {
+      "at": 1792336202003,
+      "main": 452890,
+      "momentum": 457216
+    },
+    {
+      "at": 1792336209216,
+      "main": 452683,
+      "momentum": 457114
+    },
+    {
+      "at": 1792339802013,
+      "main": 451425,
+      "momentum": 456620
+    },
+    {
+      "at": 1792343402029,
+      "main": 466568,
+      "momentum": 473458
+    },
+    {
+      "at": 1792347002032,
+      "main": 466568,
+      "momentum": 473458
+    },
+    {
+      "at": 1792350602036,
+      "main": 466568,
+      "momentum": 473458
+    },
+    {
+      "at": 1792354202049,
+      "main": 466568,
+      "momentum": 473458
+    },
+    {
+      "at": 1792357802058,
+      "main": 466568,
+      "momentum": 473458
+    },
+    {
+      "at": 1792361402068,
+      "main": 452255,
+      "momentum": 455793
+    },
+    {
+      "at": 1792365002081,
+      "main": 455054,
+      "momentum": 457800
+    },
+    {
+      "at": 1792368039042,
+      "main": 457199,
+      "momentum": 460284
+    },
+    {
+      "at": 1792368599097,
+      "main": 458055,
+      "momentum": 459839
+    },
+    {
+      "at": 1792368602086,
+      "main": 458055,
+      "momentum": 459774
+    },
+    {
+      "at": 1792372201088,
+      "main": 457030,
+      "momentum": 458914
+    },
+    {
+      "at": 1792375801102,
+      "main": 459258,
+      "momentum": 460656
+    },
+    {
+      "at": 1792378837622,
+      "main": 457893,
+      "momentum": 457305
+    },
+    {
+      "at": 1792379401122,
+      "main": 457073,
+      "momentum": 456958
+    },
+    {
+      "at": 1792379406822,
+      "main": 457021,
+      "momentum": 456958
+    },
+    {
+      "at": 1792383001122,
+      "main": 454878,
+      "momentum": 457254
+    },
+    {
+      "at": 1792386601120,
+      "main": 454821,
+      "momentum": 456972
+    },
+    {
+      "at": 1792389637221,
+      "main": 454897,
+      "momentum": 455802
+    },
+    {
+      "at": 1792390201124,
+      "main": 455607,
+      "momentum": 456602
+    },
+    {
+      "at": 1792390203356,
+      "main": 455607,
+      "momentum": 456602
+    },
+    {
+      "at": 1792393801126,
+      "main": 455909,
+      "momentum": 455041
+    },
+    {
+      "at": 1792397401132,
+      "main": 455461,
+      "momentum": 454743
+    },
+    {
+      "at": 1792400438618,
+      "main": 456106,
+      "momentum": 454706
+    },
+    {
+      "at": 1792401001150,
+      "main": 455602,
+      "momentum": 454046
+    },
+    {
+      "at": 1792401004517,
+      "main": 455602,
+      "momentum": 454046
+    },
+    {
+      "at": 1792404601149,
+      "main": 455397,
+      "momentum": 454185
+    },
+    {
+      "at": 1792408201163,
+      "main": 451950,
+      "momentum": 453322
     }
   ],
-  "lastRun": "2026-10-08T14:03:00.681Z"
+  "lastRun": "2026-10-19T11:10:01.163Z",
+  "modelChanges": [
+    {
+      "at": 1792048295085,
+      "fillModel": 2,
+      "prevParams": {
+        "START_CASH": 500000,
+        "POSITION_KRW": 50000,
+        "MAX_OPEN": 10,
+        "MAX_PER_SCAN": 3,
+        "FEE": 0.0005,
+        "STOP_SLIP": 0.002,
+        "MAX_SCAN_AGE_MS": 10800000,
+        "DEFAULT_RULE": {
+          "slPct": 12,
+          "tpPct": 12,
+          "holdMax": 7
+        }
+      },
+      "note": "prevParams backfilled 2026-10-15 (v1 = same params without FILL_MODEL)"
+    }
+  ],
+  "fillModel": 2
 }

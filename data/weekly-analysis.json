@@ -1,1167 +1,6 @@
 {
   "weeks": [
     {
-      "timestamp": "2026-07-19T13:01:38.580Z",
-      "predictions": 5336,
-      "hits": 3405,
-      "overallHitRate": 0.638,
-      "timedHitRates": {
-        "+1일": {
-          "hit": 156,
-          "total": 509,
-          "hitRate": 0.306
-        },
-        "+3일": {
-          "hit": 51,
-          "total": 332,
-          "hitRate": 0.154
-        },
-        "+7일": null
-      },
-      "signalStats": {
-        "MACD 골든크로스": {
-          "count": 106,
-          "hitRate": 0.2169811320754717,
-          "avgReturn": -4.88
-        },
-        "MACD 반등": {
-          "count": 106,
-          "hitRate": 0.2169811320754717,
-          "avgReturn": -4.88
-        },
-        "Stoch 과매도": {
-          "count": 323,
-          "hitRate": 0.24148606811145512,
-          "avgReturn": -2.55
-        },
-        "거래량 급증": {
-          "count": 517,
-          "hitRate": 0.5918762088974855,
-          "avgReturn": 1.67
-        },
-        "캔들 강세형": {
-          "count": 352,
-          "hitRate": 0.21875,
-          "avgReturn": -2.45
-        },
-        "Williams %R 과매도": {
-          "count": 261,
-          "hitRate": 0.21839080459770116,
-          "avgReturn": -2.77
-        },
-        "EMA 상승배열": {
-          "count": 164,
-          "hitRate": 0.1951219512195122,
-          "avgReturn": -3.25
-        },
-        "MACD 상승": {
-          "count": 95,
-          "hitRate": 0.3263157894736842,
-          "avgReturn": 0.02
-        },
-        "상승깃발 패턴": {
-          "count": 63,
-          "hitRate": 0.14285714285714285,
-          "avgReturn": -1.24
-        },
-        "MACD 데드크로스": {
-          "count": 629,
-          "hitRate": 0.575516693163752,
-          "avgReturn": 0.63
-        },
-        "MACD 하락전환": {
-          "count": 629,
-          "hitRate": 0.575516693163752,
-          "avgReturn": 0.63
-        },
-        "MACD 하락": {
-          "count": 1422,
-          "hitRate": 0.5386779184247539,
-          "avgReturn": -0.21
-        },
-        "EMA 하락배열": {
-          "count": 4258,
-          "hitRate": 0.6944574917801785,
-          "avgReturn": 2.52
-        },
-        "캔들 약세형": {
-          "count": 2165,
-          "hitRate": 0.715473441108545,
-          "avgReturn": 3.17
-        },
-        "쌍봉 패턴": {
-          "count": 924,
-          "hitRate": 0.6201298701298701,
-          "avgReturn": 1.27
-        },
-        "BB 상단 돌파": {
-          "count": 280,
-          "hitRate": 0.7464285714285714,
-          "avgReturn": 5.96
-        },
-        "Stoch 과매수": {
-          "count": 136,
-          "hitRate": 0.7279411764705882,
-          "avgReturn": 6.18
-        },
-        "하락깃발 패턴": {
-          "count": 710,
-          "hitRate": 0.8154929577464789,
-          "avgReturn": 3.84
-        },
-        "Williams %R 과매수": {
-          "count": 164,
-          "hitRate": 0.8292682926829268,
-          "avgReturn": 4.37
-        },
-        "RSI 과매수": {
-          "count": 70,
-          "hitRate": 0.4714285714285714,
-          "avgReturn": 3.31
-        },
-        "Stoch 과매수 데드크로스": {
-          "count": 44,
-          "hitRate": 0.5681818181818182,
-          "avgReturn": 2.7
-        },
-        "RSI 과매도": {
-          "count": 179,
-          "hitRate": 0.1452513966480447,
-          "avgReturn": -3.09
-        },
-        "Stoch 과매도 골든크로스": {
-          "count": 89,
-          "hitRate": 0.056179775280898875,
-          "avgReturn": -7.27
-        },
-        "BB 하단 지지": {
-          "count": 59,
-          "hitRate": 0.3559322033898305,
-          "avgReturn": 0.96
-        },
-        "역삼중바닥 패턴": {
-          "count": 21,
-          "hitRate": 0,
-          "avgReturn": -2.66
-        },
-        "EMA 20/50 골든크로스": {
-          "count": 7,
-          "hitRate": 0,
-          "avgReturn": -4.9
-        },
-        "거래량 선행 매집": {
-          "count": 31,
-          "hitRate": 0.3870967741935484,
-          "avgReturn": 0.84
-        },
-        "EMA 20/50 데드크로스": {
-          "count": 23,
-          "hitRate": 0.34782608695652173,
-          "avgReturn": 0.52
-        }
-      },
-      "report": {
-        "topBuySignals": [
-          {
-            "key": "거래량 선행 매집",
-            "count": 31,
-            "hitRate": 0.3870967741935484,
-            "hits": 12
-          },
-          {
-            "key": "BB 하단 지지",
-            "count": 59,
-            "hitRate": 0.3559322033898305,
-            "hits": 21
-          },
-          {
-            "key": "MACD 상승",
-            "count": 95,
-            "hitRate": 0.3263157894736842,
-            "hits": 31
-          },
-          {
-            "key": "Stoch 과매도",
-            "count": 323,
-            "hitRate": 0.24148606811145512,
-            "hits": 78
-          },
-          {
-            "key": "거래량 급증",
-            "count": 235,
-            "hitRate": 0.2297872340425532,
-            "hits": 54
-          },
-          {
-            "key": "캔들 강세형",
-            "count": 352,
-            "hitRate": 0.21875,
-            "hits": 77
-          },
-          {
-            "key": "Williams %R 과매도",
-            "count": 261,
-            "hitRate": 0.21839080459770116,
-            "hits": 57
-          },
-          {
-            "key": "MACD 골든크로스",
-            "count": 106,
-            "hitRate": 0.2169811320754717,
-            "hits": 23
-          }
-        ],
-        "topSellSignals": [
-          {
-            "key": "거래량 급증",
-            "count": 282,
-            "hitRate": 0.8936170212765957,
-            "hits": 252
-          },
-          {
-            "key": "Williams %R 과매수",
-            "count": 164,
-            "hitRate": 0.8292682926829268,
-            "hits": 136
-          },
-          {
-            "key": "하락깃발 패턴",
-            "count": 710,
-            "hitRate": 0.8154929577464789,
-            "hits": 579
-          },
-          {
-            "key": "BB 상단 돌파",
-            "count": 280,
-            "hitRate": 0.7464285714285714,
-            "hits": 209
-          },
-          {
-            "key": "Stoch 과매수",
-            "count": 136,
-            "hitRate": 0.7279411764705882,
-            "hits": 99
-          },
-          {
-            "key": "캔들 약세형",
-            "count": 2165,
-            "hitRate": 0.715473441108545,
-            "hits": 1549
-          },
-          {
-            "key": "EMA 하락배열",
-            "count": 4258,
-            "hitRate": 0.6944574917801785,
-            "hits": 2957
-          },
-          {
-            "key": "쌍봉 패턴",
-            "count": 924,
-            "hitRate": 0.6201298701298701,
-            "hits": 573
-          }
-        ],
-        "weightChanges": [
-          {
-            "key": "EMA 20/50 데드크로스",
-            "old": 1.22,
-            "new": 1.07,
-            "direction": "down",
-            "reason": "적중률 35% (표본 23) → 하향"
-          },
-          {
-            "key": "거래량 선행 매집",
-            "old": 1.17,
-            "new": 1.03,
-            "direction": "down",
-            "reason": "적중률 39% (표본 31) → 하향"
-          },
-          {
-            "key": "RSI 과매수",
-            "old": 1.3,
-            "new": 1.18,
-            "direction": "down",
-            "reason": "적중률 47% (표본 70) → 하향"
-          },
-          {
-            "key": "하락깃발 패턴",
-            "old": 1.15,
-            "new": 1.27,
-            "direction": "up",
-            "reason": "적중률 82% (표본 710) → 상향"
-          },
-          {
-            "key": "캔들 약세형",
-            "old": 1.14,
-            "new": 1.26,
-            "direction": "up",
-            "reason": "적중률 72% (표본 2165) → 상향"
-          },
-          {
-            "key": "EMA 하락배열",
-            "old": 1.15,
-            "new": 1.26,
-            "direction": "up",
-            "reason": "적중률 69% (표본 4258) → 상향"
-          },
-          {
-            "key": "BB 상단 돌파",
-            "old": 1.24,
-            "new": 1.34,
-            "direction": "up",
-            "reason": "적중률 75% (표본 280) → 상향"
-          },
-          {
-            "key": "Stoch 과매수",
-            "old": 1.24,
-            "new": 1.34,
-            "direction": "up",
-            "reason": "적중률 73% (표본 136) → 상향"
-          },
-          {
-            "key": "Williams %R 과매수",
-            "old": 1.24,
-            "new": 1.34,
-            "direction": "up",
-            "reason": "적중률 83% (표본 164) → 상향"
-          },
-          {
-            "key": "역삼중바닥 패턴",
-            "old": 1.01,
-            "new": 0.91,
-            "direction": "down",
-            "reason": "적중률 0% (표본 21) → 하향"
-          },
-          {
-            "key": "Stoch 과매도 골든크로스",
-            "old": 0.93,
-            "new": 0.84,
-            "direction": "down",
-            "reason": "적중률 6% (표본 89) → 하향"
-          },
-          {
-            "key": "MACD 하락전환",
-            "old": 0.96,
-            "new": 1.03,
-            "direction": "up",
-            "reason": "적중률 58% (표본 629) → 상향"
-          },
-          {
-            "key": "RSI 과매도",
-            "old": 0.92,
-            "new": 0.85,
-            "direction": "down",
-            "reason": "적중률 15% (표본 179) → 하향"
-          },
-          {
-            "key": "Stoch 과매도",
-            "old": 0.91,
-            "new": 0.84,
-            "direction": "down",
-            "reason": "적중률 24% (표본 323) → 하향"
-          },
-          {
-            "key": "Williams %R 과매도",
-            "old": 0.92,
-            "new": 0.85,
-            "direction": "down",
-            "reason": "적중률 22% (표본 261) → 하향"
-          },
-          {
-            "key": "거래량 급증",
-            "old": 1.01,
-            "new": 1.08,
-            "direction": "up",
-            "reason": "적중률 59% (표본 517) → 상향"
-          },
-          {
-            "key": "MACD 데드크로스",
-            "old": 0.98,
-            "new": 1.04,
-            "direction": "up",
-            "reason": "적중률 58% (표본 629) → 상향"
-          },
-          {
-            "key": "캔들 강세형",
-            "old": 0.88,
-            "new": 0.82,
-            "direction": "down",
-            "reason": "적중률 22% (표본 352) → 하향"
-          },
-          {
-            "key": "상승깃발 패턴",
-            "old": 0.87,
-            "new": 0.82,
-            "direction": "down",
-            "reason": "적중률 14% (표본 63) → 하향"
-          },
-          {
-            "key": "EMA 상승배열",
-            "old": 0.84,
-            "new": 0.79,
-            "direction": "down",
-            "reason": "적중률 20% (표본 164) → 하향"
-          },
-          {
-            "key": "쌍봉 패턴",
-            "old": 1.12,
-            "new": 1.17,
-            "direction": "up",
-            "reason": "적중률 62% (표본 924) → 상향"
-          },
-          {
-            "key": "MACD 골든크로스",
-            "old": 0.81,
-            "new": 0.77,
-            "direction": "down",
-            "reason": "적중률 22% (표본 106) → 하향"
-          },
-          {
-            "key": "MACD 반등",
-            "old": 0.79,
-            "new": 0.75,
-            "direction": "down",
-            "reason": "적중률 22% (표본 106) → 하향"
-          },
-          {
-            "key": "BB 하단 지지",
-            "old": 0.85,
-            "new": 0.81,
-            "direction": "down",
-            "reason": "적중률 36% (표본 59) → 하향"
-          },
-          {
-            "key": "MACD 상승",
-            "old": 0.79,
-            "new": 0.76,
-            "direction": "down",
-            "reason": "적중률 33% (표본 95) → 하향"
-          },
-          {
-            "key": "MACD 하락",
-            "old": 1,
-            "new": 1.02,
-            "direction": "up",
-            "reason": "적중률 54% (표본 1422) → 상향"
-          },
-          {
-            "key": "Stoch 과매수 데드크로스",
-            "old": 1.25,
-            "new": 1.23,
-            "direction": "down",
-            "reason": "적중률 57% (표본 44) → 하향"
-          }
-        ],
-        "hitCoins": [
-          {
-            "market": "KRW-AAVE",
-            "korean_name": "에이브",
-            "hits": 55,
-            "total": 55
-          },
-          {
-            "market": "KRW-TIA",
-            "korean_name": "셀레스티아",
-            "hits": 51,
-            "total": 59
-          },
-          {
-            "market": "KRW-AVAX",
-            "korean_name": "아발란체",
-            "hits": 49,
-            "total": 49
-          },
-          {
-            "market": "KRW-AKT",
-            "korean_name": "아카시네트워크",
-            "hits": 40,
-            "total": 40
-          },
-          {
-            "market": "KRW-F",
-            "korean_name": "신퓨처스",
-            "hits": 39,
-            "total": 39
-          },
-          {
-            "market": "KRW-CC",
-            "korean_name": "캔톤",
-            "hits": 39,
-            "total": 43
-          },
-          {
-            "market": "KRW-OP",
-            "korean_name": "옵티미즘",
-            "hits": 38,
-            "total": 38
-          },
-          {
-            "market": "KRW-SOON",
-            "korean_name": "쑨",
-            "hits": 38,
-            "total": 38
-          },
-          {
-            "market": "KRW-VET",
-            "korean_name": "비체인",
-            "hits": 38,
-            "total": 38
-          },
-          {
-            "market": "KRW-ERA",
-            "korean_name": "칼데라",
-            "hits": 35,
-            "total": 35
-          }
-        ],
-        "missCoins": [
-          {
-            "market": "KRW-BONK",
-            "korean_name": "봉크",
-            "total": 38
-          },
-          {
-            "market": "KRW-STRAX",
-            "korean_name": "저트라",
-            "total": 25
-          },
-          {
-            "market": "KRW-SENT",
-            "korean_name": "센티언트",
-            "total": 23
-          },
-          {
-            "market": "KRW-ATH",
-            "korean_name": "에이셔",
-            "total": 22
-          },
-          {
-            "market": "KRW-SUI",
-            "korean_name": "수이",
-            "total": 22
-          },
-          {
-            "market": "KRW-WET",
-            "korean_name": "휴미디파이",
-            "total": 21
-          },
-          {
-            "market": "KRW-SOL",
-            "korean_name": "솔라나",
-            "total": 21
-          },
-          {
-            "market": "KRW-PEPE",
-            "korean_name": "페페",
-            "total": 21
-          },
-          {
-            "market": "KRW-MET2",
-            "korean_name": "메테오라",
-            "total": 18
-          },
-          {
-            "market": "KRW-HYPER",
-            "korean_name": "하이퍼레인",
-            "total": 17
-          }
-        ]
-      },
-      "momentum": {
-        "picks": 46,
-        "overallHitRate": 0.478,
-        "timedHitRates": {
-          "+1일": {
-            "hit": 13,
-            "total": 34,
-            "hitRate": 0.382
-          },
-          "+3일": null,
-          "+7일": null
-        }
-      },
-      "horizonMode": "current-price-mixed"
-    },
-    {
-      "timestamp": "2026-07-26T13:02:19.270Z",
-      "predictions": 8310,
-      "hits": 5028,
-      "overallHitRate": 0.605,
-      "timedHitRates": {
-        "+1일": {
-          "hit": 331,
-          "total": 640,
-          "hitRate": 0.517
-        },
-        "+3일": {
-          "hit": 182,
-          "total": 532,
-          "hitRate": 0.342
-        },
-        "+7일": null
-      },
-      "signalStats": {
-        "MACD 골든크로스": {
-          "count": 100,
-          "hitRate": 0.39,
-          "avgReturn": -0.83
-        },
-        "MACD 반등": {
-          "count": 100,
-          "hitRate": 0.39,
-          "avgReturn": -0.83
-        },
-        "Stoch 과매도 골든크로스": {
-          "count": 197,
-          "hitRate": 0.27918781725888325,
-          "avgReturn": -2.14
-        },
-        "거래량 급증": {
-          "count": 804,
-          "hitRate": 0.48009950248756217,
-          "avgReturn": 1.1
-        },
-        "캔들 강세형": {
-          "count": 375,
-          "hitRate": 0.24266666666666667,
-          "avgReturn": -2.68
-        },
-        "Stoch 과매도": {
-          "count": 290,
-          "hitRate": 0.3620689655172414,
-          "avgReturn": 0.15
-        },
-        "역삼중바닥 패턴": {
-          "count": 7,
-          "hitRate": 0,
-          "avgReturn": -4.56
-        },
-        "MACD 상승": {
-          "count": 70,
-          "hitRate": 0.4,
-          "avgReturn": 2.79
-        },
-        "EMA 20/50 골든크로스": {
-          "count": 19,
-          "hitRate": 0,
-          "avgReturn": -9.56
-        },
-        "EMA 상승배열": {
-          "count": 159,
-          "hitRate": 0.5094339622641509,
-          "avgReturn": 2.17
-        },
-        "거래량 선행 매집": {
-          "count": 81,
-          "hitRate": 0.2962962962962963,
-          "avgReturn": 1.35
-        },
-        "Williams %R 과매도": {
-          "count": 232,
-          "hitRate": 0.4827586206896552,
-          "avgReturn": 1.46
-        },
-        "RSI 과매도": {
-          "count": 156,
-          "hitRate": 0.5064102564102564,
-          "avgReturn": 3.2
-        },
-        "상승깃발 패턴": {
-          "count": 29,
-          "hitRate": 0.7241379310344828,
-          "avgReturn": 4
-        },
-        "MACD 데드크로스": {
-          "count": 636,
-          "hitRate": 0.539308176100629,
-          "avgReturn": 0.36
-        },
-        "MACD 하락전환": {
-          "count": 636,
-          "hitRate": 0.539308176100629,
-          "avgReturn": 0.36
-        },
-        "MACD 하락": {
-          "count": 3952,
-          "hitRate": 0.5898279352226721,
-          "avgReturn": 0.46
-        },
-        "EMA 하락배열": {
-          "count": 7043,
-          "hitRate": 0.6309811160017038,
-          "avgReturn": 1.18
-        },
-        "쌍봉 패턴": {
-          "count": 1297,
-          "hitRate": 0.5713184271395528,
-          "avgReturn": 1.16
-        },
-        "캔들 약세형": {
-          "count": 1807,
-          "hitRate": 0.6480354178195905,
-          "avgReturn": 1.47
-        },
-        "RSI 과매수": {
-          "count": 107,
-          "hitRate": 0.5327102803738317,
-          "avgReturn": -3.69
-        },
-        "BB 상단 돌파": {
-          "count": 314,
-          "hitRate": 0.6050955414012739,
-          "avgReturn": 2.31
-        },
-        "하락깃발 패턴": {
-          "count": 1637,
-          "hitRate": 0.7214416615760537,
-          "avgReturn": 1.72
-        },
-        "Stoch 과매수": {
-          "count": 210,
-          "hitRate": 0.6476190476190476,
-          "avgReturn": -0.31
-        },
-        "Williams %R 과매수": {
-          "count": 273,
-          "hitRate": 0.6263736263736264,
-          "avgReturn": 0.08
-        },
-        "BB 하단 지지": {
-          "count": 69,
-          "hitRate": 0.5797101449275363,
-          "avgReturn": 1.98
-        },
-        "EMA 20/50 데드크로스": {
-          "count": 33,
-          "hitRate": 1,
-          "avgReturn": 1.9
-        },
-        "Stoch 과매수 데드크로스": {
-          "count": 63,
-          "hitRate": 0.6507936507936508,
-          "avgReturn": 0.3
-        }
-      },
-      "report": {
-        "topBuySignals": [
-          {
-            "key": "상승깃발 패턴",
-            "count": 29,
-            "hitRate": 0.7241379310344828,
-            "hits": 21
-          },
-          {
-            "key": "BB 하단 지지",
-            "count": 69,
-            "hitRate": 0.5797101449275363,
-            "hits": 40
-          },
-          {
-            "key": "EMA 상승배열",
-            "count": 159,
-            "hitRate": 0.5094339622641509,
-            "hits": 81
-          },
-          {
-            "key": "RSI 과매도",
-            "count": 156,
-            "hitRate": 0.5064102564102564,
-            "hits": 79
-          },
-          {
-            "key": "Williams %R 과매도",
-            "count": 232,
-            "hitRate": 0.4827586206896552,
-            "hits": 112
-          },
-          {
-            "key": "MACD 상승",
-            "count": 70,
-            "hitRate": 0.4,
-            "hits": 28
-          },
-          {
-            "key": "MACD 골든크로스",
-            "count": 100,
-            "hitRate": 0.39,
-            "hits": 39
-          },
-          {
-            "key": "MACD 반등",
-            "count": 100,
-            "hitRate": 0.39,
-            "hits": 39
-          }
-        ],
-        "topSellSignals": [
-          {
-            "key": "EMA 20/50 데드크로스",
-            "count": 33,
-            "hitRate": 1,
-            "hits": 33
-          },
-          {
-            "key": "하락깃발 패턴",
-            "count": 1637,
-            "hitRate": 0.7214416615760537,
-            "hits": 1181
-          },
-          {
-            "key": "거래량 급증",
-            "count": 465,
-            "hitRate": 0.6688172043010753,
-            "hits": 311
-          },
-          {
-            "key": "Stoch 과매수 데드크로스",
-            "count": 63,
-            "hitRate": 0.6507936507936508,
-            "hits": 41
-          },
-          {
-            "key": "캔들 약세형",
-            "count": 1807,
-            "hitRate": 0.6480354178195905,
-            "hits": 1171
-          },
-          {
-            "key": "Stoch 과매수",
-            "count": 210,
-            "hitRate": 0.6476190476190476,
-            "hits": 136
-          },
-          {
-            "key": "EMA 하락배열",
-            "count": 7043,
-            "hitRate": 0.6309811160017038,
-            "hits": 4444
-          },
-          {
-            "key": "Williams %R 과매수",
-            "count": 273,
-            "hitRate": 0.6263736263736264,
-            "hits": 171
-          }
-        ],
-        "weightChanges": [
-          {
-            "key": "상승깃발 패턴",
-            "old": 0.82,
-            "new": 1.04,
-            "direction": "up",
-            "reason": "적중률 72% (표본 29) → 상향"
-          },
-          {
-            "key": "EMA 20/50 데드크로스",
-            "old": 1.07,
-            "new": 1.2,
-            "direction": "up",
-            "reason": "적중률 100% (표본 33) → 상향"
-          },
-          {
-            "key": "BB 하단 지지",
-            "old": 0.81,
-            "new": 0.93,
-            "direction": "up",
-            "reason": "적중률 58% (표본 69) → 상향"
-          },
-          {
-            "key": "거래량 선행 매집",
-            "old": 1.03,
-            "new": 0.94,
-            "direction": "down",
-            "reason": "적중률 30% (표본 81) → 하향"
-          },
-          {
-            "key": "EMA 20/50 골든크로스",
-            "old": 0.95,
-            "new": 0.86,
-            "direction": "down",
-            "reason": "적중률 0% (표본 19) → 하향"
-          },
-          {
-            "key": "하락깃발 패턴",
-            "old": 1.27,
-            "new": 1.35,
-            "direction": "up",
-            "reason": "적중률 72% (표본 1637) → 상향"
-          },
-          {
-            "key": "EMA 상승배열",
-            "old": 0.79,
-            "new": 0.86,
-            "direction": "up",
-            "reason": "적중률 51% (표본 159) → 상향"
-          },
-          {
-            "key": "MACD 하락",
-            "old": 1.02,
-            "new": 1.08,
-            "direction": "up",
-            "reason": "적중률 59% (표본 3952) → 상향"
-          },
-          {
-            "key": "RSI 과매도",
-            "old": 0.85,
-            "new": 0.9,
-            "direction": "up",
-            "reason": "적중률 51% (표본 156) → 상향"
-          },
-          {
-            "key": "RSI 과매수",
-            "old": 1.18,
-            "new": 1.13,
-            "direction": "down",
-            "reason": "적중률 53% (표본 107) → 하향"
-          },
-          {
-            "key": "거래량 급증",
-            "old": 1.08,
-            "new": 1.03,
-            "direction": "down",
-            "reason": "적중률 48% (표본 804) → 하향"
-          },
-          {
-            "key": "Stoch 과매수 데드크로스",
-            "old": 1.23,
-            "new": 1.27,
-            "direction": "up",
-            "reason": "적중률 65% (표본 63) → 상향"
-          },
-          {
-            "key": "캔들 약세형",
-            "old": 1.26,
-            "new": 1.3,
-            "direction": "up",
-            "reason": "적중률 65% (표본 1807) → 상향"
-          },
-          {
-            "key": "Stoch 과매도 골든크로스",
-            "old": 0.84,
-            "new": 0.8,
-            "direction": "down",
-            "reason": "적중률 28% (표본 197) → 하향"
-          },
-          {
-            "key": "Stoch 과매도",
-            "old": 0.84,
-            "new": 0.8,
-            "direction": "down",
-            "reason": "적중률 36% (표본 290) → 하향"
-          },
-          {
-            "key": "캔들 강세형",
-            "old": 0.82,
-            "new": 0.78,
-            "direction": "down",
-            "reason": "적중률 24% (표본 375) → 하향"
-          },
-          {
-            "key": "MACD 골든크로스",
-            "old": 0.77,
-            "new": 0.75,
-            "direction": "down",
-            "reason": "적중률 39% (표본 100) → 하향"
-          },
-          {
-            "key": "BB 상단 돌파",
-            "old": 1.34,
-            "new": 1.32,
-            "direction": "down",
-            "reason": "적중률 61% (표본 314) → 하향"
-          },
-          {
-            "key": "Williams %R 과매도",
-            "old": 0.85,
-            "new": 0.87,
-            "direction": "up",
-            "reason": "적중률 48% (표본 232) → 상향"
-          },
-          {
-            "key": "EMA 하락배열",
-            "old": 1.26,
-            "new": 1.28,
-            "direction": "up",
-            "reason": "적중률 63% (표본 7043) → 상향"
-          },
-          {
-            "key": "MACD 반등",
-            "old": 0.75,
-            "new": 0.74,
-            "direction": "down",
-            "reason": "적중률 39% (표본 100) → 하향"
-          },
-          {
-            "key": "MACD 상승",
-            "old": 0.76,
-            "new": 0.75,
-            "direction": "down",
-            "reason": "적중률 40% (표본 70) → 하향"
-          },
-          {
-            "key": "MACD 데드크로스",
-            "old": 1.04,
-            "new": 1.05,
-            "direction": "up",
-            "reason": "적중률 54% (표본 636) → 상향"
-          },
-          {
-            "key": "MACD 하락전환",
-            "old": 1.03,
-            "new": 1.04,
-            "direction": "up",
-            "reason": "적중률 54% (표본 636) → 상향"
-          },
-          {
-            "key": "Stoch 과매수",
-            "old": 1.34,
-            "new": 1.35,
-            "direction": "up",
-            "reason": "적중률 65% (표본 210) → 상향"
-          },
-          {
-            "key": "Williams %R 과매수",
-            "old": 1.34,
-            "new": 1.33,
-            "direction": "down",
-            "reason": "적중률 63% (표본 273) → 하향"
-          }
-        ],
-        "hitCoins": [
-          {
-            "market": "KRW-MOVE",
-            "korean_name": "무브먼트",
-            "hits": 59,
-            "total": 59
-          },
-          {
-            "market": "KRW-WLFI",
-            "korean_name": "월드리버티파이낸셜",
-            "hits": 59,
-            "total": 74
-          },
-          {
-            "market": "KRW-BLUR",
-            "korean_name": "블러",
-            "hits": 59,
-            "total": 59
-          },
-          {
-            "market": "KRW-TAIKO",
-            "korean_name": "타이코",
-            "hits": 59,
-            "total": 59
-          },
-          {
-            "market": "KRW-ZIL",
-            "korean_name": "질리카",
-            "hits": 59,
-            "total": 68
-          },
-          {
-            "market": "KRW-ORBS",
-            "korean_name": "오브스",
-            "hits": 58,
-            "total": 58
-          },
-          {
-            "market": "KRW-WCT",
-            "korean_name": "월렛커넥트",
-            "hits": 56,
-            "total": 56
-          },
-          {
-            "market": "KRW-EDGE",
-            "korean_name": "디피니티브",
-            "hits": 56,
-            "total": 68
-          },
-          {
-            "market": "KRW-ATH",
-            "korean_name": "에이셔",
-            "hits": 56,
-            "total": 56
-          },
-          {
-            "market": "KRW-AKT",
-            "korean_name": "아카시네트워크",
-            "hits": 54,
-            "total": 59
-          }
-        ],
-        "missCoins": [
-          {
-            "market": "KRW-PEPE",
-            "korean_name": "페페",
-            "total": 59
-          },
-          {
-            "market": "KRW-TRX",
-            "korean_name": "트론",
-            "total": 54
-          },
-          {
-            "market": "KRW-HOLO",
-            "korean_name": "홀로월드에이아이",
-            "total": 47
-          },
-          {
-            "market": "KRW-LAYER",
-            "korean_name": "솔레이어",
-            "total": 44
-          },
-          {
-            "market": "KRW-ZRO",
-            "korean_name": "레이어제로",
-            "total": 44
-          },
-          {
-            "market": "KRW-SHIB",
-            "korean_name": "시바이누",
-            "total": 42
-          },
-          {
-            "market": "KRW-GLM",
-            "korean_name": "골렘",
-            "total": 38
-          },
-          {
-            "market": "KRW-PLUME",
-            "korean_name": "플룸",
-            "total": 38
-          },
-          {
-            "market": "KRW-SAFE",
-            "korean_name": "세이프",
-            "total": 36
-          },
-          {
-            "market": "KRW-WIF",
-            "korean_name": "도그위프햇",
-            "total": 32
-          }
-        ]
-      },
-      "momentum": {
-        "picks": 79,
-        "overallHitRate": 0.241,
-        "timedHitRates": {
-          "+1일": {
-            "hit": 22,
-            "total": 61,
-            "hitRate": 0.361
-          },
-          "+3일": {
-            "hit": 5,
-            "total": 17,
-            "hitRate": 0.294
-          },
-          "+7일": null
-        }
-      },
-      "horizonMode": "current-price-mixed"
-    },
-    {
       "timestamp": "2026-08-01T06:28:54.519Z",
       "predictions": 10028,
       "hits": 6298,
@@ -7064,6 +5903,1020 @@
       "learned": {
         "records": 9867,
         "learnedUntil": "2026-10-02T21:00:39.756Z",
+        "skipped": false
+      }
+    },
+    {
+      "timestamp": "2026-10-11T13:00:39.520Z",
+      "predictions": 4791,
+      "hits": 2597,
+      "overallHitRate": 0.542,
+      "sideStats": {
+        "buy": {
+          "predictions": 2019,
+          "hits": 773,
+          "hitRate": 0.383
+        },
+        "sell": {
+          "predictions": 2772,
+          "hits": 1824,
+          "hitRate": 0.658
+        }
+      },
+      "timedHitRates": {
+        "+1일": {
+          "hit": 1786,
+          "total": 4143,
+          "hitRate": 0.431
+        },
+        "+3일": {
+          "hit": 1149,
+          "total": 3512,
+          "hitRate": 0.327
+        },
+        "+7일": {
+          "hit": 469,
+          "total": 1857,
+          "hitRate": 0.253
+        }
+      },
+      "signalStats": {
+        "MACD 골든크로스": {
+          "count": 192,
+          "hitRate": 0.24479166666666666,
+          "avgReturn": -2.64
+        },
+        "MACD 상승": {
+          "count": 683,
+          "hitRate": 0.3440702781844802,
+          "avgReturn": -0.58
+        },
+        "EMA 상승배열": {
+          "count": 1892,
+          "hitRate": 0.38160676532769555,
+          "avgReturn": -0.74
+        },
+        "캔들 강세형": {
+          "count": 602,
+          "hitRate": 0.2956810631229236,
+          "avgReturn": -1.68
+        },
+        "Stoch 과매도": {
+          "count": 591,
+          "hitRate": 0.5414551607445008,
+          "avgReturn": -0.22
+        },
+        "상승깃발 패턴": {
+          "count": 825,
+          "hitRate": 0.26666666666666666,
+          "avgReturn": -1.49
+        },
+        "역삼중바닥 패턴": {
+          "count": 61,
+          "hitRate": 0.3114754098360656,
+          "avgReturn": -1.46
+        },
+        "거래량 급증": {
+          "count": 351,
+          "hitRate": 0.3333333333333333,
+          "avgReturn": 0.06
+        },
+        "Williams %R 과매도": {
+          "count": 645,
+          "hitRate": 0.4945736434108527,
+          "avgReturn": -0.85
+        },
+        "Stoch 과매도 골든크로스": {
+          "count": 136,
+          "hitRate": 0.22058823529411764,
+          "avgReturn": -3.41
+        },
+        "BB 하단 지지": {
+          "count": 365,
+          "hitRate": 0.6821917808219178,
+          "avgReturn": 1.63
+        },
+        "RSI 과매수": {
+          "count": 802,
+          "hitRate": 0.7069825436408977,
+          "avgReturn": 3.38
+        },
+        "MACD 데드크로스": {
+          "count": 858,
+          "hitRate": 0.6060606060606061,
+          "avgReturn": 2.27
+        },
+        "MACD 하락전환": {
+          "count": 858,
+          "hitRate": 0.6060606060606061,
+          "avgReturn": 2.27
+        },
+        "캔들 약세형": {
+          "count": 724,
+          "hitRate": 0.6174033149171271,
+          "avgReturn": 3.11
+        },
+        "BB 상단 돌파": {
+          "count": 364,
+          "hitRate": 0.6648351648351648,
+          "avgReturn": 3.06
+        },
+        "MACD 하락": {
+          "count": 164,
+          "hitRate": 0.34146341463414637,
+          "avgReturn": 0.39
+        },
+        "EMA 하락배열": {
+          "count": 496,
+          "hitRate": 0.4375,
+          "avgReturn": 0.27
+        },
+        "EMA 20/50 데드크로스": {
+          "count": 32,
+          "hitRate": 0.59375,
+          "avgReturn": -0.19
+        },
+        "RSI 과매도": {
+          "count": 8,
+          "hitRate": 1,
+          "avgReturn": 3.37
+        }
+      },
+      "report": {
+        "topBuySignals": [
+          {
+            "key": "RSI 과매도",
+            "count": 8,
+            "hitRate": 1,
+            "hits": 8
+          },
+          {
+            "key": "BB 하단 지지",
+            "count": 365,
+            "hitRate": 0.6821917808219178,
+            "hits": 249
+          },
+          {
+            "key": "Stoch 과매도",
+            "count": 591,
+            "hitRate": 0.5414551607445008,
+            "hits": 320
+          },
+          {
+            "key": "Williams %R 과매도",
+            "count": 645,
+            "hitRate": 0.4945736434108527,
+            "hits": 319
+          },
+          {
+            "key": "EMA 상승배열",
+            "count": 1892,
+            "hitRate": 0.38160676532769555,
+            "hits": 722
+          },
+          {
+            "key": "MACD 상승",
+            "count": 683,
+            "hitRate": 0.3440702781844802,
+            "hits": 235
+          },
+          {
+            "key": "역삼중바닥 패턴",
+            "count": 61,
+            "hitRate": 0.3114754098360656,
+            "hits": 19
+          },
+          {
+            "key": "캔들 강세형",
+            "count": 602,
+            "hitRate": 0.2956810631229236,
+            "hits": 178
+          }
+        ],
+        "topSellSignals": [
+          {
+            "key": "RSI 과매수",
+            "count": 802,
+            "hitRate": 0.7069825436408977,
+            "hits": 567
+          },
+          {
+            "key": "BB 상단 돌파",
+            "count": 364,
+            "hitRate": 0.6648351648351648,
+            "hits": 242
+          },
+          {
+            "key": "캔들 약세형",
+            "count": 724,
+            "hitRate": 0.6174033149171271,
+            "hits": 447
+          },
+          {
+            "key": "MACD 데드크로스",
+            "count": 858,
+            "hitRate": 0.6060606060606061,
+            "hits": 520
+          },
+          {
+            "key": "MACD 하락전환",
+            "count": 858,
+            "hitRate": 0.6060606060606061,
+            "hits": 520
+          },
+          {
+            "key": "EMA 20/50 데드크로스",
+            "count": 32,
+            "hitRate": 0.59375,
+            "hits": 19
+          },
+          {
+            "key": "거래량 급증",
+            "count": 113,
+            "hitRate": 0.46017699115044247,
+            "hits": 52
+          },
+          {
+            "key": "EMA 하락배열",
+            "count": 496,
+            "hitRate": 0.4375,
+            "hits": 217
+          }
+        ],
+        "weightChanges": [
+          {
+            "key": "Stoch 과매도 골든크로스",
+            "old": 1.28,
+            "new": 1.1,
+            "direction": "down",
+            "reason": "적중률 24% (표본 143) → 하향"
+          },
+          {
+            "key": "EMA 20/50 데드크로스",
+            "old": 0.85,
+            "new": 1.01,
+            "direction": "up",
+            "reason": "적중률 66% (표본 38) → 상향"
+          },
+          {
+            "key": "RSI 과매도",
+            "old": 1,
+            "new": 1.16,
+            "direction": "up",
+            "reason": "적중률 100% (표본 8) → 상향"
+          },
+          {
+            "key": "MACD 골든크로스",
+            "old": 1.07,
+            "new": 0.95,
+            "direction": "down",
+            "reason": "적중률 26% (표본 229) → 하향"
+          },
+          {
+            "key": "역삼중바닥 패턴",
+            "old": 1.12,
+            "new": 1,
+            "direction": "down",
+            "reason": "적중률 41% (표본 121) → 하향"
+          },
+          {
+            "key": "상승깃발 패턴",
+            "old": 1.06,
+            "new": 0.96,
+            "direction": "down",
+            "reason": "적중률 41% (표본 1198) → 하향"
+          },
+          {
+            "key": "BB 상단 돌파",
+            "old": 1.01,
+            "new": 1.1,
+            "direction": "up",
+            "reason": "적중률 62% (표본 454) → 상향"
+          },
+          {
+            "key": "MACD 데드크로스",
+            "old": 0.77,
+            "new": 0.85,
+            "direction": "up",
+            "reason": "적중률 51% (표본 1199) → 상향"
+          },
+          {
+            "key": "MACD 하락전환",
+            "old": 0.77,
+            "new": 0.85,
+            "direction": "up",
+            "reason": "적중률 51% (표본 1199) → 상향"
+          },
+          {
+            "key": "캔들 강세형",
+            "old": 0.97,
+            "new": 0.89,
+            "direction": "down",
+            "reason": "적중률 38% (표본 807) → 하향"
+          },
+          {
+            "key": "RSI 과매수",
+            "old": 1.18,
+            "new": 1.25,
+            "direction": "up",
+            "reason": "적중률 65% (표본 998) → 상향"
+          },
+          {
+            "key": "캔들 약세형",
+            "old": 0.84,
+            "new": 0.91,
+            "direction": "up",
+            "reason": "적중률 53% (표본 957) → 상향"
+          },
+          {
+            "key": "거래량 급증",
+            "old": 0.88,
+            "new": 0.82,
+            "direction": "down",
+            "reason": "적중률 39% (표본 478) → 하향"
+          },
+          {
+            "key": "EMA 상승배열",
+            "old": 0.99,
+            "new": 0.95,
+            "direction": "down",
+            "reason": "적중률 46% (표본 2481) → 하향"
+          },
+          {
+            "key": "BB 하단 지지",
+            "old": 1.35,
+            "new": 1.38,
+            "direction": "up",
+            "reason": "적중률 68% (표본 382) → 상향"
+          },
+          {
+            "key": "Stoch 과매도",
+            "old": 1.02,
+            "new": 1.04,
+            "direction": "up",
+            "reason": "적중률 55% (표본 654) → 상향"
+          },
+          {
+            "key": "EMA 하락배열",
+            "old": 0.81,
+            "new": 0.83,
+            "direction": "up",
+            "reason": "적중률 46% (표본 681) → 상향"
+          },
+          {
+            "key": "MACD 상승",
+            "old": 0.9,
+            "new": 0.89,
+            "direction": "down",
+            "reason": "적중률 47% (표본 973) → 하향"
+          },
+          {
+            "key": "Williams %R 과매도",
+            "old": 1,
+            "new": 0.99,
+            "direction": "down",
+            "reason": "적중률 50% (표본 695) → 하향"
+          }
+        ],
+        "hitCoins": [
+          {
+            "market": "KRW-BAT",
+            "korean_name": "베이직어텐션토큰",
+            "hits": 43,
+            "total": 54
+          },
+          {
+            "market": "KRW-ORCA",
+            "korean_name": "오르카",
+            "hits": 42,
+            "total": 73
+          },
+          {
+            "market": "KRW-ONG",
+            "korean_name": "온톨로지가스",
+            "hits": 39,
+            "total": 42
+          },
+          {
+            "market": "KRW-SENT",
+            "korean_name": "센티언트",
+            "hits": 36,
+            "total": 63
+          },
+          {
+            "market": "KRW-ADA",
+            "korean_name": "에이다",
+            "hits": 34,
+            "total": 61
+          },
+          {
+            "market": "KRW-MANA",
+            "korean_name": "디센트럴랜드",
+            "hits": 34,
+            "total": 47
+          },
+          {
+            "market": "KRW-SUPER",
+            "korean_name": "슈퍼버스",
+            "hits": 34,
+            "total": 40
+          },
+          {
+            "market": "KRW-MBL",
+            "korean_name": "무비블록",
+            "hits": 34,
+            "total": 36
+          },
+          {
+            "market": "KRW-MINA",
+            "korean_name": "미나",
+            "hits": 33,
+            "total": 42
+          },
+          {
+            "market": "KRW-BIRB",
+            "korean_name": "문버드",
+            "hits": 33,
+            "total": 37
+          }
+        ],
+        "missCoins": [
+          {
+            "market": "KRW-MASK",
+            "korean_name": "마스크네트워크",
+            "total": 38
+          },
+          {
+            "market": "KRW-XAUT",
+            "korean_name": "테더골드",
+            "total": 29
+          },
+          {
+            "market": "KRW-QTUM",
+            "korean_name": "퀀텀",
+            "total": 21
+          },
+          {
+            "market": "KRW-TRX",
+            "korean_name": "트론",
+            "total": 19
+          },
+          {
+            "market": "KRW-ENA",
+            "korean_name": "에테나",
+            "total": 13
+          },
+          {
+            "market": "KRW-POLYX",
+            "korean_name": "폴리매쉬",
+            "total": 11
+          },
+          {
+            "market": "KRW-TOKAMAK",
+            "korean_name": "토카막네트워크",
+            "total": 10
+          },
+          {
+            "market": "KRW-ENSO",
+            "korean_name": "엔소",
+            "total": 10
+          },
+          {
+            "market": "KRW-ENS",
+            "korean_name": "이더리움네임서비스",
+            "total": 10
+          },
+          {
+            "market": "KRW-BABY",
+            "korean_name": "바빌론",
+            "total": 10
+          }
+        ]
+      },
+      "momentum": {
+        "picks": 75,
+        "overallHitRate": 0.32,
+        "timedHitRates": {
+          "+1일": {
+            "hit": 28,
+            "total": 56,
+            "hitRate": 0.5
+          },
+          "+3일": null,
+          "+7일": null
+        }
+      },
+      "horizonMode": "confirmed-1d",
+      "learned": {
+        "records": 6376,
+        "learnedUntil": "2026-10-09T21:00:56.162Z",
+        "skipped": false
+      }
+    },
+    {
+      "timestamp": "2026-10-18T13:00:37.128Z",
+      "predictions": 3438,
+      "hits": 1395,
+      "overallHitRate": 0.406,
+      "sideStats": {
+        "buy": {
+          "predictions": 2282,
+          "hits": 531,
+          "hitRate": 0.233
+        },
+        "sell": {
+          "predictions": 1156,
+          "hits": 864,
+          "hitRate": 0.747
+        }
+      },
+      "timedHitRates": {
+        "+1일": {
+          "hit": 1519,
+          "total": 4816,
+          "hitRate": 0.315
+        },
+        "+3일": {
+          "hit": 625,
+          "total": 3464,
+          "hitRate": 0.18
+        },
+        "+7일": {
+          "hit": 302,
+          "total": 2340,
+          "hitRate": 0.129
+        }
+      },
+      "signalStats": {
+        "Stoch 과매도 골든크로스": {
+          "count": 510,
+          "hitRate": 0.06470588235294118,
+          "avgReturn": -3.5
+        },
+        "Williams %R 과매도": {
+          "count": 1199,
+          "hitRate": 0.3127606338615513,
+          "avgReturn": -1.24
+        },
+        "EMA 상승배열": {
+          "count": 2049,
+          "hitRate": 0.22791605661298195,
+          "avgReturn": -2.26
+        },
+        "캔들 강세형": {
+          "count": 587,
+          "hitRate": 0.03747870528109029,
+          "avgReturn": -4.45
+        },
+        "MACD 골든크로스": {
+          "count": 127,
+          "hitRate": 0.15748031496062992,
+          "avgReturn": -6.64
+        },
+        "MACD 상승": {
+          "count": 154,
+          "hitRate": 0.18181818181818182,
+          "avgReturn": -5.9
+        },
+        "BB 하단 지지": {
+          "count": 947,
+          "hitRate": 0.31890179514255546,
+          "avgReturn": -0.96
+        },
+        "Stoch 과매도": {
+          "count": 1344,
+          "hitRate": 0.32068452380952384,
+          "avgReturn": -1.19
+        },
+        "상승깃발 패턴": {
+          "count": 77,
+          "hitRate": 0.4155844155844156,
+          "avgReturn": -1.65
+        },
+        "RSI 과매수": {
+          "count": 206,
+          "hitRate": 0.616504854368932,
+          "avgReturn": 5.21
+        },
+        "BB 상단 돌파": {
+          "count": 194,
+          "hitRate": 0.7989690721649485,
+          "avgReturn": 9.58
+        },
+        "MACD 데드크로스": {
+          "count": 297,
+          "hitRate": 0.7407407407407407,
+          "avgReturn": 3.02
+        },
+        "MACD 하락전환": {
+          "count": 297,
+          "hitRate": 0.7407407407407407,
+          "avgReturn": 3.02
+        },
+        "MACD 하락": {
+          "count": 346,
+          "hitRate": 0.7687861271676301,
+          "avgReturn": 3.12
+        },
+        "EMA 하락배열": {
+          "count": 426,
+          "hitRate": 0.8262910798122066,
+          "avgReturn": 4.37
+        },
+        "캔들 약세형": {
+          "count": 532,
+          "hitRate": 0.7763157894736842,
+          "avgReturn": 3.66
+        },
+        "거래량 급증": {
+          "count": 164,
+          "hitRate": 0.6524390243902439,
+          "avgReturn": 4.32
+        },
+        "RSI 과매도": {
+          "count": 120,
+          "hitRate": 0.25,
+          "avgReturn": -1.89
+        },
+        "EMA 20/50 데드크로스": {
+          "count": 88,
+          "hitRate": 0.5568181818181818,
+          "avgReturn": 1.54
+        },
+        "역삼중바닥 패턴": {
+          "count": 9,
+          "hitRate": 0,
+          "avgReturn": -2.18
+        }
+      },
+      "report": {
+        "topBuySignals": [
+          {
+            "key": "상승깃발 패턴",
+            "count": 77,
+            "hitRate": 0.4155844155844156,
+            "hits": 32
+          },
+          {
+            "key": "Stoch 과매도",
+            "count": 1344,
+            "hitRate": 0.32068452380952384,
+            "hits": 431
+          },
+          {
+            "key": "BB 하단 지지",
+            "count": 947,
+            "hitRate": 0.31890179514255546,
+            "hits": 302
+          },
+          {
+            "key": "Williams %R 과매도",
+            "count": 1199,
+            "hitRate": 0.3127606338615513,
+            "hits": 375
+          },
+          {
+            "key": "RSI 과매도",
+            "count": 120,
+            "hitRate": 0.25,
+            "hits": 30
+          },
+          {
+            "key": "EMA 상승배열",
+            "count": 2049,
+            "hitRate": 0.22791605661298195,
+            "hits": 467
+          },
+          {
+            "key": "MACD 상승",
+            "count": 154,
+            "hitRate": 0.18181818181818182,
+            "hits": 28
+          },
+          {
+            "key": "MACD 골든크로스",
+            "count": 127,
+            "hitRate": 0.15748031496062992,
+            "hits": 20
+          }
+        ],
+        "topSellSignals": [
+          {
+            "key": "EMA 하락배열",
+            "count": 426,
+            "hitRate": 0.8262910798122066,
+            "hits": 352
+          },
+          {
+            "key": "BB 상단 돌파",
+            "count": 194,
+            "hitRate": 0.7989690721649485,
+            "hits": 155
+          },
+          {
+            "key": "캔들 약세형",
+            "count": 532,
+            "hitRate": 0.7763157894736842,
+            "hits": 413
+          },
+          {
+            "key": "MACD 하락",
+            "count": 346,
+            "hitRate": 0.7687861271676301,
+            "hits": 266
+          },
+          {
+            "key": "MACD 데드크로스",
+            "count": 297,
+            "hitRate": 0.7407407407407407,
+            "hits": 220
+          },
+          {
+            "key": "MACD 하락전환",
+            "count": 297,
+            "hitRate": 0.7407407407407407,
+            "hits": 220
+          },
+          {
+            "key": "거래량 급증",
+            "count": 164,
+            "hitRate": 0.6524390243902439,
+            "hits": 107
+          },
+          {
+            "key": "RSI 과매수",
+            "count": 206,
+            "hitRate": 0.616504854368932,
+            "hits": 127
+          }
+        ],
+        "weightChanges": [
+          {
+            "key": "MACD 하락",
+            "old": 0.77,
+            "new": 1,
+            "direction": "up",
+            "reason": "적중률 77% (표본 364) → 상향"
+          },
+          {
+            "key": "EMA 하락배열",
+            "old": 0.83,
+            "new": 1.05,
+            "direction": "up",
+            "reason": "적중률 82% (표본 480) → 상향"
+          },
+          {
+            "key": "BB 하단 지지",
+            "old": 1.38,
+            "new": 1.18,
+            "direction": "down",
+            "reason": "적중률 35% (표본 1047) → 하향"
+          },
+          {
+            "key": "캔들 약세형",
+            "old": 0.91,
+            "new": 1.1,
+            "direction": "up",
+            "reason": "적중률 77% (표본 576) → 상향"
+          },
+          {
+            "key": "거래량 급증",
+            "old": 0.82,
+            "new": 1,
+            "direction": "up",
+            "reason": "적중률 64% (표본 182) → 상향"
+          },
+          {
+            "key": "MACD 데드크로스",
+            "old": 0.85,
+            "new": 1.01,
+            "direction": "up",
+            "reason": "적중률 65% (표본 368) → 상향"
+          },
+          {
+            "key": "MACD 하락전환",
+            "old": 0.85,
+            "new": 1.01,
+            "direction": "up",
+            "reason": "적중률 65% (표본 368) → 상향"
+          },
+          {
+            "key": "BB 상단 돌파",
+            "old": 1.1,
+            "new": 1.25,
+            "direction": "up",
+            "reason": "적중률 74% (표본 292) → 상향"
+          },
+          {
+            "key": "RSI 과매도",
+            "old": 1.16,
+            "new": 1.02,
+            "direction": "down",
+            "reason": "적중률 25% (표본 120) → 하향"
+          },
+          {
+            "key": "Stoch 과매도 골든크로스",
+            "old": 1.1,
+            "new": 0.97,
+            "direction": "down",
+            "reason": "적중률 16% (표본 717) → 하향"
+          },
+          {
+            "key": "Stoch 과매도",
+            "old": 1.04,
+            "new": 0.94,
+            "direction": "down",
+            "reason": "적중률 34% (표본 1501) → 하향"
+          },
+          {
+            "key": "MACD 골든크로스",
+            "old": 0.95,
+            "new": 0.86,
+            "direction": "down",
+            "reason": "적중률 16% (표본 186) → 하향"
+          },
+          {
+            "key": "Williams %R 과매도",
+            "old": 0.99,
+            "new": 0.9,
+            "direction": "down",
+            "reason": "적중률 33% (표본 1333) → 하향"
+          },
+          {
+            "key": "역삼중바닥 패턴",
+            "old": 1,
+            "new": 0.91,
+            "direction": "down",
+            "reason": "적중률 0% (표본 9) → 하향"
+          },
+          {
+            "key": "EMA 상승배열",
+            "old": 0.95,
+            "new": 0.87,
+            "direction": "down",
+            "reason": "적중률 27% (표본 2554) → 하향"
+          },
+          {
+            "key": "MACD 상승",
+            "old": 0.89,
+            "new": 0.82,
+            "direction": "down",
+            "reason": "적중률 20% (표본 231) → 하향"
+          },
+          {
+            "key": "캔들 강세형",
+            "old": 0.89,
+            "new": 0.83,
+            "direction": "down",
+            "reason": "적중률 15% (표본 816) → 하향"
+          },
+          {
+            "key": "상승깃발 패턴",
+            "old": 0.96,
+            "new": 0.91,
+            "direction": "down",
+            "reason": "적중률 43% (표본 179) → 하향"
+          },
+          {
+            "key": "EMA 20/50 데드크로스",
+            "old": 1.01,
+            "new": 1.05,
+            "direction": "up",
+            "reason": "적중률 56% (표본 88) → 상향"
+          }
+        ],
+        "hitCoins": [
+          {
+            "market": "KRW-DOS",
+            "korean_name": "댑오에스",
+            "hits": 31,
+            "total": 41
+          },
+          {
+            "market": "KRW-W",
+            "korean_name": "웜홀",
+            "hits": 26,
+            "total": 27
+          },
+          {
+            "market": "KRW-CYBER",
+            "korean_name": "사이버",
+            "hits": 23,
+            "total": 24
+          },
+          {
+            "market": "KRW-CHIP",
+            "korean_name": "유에스디에이아이",
+            "hits": 19,
+            "total": 19
+          },
+          {
+            "market": "KRW-WAL",
+            "korean_name": "월러스",
+            "hits": 19,
+            "total": 27
+          },
+          {
+            "market": "KRW-VVV",
+            "korean_name": "베니스토큰",
+            "hits": 18,
+            "total": 33
+          },
+          {
+            "market": "KRW-AXL",
+            "korean_name": "엑셀라",
+            "hits": 18,
+            "total": 50
+          },
+          {
+            "market": "KRW-BAT",
+            "korean_name": "베이직어텐션토큰",
+            "hits": 17,
+            "total": 41
+          },
+          {
+            "market": "KRW-ERA",
+            "korean_name": "칼데라",
+            "hits": 17,
+            "total": 17
+          },
+          {
+            "market": "KRW-CFX",
+            "korean_name": "콘플럭스",
+            "hits": 16,
+            "total": 19
+          }
+        ],
+        "missCoins": [
+          {
+            "market": "KRW-GRT",
+            "korean_name": "더그래프",
+            "total": 22
+          },
+          {
+            "market": "KRW-DOGE",
+            "korean_name": "도지코인",
+            "total": 22
+          },
+          {
+            "market": "KRW-POWR",
+            "korean_name": "파워렛저",
+            "total": 16
+          },
+          {
+            "market": "KRW-PROVE",
+            "korean_name": "서싱트",
+            "total": 16
+          },
+          {
+            "market": "KRW-SAFE",
+            "korean_name": "세이프",
+            "total": 16
+          },
+          {
+            "market": "KRW-ADA",
+            "korean_name": "에이다",
+            "total": 16
+          },
+          {
+            "market": "KRW-ORDER",
+            "korean_name": "오덜리",
+            "total": 14
+          },
+          {
+            "market": "KRW-TREE",
+            "korean_name": "트리하우스",
+            "total": 14
+          },
+          {
+            "market": "KRW-SPK",
+            "korean_name": "스파크",
+            "total": 14
+          },
+          {
+            "market": "KRW-WAXP",
+            "korean_name": "왁스",
+            "total": 13
+          }
+        ]
+      },
+      "momentum": {
+        "picks": 28,
+        "overallHitRate": 0.036,
+        "timedHitRates": {
+          "+1일": {
+            "hit": 2,
+            "total": 17,
+            "hitRate": 0.118
+          },
+          "+3일": null,
+          "+7일": null
+        }
+      },
+      "horizonMode": "confirmed-1d",
+      "learned": {
+        "records": 4235,
+        "learnedUntil": "2026-10-16T21:00:46.781Z",
         "skipped": false
       }
     }
