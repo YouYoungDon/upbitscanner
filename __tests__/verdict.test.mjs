@@ -11,13 +11,12 @@ const flat = (from, n) => Object.fromEntries(Array.from({ length: n }, (_, i) =>
 
 describe('ruleRows', () => {
   const daily = flat('2026-10-01T00:00:00Z', 40)
-  it('기간·저유동성·미청산·기준선 없음을 거르고 비용을 뺀다', () => {
+  it('기간·저유동성·채점 없음·기준선 없음을 거르고 비용을 뺀다', () => {
     const eps = [
       ep('2026-10-09T00:00:00Z', 0.12, 2),
       ep('2026-10-07T00:00:00Z', 0.12, 2), // 기간 전
       ep('2026-10-09T03:00:00Z', 0.12, 2, { lowLiquidity: true }),
-      ep('2026-10-09T03:00:00Z', null, null, { exit: { reason: 'open', ret: null, exitDay: null } }),
-      ep('2026-10-09T03:00:00Z', 0.1, 2, { exit: undefined }),
+      ep('2026-10-09T03:00:00Z', 0.1, 2, { exit: undefined }), // 청산 채점 없음 → 건너뜀(날을 막지 않음)
       ep('2026-11-30T00:00:00Z', 0.12, 2), // 기준선 없음 → dropped
     ]
     const { rows, dropped } = ruleRows(eps, daily, { from: VERDICT.FROM, cost: 0.003 })
@@ -25,6 +24,20 @@ describe('ruleRows', () => {
     expect(rows[0].v).toBeCloseTo(0.117, 9)
     expect(rows[0].day).toBe(D('2026-10-09T00:00:00Z'))
     expect(dropped).toBe(1)
+  })
+  // 손절은 빨리 끝나고 기한 청산은 7일 뒤라, 결과가 일부만 나온 날을 넣으면 최근 날이 손절 위주로 채워진다(10-19 독립 리뷰:
+  // 전체 −2.08% vs 결과가 다 나온 날만 −0.79%). 그날 진입한 에피소드가 하나라도 진행 중(open)이면 그날 전체를 뺀다.
+  it('진행 중(open) 에피소드가 있는 진입일은 통째로 빼고 running으로 센다', () => {
+    const eps = [
+      ep('2026-10-09T00:00:00Z', 0.12, 2),
+      ep('2026-10-10T00:00:00Z', -0.12, 1), // 같은 날 open이 있어 함께 빠진다
+      ep('2026-10-10T03:00:00Z', null, null, { exit: { reason: 'open', ret: null, exitDay: null } }),
+      ep('2026-10-11T00:00:00Z', null, null, { exit: { reason: 'no-data', ret: null, exitDay: null } }), // 최종 상태 — 날을 막지 않음
+      ep('2026-10-11T03:00:00Z', 0.05, 7, { exit: { reason: 'time', ret: 0.05, exitDay: 7 } }),
+    ]
+    const { rows, running } = ruleRows(eps, daily, { from: VERDICT.FROM, cost: 0 })
+    expect(rows.map((r) => r.day)).toEqual([D('2026-10-09T00:00:00Z'), D('2026-10-11T00:00:00Z')])
+    expect(running).toBe(2)
   })
   it('시장 수익을 같은 보유 구간만큼 뺀다', () => {
     const d = { ...daily, [D('2026-10-10T00:00:00Z')]: 0.05 }
@@ -72,12 +85,12 @@ describe('decide', () => {
 })
 
 describe('power', () => {
-  it('(2·sd/δ)² 진입일과 예상일(첫날+need+7)', () => {
+  it('(2·sd/δ)² 진입일과 예상일(첫날+need+8)', () => {
     const rows = rowsOf([0.01, -0.01, 0.01, -0.01]) // mean 0 → δ=0.005, sd≈0.011547
     const p = power(rows)
     expect(p.sd).toBeCloseTo(0.011547, 5)
     expect(p.need).toBe(Math.ceil((2 * p.sd / 0.005) ** 2))
-    expect(p.etaDay).toBe(20000 + p.need + 7)
+    expect(p.etaDay).toBe(20000 + p.need + 8) // 마지막 진입일의 7일 보유 결과가 다음 날 확정
   })
   it('진입일 1일이면 need null', () => {
     expect(power(rowsOf([0.01])).need).toBeNull()
@@ -121,9 +134,9 @@ describe('costFrom', () => {
   it('짝 10건 미만이면 기본 0.3%', () => {
     expect(costFrom({ n: 9, mean: -0.02 })).toEqual({ cost: 0.003, source: 'default' })
   })
-  it('10건 이상이면 −평균, 하한 0.1%', () => {
+  it('10건 이상이면 −평균, 하한은 기본 0.3%', () => {
     expect(costFrom({ n: 10, mean: -0.02 }).cost).toBeCloseTo(0.02, 9)
-    expect(costFrom({ n: 10, mean: 0.01 })).toEqual({ cost: 0.001, source: 'measured' })
+    expect(costFrom({ n: 10, mean: 0.01 })).toEqual({ cost: 0.003, source: 'measured' }) // 측정값이 좋아도 기본 0.3%보다 낮추지 않는다
   })
 })
 

@@ -38,7 +38,10 @@ if (!sc?.episodes?.length) console.log('  스코어카드 없음 — npm run sco
 else if (!Object.keys(daily).length) console.log('  시장 기준선 없음 — npm run scorecard가 data/market-baseline.json을 만든다')
 else {
   // 메인 장부 청산 거래마다 같은 스캔가·같은 손절/익절 %로 스코어카드 방식(일봉) 결과를 다시 계산해 실체결과 비교한다.
-  const mainClosed = st.books.main?.closed ?? []
+  // 판정 표본과 같은 이유로 일봉 결과가 다 나올 수 있는 거래만(스캔 후 8일) — 빨리 끝난 일봉 결과만 남으면 한쪽으로 치우친다.
+  const nowDay = utcDay(Date.now())
+  const allMainClosed = st.books.main?.closed ?? []
+  const mainClosed = allMainClosed.filter((c) => utcDay(c.scanAt) + VERDICT.HOLD_WAIT_DAYS <= nowDay)
   const confirmedOf = {}
   for (const m of [...new Set(mainClosed.map((c) => c.market))]) {
     const raw = await getDayCandles(m, 200)
@@ -50,9 +53,10 @@ else {
   const gapNow = gap.byModel[PAPER.FILL_MODEL] ?? { n: 0, mean: null }
   const { cost, source } = costFrom(gapNow)
   const show = (label, from, to) => {
-    const { rows, dropped } = ruleRows(sc.episodes, daily, { from, to, cost })
+    const { rows, dropped, running } = ruleRows(sc.episodes, daily, { from, to, cost })
     const r = decide(rows), p = power(rows)
-    console.log(`\n[${label}] ${r.n}건 · 진입일 ${r.days}일 · 평균 ${pct(r.mean)} (t ${tStr(r)})${dropped ? ` · 기준선 없어 제외 ${dropped}건` : ''}`)
+    console.log(`\n[${label}] ${r.n}건 · 진입일 ${r.days}일 · 평균 ${pct(r.mean)} (t ${tStr(r)})` +
+      `${running ? ` · 결과가 다 안 나온 진입일의 ${running}건 제외` : ''}${dropped ? ` · 기준선 없어 제외 ${dropped}건` : ''}`)
     console.log(`  전반 ${pct(r.halves.first)} / 후반 ${pct(r.halves.second)} · 점수 하위 ${pct(r.terciles.low)} / 중간 ${pct(r.terciles.mid)} / 상위 ${pct(r.terciles.high)}`)
     const enough = p.need != null && p.days >= p.need
     console.log(`  검정력: |t|=2에 필요한 진입일 ${p.need ?? '-'}일(지금 ${p.days}일) · 판정 가능 예상 ${enough ? '지금 충분' : dayStr(p.etaDay)}`)
@@ -62,7 +66,8 @@ else {
   const r = show(`판정 표본 ${VERDICT.FROM.slice(0, 10)}~`, VERDICT.FROM, null)
   console.log(`  ▶ ${VERDICT_KO[r.verdict]} · ${r.reasons.join(' · ')}`)
   const models = Object.entries(gap.byModel).map(([m, b]) => `v${m} ${b.n}건 ${pct(b.mean)}`).join(' / ')
-  console.log(`\n실체결 차이(장부 순수익 − 같은 스캔가 일봉 채점 수익): 짝 ${gap.n}건 · 평균 ${pct(gap.mean)} (t ${tStr(gap)}, ${gap.days}일)${models ? ` · ${models}` : ''}`)
+  console.log(`\n실체결 차이(장부 순수익 − 같은 스캔가 일봉 채점 수익): 짝 ${gap.n}건 · 평균 ${pct(gap.mean)} (t ${tStr(gap)}, ${gap.days}일)${models ? ` · ${models}` : ''}` +
+    ` · 스캔 후 ${VERDICT.HOLD_WAIT_DAYS}일 안 된 ${allMainClosed.length - mainClosed.length}건 제외`)
   const vr = vsRandom(st.books.main?.closed ?? [], st.books.random?.closed ?? [])
   console.log(`무작위 대조(보조 — 두 장부 모두 자금 제약): 같은 스캔 ${vr.scans}회 · 메인 − 무작위 ${pct(vr.mean)} (t ${tStr(vr)}, ${vr.days}일)`)
   show('참고: 신호 정리 전 06-11~10-07, 판정에 안 씀', '2026-06-01T00:00:00Z', VERDICT.FROM)
