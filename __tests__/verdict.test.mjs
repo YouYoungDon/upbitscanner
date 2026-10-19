@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { VERDICT, ruleRows, decide, power } from '../lib/verdict.mjs'
+import { VERDICT, ruleRows, decide, power, fillGap, costFrom, vsRandom } from '../lib/verdict.mjs'
 
 const D = (iso) => Math.floor(Date.parse(iso) / 86400_000)
 const ep = (iso, ret, exitDay, extra = {}) => ({
@@ -81,5 +81,46 @@ describe('power', () => {
   })
   it('진입일 1일이면 need null', () => {
     expect(power(rowsOf([0.01])).need).toBeNull()
+  })
+})
+
+describe('fillGap', () => {
+  const ts = '2026-10-16T00:00:20.000Z'
+  const eps = [{ market: 'KRW-A', entryTs: ts, exit: { reason: 'sl', ret: -0.12, exitDay: 2 } },
+    { market: 'KRW-B', entryTs: ts, exit: { reason: 'open', ret: null } }]
+  it('같은 market·같은 스캔만 짝짓고 gap = net − 에피소드 수익', () => {
+    const trades = [
+      { market: 'KRW-A', scanAt: Date.parse(ts), entryAt: Date.parse(ts) + 60_000, net: -0.135, fillModel: 2 },
+      { market: 'KRW-A', scanAt: Date.parse(ts) + 3 * 3600_000, entryAt: 0, net: 0.1, fillModel: 2 }, // 다른 스캔
+      { market: 'KRW-B', scanAt: Date.parse(ts), entryAt: 0, net: 0.1, fillModel: 2 }, // 에피소드 미청산
+    ]
+    const g = fillGap(trades, eps)
+    expect(g.n).toBe(1)
+    expect(g.mean).toBeCloseTo(-0.015, 9)
+    expect(g.byModel[2].n).toBe(1)
+  })
+  it('짝이 없으면 n 0, mean null', () => {
+    expect(fillGap([], eps)).toMatchObject({ n: 0, mean: null })
+  })
+})
+
+describe('costFrom', () => {
+  it('짝 10건 미만이면 기본 0.3%', () => {
+    expect(costFrom({ n: 9, mean: -0.02 })).toEqual({ cost: 0.003, source: 'default' })
+  })
+  it('10건 이상이면 −평균, 하한 0.1%', () => {
+    expect(costFrom({ n: 10, mean: -0.02 }).cost).toBeCloseTo(0.02, 9)
+    expect(costFrom({ n: 10, mean: 0.01 })).toEqual({ cost: 0.001, source: 'measured' })
+  })
+})
+
+describe('vsRandom', () => {
+  it('같은 스캔에서 산 메인·무작위 평균 차이를 스캔 짝으로', () => {
+    const S1 = Date.parse('2026-10-20T00:00:10Z'), S2 = Date.parse('2026-10-21T03:00:10Z')
+    const main = [{ scanAt: S1, entryAt: S1, net: 0.1 }, { scanAt: S1, entryAt: S1, net: 0 }, { scanAt: S2, entryAt: S2, net: 0.02 }]
+    const rnd = [{ scanAt: S1, entryAt: S1, net: -0.05 }, { scanAt: 99, entryAt: 99, net: 0.5 }]
+    const r = vsRandom(main, rnd)
+    expect(r.scans).toBe(1)
+    expect(r.mean).toBeCloseTo(0.1, 9) // 메인 평균 0.05 − 무작위 −0.05
   })
 })
