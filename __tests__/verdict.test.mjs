@@ -1,0 +1,85 @@
+import { describe, it, expect } from 'vitest'
+import { VERDICT, ruleRows, decide, power } from '../lib/verdict.mjs'
+
+const D = (iso) => Math.floor(Date.parse(iso) / 86400_000)
+const ep = (iso, ret, exitDay, extra = {}) => ({
+  market: 'KRW-A', entryTs: iso, score: 5, lowLiquidity: false,
+  exit: { reason: 'tp', ret, exitDay }, ...extra,
+})
+// 기준선: 모든 날 0 → 시장 수익 0
+const flat = (from, n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [D(from) + i, 0]))
+
+describe('ruleRows', () => {
+  const daily = flat('2026-10-01T00:00:00Z', 40)
+  it('기간·저유동성·미청산·기준선 없음을 거르고 비용을 뺀다', () => {
+    const eps = [
+      ep('2026-10-09T00:00:00Z', 0.12, 2),
+      ep('2026-10-07T00:00:00Z', 0.12, 2), // 기간 전
+      ep('2026-10-09T03:00:00Z', 0.12, 2, { lowLiquidity: true }),
+      ep('2026-10-09T03:00:00Z', null, null, { exit: { reason: 'open', ret: null, exitDay: null } }),
+      ep('2026-10-09T03:00:00Z', 0.1, 2, { exit: undefined }),
+      ep('2026-11-30T00:00:00Z', 0.12, 2), // 기준선 없음 → dropped
+    ]
+    const { rows, dropped } = ruleRows(eps, daily, { from: VERDICT.FROM, cost: 0.003 })
+    expect(rows).toHaveLength(1)
+    expect(rows[0].v).toBeCloseTo(0.117, 9)
+    expect(rows[0].day).toBe(D('2026-10-09T00:00:00Z'))
+    expect(dropped).toBe(1)
+  })
+  it('시장 수익을 같은 보유 구간만큼 뺀다', () => {
+    const d = { ...daily, [D('2026-10-10T00:00:00Z')]: 0.05 }
+    const { rows } = ruleRows([ep('2026-10-09T05:00:00Z', 0.12, 1)], d, { from: VERDICT.FROM, cost: 0 })
+    expect(rows[0].v).toBeCloseTo(0.07, 9)
+  })
+  it('to를 주면 그 전까지만(참고 구간)', () => {
+    const { rows } = ruleRows([ep('2026-10-02T00:00:00Z', 0.1, 1), ep('2026-10-09T00:00:00Z', 0.1, 1)], daily, { from: '2026-06-01T00:00:00Z', to: VERDICT.FROM, cost: 0 })
+    expect(rows).toHaveLength(1)
+  })
+})
+
+// 진입일 n일, 날마다 값 vals[i], 점수 scores[i]
+const rowsOf = (vals, scores) => vals.map((v, i) => ({ day: 20000 + i, v, score: scores ? scores[i] : 5 }))
+
+describe('decide', () => {
+  it('t≥2·전후반 양·상위>하위면 pass', () => {
+    const r = decide(rowsOf([0.02, 0.025, 0.02, 0.03, 0.035, 0.03], [1, 2, 3, 4, 5, 6])) // 하위 2.25% < 상위 3.25%
+    expect(r.verdict).toBe('pass')
+    expect(r.t).toBeGreaterThan(2)
+  })
+  it('t≤−2면 fail', () => {
+    expect(decide(rowsOf([-0.02, -0.03, -0.025, -0.035, -0.02, -0.03])).verdict).toBe('fail')
+  })
+  it('t≥2여도 상위 점수가 하위보다 나쁘면 inconclusive', () => {
+    const r = decide(rowsOf([0.035, 0.03, 0.025, 0.03, 0.02, 0.02], [1, 2, 3, 4, 5, 6]))
+    expect(r.t).toBeGreaterThan(2)
+    expect(r.verdict).toBe('inconclusive')
+    expect(r.reasons.join(' ')).toContain('점수')
+  })
+  it('t≥2여도 전반이나 후반이 음이면 inconclusive', () => {
+    const r = decide(rowsOf([-0.001, -0.001, -0.001, 0.05, 0.05, 0.05, 0.05], [1, 2, 3, 4, 5, 6, 7]))
+    expect(r.halves.first).toBeLessThan(0)
+    expect(r.t).toBeGreaterThan(2)
+    expect(r.verdict).toBe('inconclusive')
+  })
+  it('진입일 5일 미만이면 inconclusive(표본 부족)', () => {
+    const r = decide(rowsOf([0.05, 0.06, 0.05, 0.06]))
+    expect(r.verdict).toBe('inconclusive')
+    expect(r.reasons.join(' ')).toContain('표본')
+  })
+  it('빈 표본도 예외 없이 inconclusive', () => {
+    expect(decide([]).verdict).toBe('inconclusive')
+  })
+})
+
+describe('power', () => {
+  it('(2·sd/δ)² 진입일과 예상일(첫날+need+7)', () => {
+    const rows = rowsOf([0.01, -0.01, 0.01, -0.01]) // mean 0 → δ=0.005, sd≈0.011547
+    const p = power(rows)
+    expect(p.sd).toBeCloseTo(0.011547, 5)
+    expect(p.need).toBe(Math.ceil((2 * p.sd / 0.005) ** 2))
+    expect(p.etaDay).toBe(20000 + p.need + 7)
+  })
+  it('진입일 1일이면 need null', () => {
+    expect(power(rowsOf([0.01])).need).toBeNull()
+  })
+})
