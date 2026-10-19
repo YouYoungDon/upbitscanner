@@ -51,6 +51,19 @@ describe('getScanUniverse', () => {
     expect(r.targets).toEqual(['KRW-A', 'KRW-B', 'KRW-C'])
     expect(waits.slice(0, 5).reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(30000)
   })
+  it('조회가 매번 오래 걸려도(응답 없음 ~31초) 전체 대기는 시간 한도에서 멈춘다 — 다음 정시 스캔과 겹치지 않게', async () => {
+    let clock = 0, calls = 0
+    const r = await getScanUniverse({
+      getMarkets: async () => { calls++; clock += 31_000; return null },
+      getTicker: async () => [],
+      delay: 0,
+      sleepFn: async (ms) => { clock += ms },
+      nowFn: () => clock,
+    })
+    expect(r.targets).toEqual([])
+    expect(calls).toBeLessThanOrEqual(3)
+    expect(clock).toBeLessThanOrEqual(100_000)
+  })
   it('유의종목 플래그를 warnOf에 매핑 (warning/caution만, 정상은 제외)', async () => {
     const warned = [
       { market: 'KRW-A', korean_name: '에이', warning: true },

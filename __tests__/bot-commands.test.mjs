@@ -219,7 +219,7 @@ describe('모의매매 명령', () => {
     const view = {
       lastRun: '2026-10-19T11:10:01Z',
       books: {
-        main: { equity: 474290, ret: -0.0514, market: -0.04, open: [
+        main: { equity: 474290, ret: -0.0514, market: -0.04, vsMarket: -0.0114, open: [
           { name: '헤데라', ret: -0.11, toStop: -0.01 }, { name: '솔라나', ret: 0.02, toStop: -0.13 } ],
           summary: { n: 22, win: 0.36, pnl: -40000 }, closed: [{ name: '애니메코인', exitType: 'tp', net: 0.12, exitAt: 1792000000000 }] },
         momentum: { equity: 494294, ret: -0.0114, market: -0.04, open: [], summary: { n: 0 }, closed: [] },
@@ -234,6 +234,10 @@ describe('모의매매 명령', () => {
     expect(t).not.toMatch(/⚠️[^\n]*솔라나/)
     expect(t).toContain('애니메코인')
     expect(t).toContain('모멘텀')
+  })
+  it('formatPaper: 현재가를 못 받았으면 그렇다고 알린다', () => {
+    const t = formatPaper({ pricesMissing: true, books: { main: { equity: 500000, ret: 0, market: null, vsMarket: null, open: [{ name: 'X', ret: null, toStop: null }], summary: { n: 0 }, closed: [] } } })
+    expect(t).toContain('현재가 조회 실패')
   })
   it('formatPaper: 데이터 없으면 안내', () => {
     expect(formatPaper(null)).toContain('없')

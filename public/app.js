@@ -534,14 +534,13 @@ const routes = {
 
     const card = (src, b) => {
       const s = b.summary || { n: 0 }
-      const vsMkt = b.market == null ? null : b.ret - b.market
       return `<div class="card bg-base-200 p-4">
         <div class="flex items-baseline justify-between gap-2">
           <h3 class="font-bold text-lg" style="color:${COLOR[src] || 'inherit'}">${esc(LABEL[src] || src)}</h3>
           <span class="text-xs opacity-60">현금 ${fmt(Math.round(b.cash))}원 · 보유 ${b.open.length}/${P.MAX_OPEN ?? '-'}건</span>
         </div>
         <div class="text-3xl font-bold mt-1">${fmt(Math.round(b.equity))}원 <span class="text-xl">${pc(b.ret, 2)}</span></div>
-        <div class="text-sm mt-1">같은 기간 시장 ${pc(b.market, 2)} · 시장 대비 ${pc(vsMkt, 2)} · MDD ${pc(b.mdd, 1)}</div>
+        <div class="text-sm mt-1"><span title="시장 기준선은 일 단위라 어제 마감(09:00)까지만 있다 — 장부도 그 시점 평가금으로 비교">같은 기간 시장 ${pc(b.market, 2)} · 시장 대비 ${pc(b.vsMarket, 2)} <span class="opacity-60">(어제 마감 기준)</span></span> · MDD ${pc(b.mdd, 1)}</div>
         <div class="divider my-2"></div>
         ${s.n ? `<div class="text-sm leading-6">
           종료 <b>${s.n}건</b> · 승률 <b>${Math.round(s.win * 100)}%</b> (익절 ${s.byType.tp || 0} · 손절 ${s.byType.sl || 0}${s.byType.time ? ` · 기한 ${s.byType.time}` : ''}) · 실현 손익 <b>${won(s.pnl)}</b><br>

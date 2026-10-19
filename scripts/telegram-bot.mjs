@@ -15,7 +15,7 @@ import {
   parseCommand, resolveSymbol,
   formatCoin, formatStatus, formatStrategy, formatPositions, formatScorecard, formatHelp, formatNotFound, formatPaper,
 } from '../lib/bot-commands.mjs'
-import { buildPaperView } from '../lib/paper-summary.mjs'
+import { loadPaperView } from '../lib/paper-summary.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -41,9 +41,9 @@ async function send(text) {
 }
 
 // 로컬 8787 우선, 실패 시 null (호출부가 파일 폴백)
-async function localApi(path) {
+async function localApi(path, timeoutMs = 3_000) {
   try {
-    const r = await fetch(`${LOCAL}${path}`, { signal: AbortSignal.timeout(3_000) })
+    const r = await fetch(`${LOCAL}${path}`, { signal: AbortSignal.timeout(timeoutMs) })
     if (!r.ok) return null
     return await r.json()
   } catch { return null }
@@ -131,14 +131,12 @@ async function handleScorecard() {
   return formatScorecard({ ...sc.horizons, total: sc.total, pendingCount: sc.pendingCount, risk: sc.risk?.scorecard })
 }
 
-// 모의매매: 대시보드 API(실시간 현재가 포함) 우선, 꺼져 있으면 장부 파일로(현재가 없이 마지막 평가금 기준)
+// 모의매매: 대시보드 API 우선(15초 — /api/paper는 업비트 현재가를 받느라 3초를 넘길 수 있다).
+// 대시보드가 꺼져 있으면 같은 로더(lib/paper-summary loadPaperView)로 직접 — 현재가도 직접 받는다.
 async function handlePaper() {
-  const v = await localApi('/api/paper')
+  const v = await localApi('/api/paper', 15_000)
   if (v) return formatPaper(v)
-  const st = await readJson('paper-trades.json', null)
-  if (!st) return formatPaper(null)
-  const daily = (await readJson('market-baseline.json', { daily: {} })).daily || {}
-  return formatPaper(buildPaperView(st, daily, {}))
+  return formatPaper(await loadPaperView({ readJson, getTicker, listedMarkets: async () => ((await getMarkets()) || []).map((m) => m.market) }))
 }
 
 function handleScan() {

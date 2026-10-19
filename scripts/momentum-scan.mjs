@@ -2,7 +2,7 @@ import '../lib/env.mjs' // .env 로드(스케줄러 환경 캐시 미스 대비)
 import { getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { confirmedOhlcvAsOf, ensureMinConfirmed } from '../lib/ohlcv.mjs'
 import { scoreMomentum, MIN_MOMENTUM_SCORE, sameDayOverheat } from '../lib/momentum.mjs'
-import { readJson, writeJson, rollingAppend, withLock } from '../lib/store.mjs'
+import { readJson, writeJson, rollingAppend, keepRecent, withLock } from '../lib/store.mjs'
 import { triggerPaper } from '../lib/paper-trigger.mjs'
 import { getScanUniverse, BATCH, DELAY, sleep, liquidityPenalty, upbitDominancePenalty } from '../lib/scan-universe.mjs'
 import { ensureCgData } from '../lib/cg-data.mjs'
@@ -11,9 +11,11 @@ import { ensureEvents, applyEventDefense } from '../lib/exchange-events.mjs'
 import { readPositions } from '../lib/positions.mjs'
 import { ensureKimchi, splitPremiumHot } from '../lib/kimchi.mjs'
 
-// 15일치(하루 8회) — 주간 분석이 14일 창으로 +3/+7일 적중률을 본다. 30회(3.7일)였을 땐 그 칸이 늘 비었다(2026-10-19 QA).
+// 최근 15일 보관 — 주간 분석이 14일 창으로 +3/+7일 적중률을 본다. 30회(3.7일)였을 땐 그 칸이 늘 비었다(2026-10-19 QA).
+// 횟수가 아니라 기간으로 자른다(수동 실행이 끼어도 14일이 남게). MAX_SCANS는 폭주 대비 상한일 뿐이다.
 // 모멘텀은 반등 스캔과 달리 무제한 아카이브(scan-archive.jsonl)가 없어 이 파일이 유일한 기록이다.
-const MAX_SCANS = 120
+const KEEP_MS = 15 * 86400_000
+const MAX_SCANS = 400
 
 async function main() {
   const { targets, nameOf, total, tradePrice, warnOf } = await getScanUniverse()
@@ -72,7 +74,7 @@ async function main() {
   await withLock('momentum-log', async () => {
     const fresh = await readJson('momentum-log.json', { started: new Date().toISOString(), totalScans: 0, scans: [] })
     fresh.totalScans = (fresh.totalScans || 0) + 1
-    fresh.scans = rollingAppend(fresh.scans || [], { timestamp: new Date().toISOString(), picks, chase }, MAX_SCANS)
+    fresh.scans = keepRecent(rollingAppend(fresh.scans || [], { timestamp: new Date().toISOString(), picks, chase }, MAX_SCANS), KEEP_MS)
     await writeJson('momentum-log.json', fresh)
     scanNum = fresh.totalScans
   })

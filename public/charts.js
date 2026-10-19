@@ -1,12 +1,14 @@
 // lightweight-charts 래퍼. 전역 LightweightCharts 사용.
 // 가격 축: 1,000원 이상은 정수+쉼표, 1원 이상은 소수 둘째 자리까지, 1원 미만은 유효숫자 4자리
 // (기본 포맷은 1억대 BTC도 '110582000.00'처럼 소수 둘째 자리를 붙였다 — 2026-10-19 QA).
+// 가격 시리즈의 priceFormat으로만 건다 — localization.priceFormatter는 거래량 히스토그램 축까지 덮어쓴다(v4.1.3).
 const priceFmt = (v) => {
   const a = Math.abs(v)
   if (a >= 1000) return Math.round(v).toLocaleString('ko-KR')
   if (a >= 1) return Number(v.toFixed(2)).toLocaleString('ko-KR')
   return Number(v.toPrecision(4)).toString()
 }
+const PRICE_FORMAT = { type: 'custom', formatter: priceFmt, minMove: 1e-8 }
 window.Charts = {
   candle(el, ohlcv, { volume = true } = {}) {
     el.innerHTML = ''
@@ -17,10 +19,9 @@ window.Charts = {
       crosshair: { vertLine: { color: 'rgba(139,108,255,0.45)' }, horzLine: { color: 'rgba(139,108,255,0.45)' } },
       rightPriceScale: { borderColor: 'rgba(150,170,220,0.1)' },
       timeScale: { borderColor: 'rgba(150,170,220,0.1)' },
-      localization: { locale: 'ko-KR', priceFormatter: priceFmt },
       width: el.clientWidth, height: 300,
     })
-    const s = chart.addCandlestickSeries({ upColor: '#26e0a3', downColor: '#fb567f', wickUpColor: '#26e0a3', wickDownColor: '#fb567f', borderVisible: false })
+    const s = chart.addCandlestickSeries({ upColor: '#26e0a3', downColor: '#fb567f', wickUpColor: '#26e0a3', wickDownColor: '#fb567f', borderVisible: false, priceFormat: PRICE_FORMAT })
     const base = Date.now() - ohlcv.length * 86400000
     // 서버가 준 실제 캔들 시각(c.time) 우선, 없으면 일봉 간격으로 합성 (4h/1h 정렬 정확)
     const tof = (c, i) => c.time ?? Math.floor((base + i * 86400000) / 1000)
@@ -43,10 +44,9 @@ window.Charts = {
       grid: { vertLines: { color: 'rgba(150,170,220,0.05)' }, horzLines: { color: 'rgba(150,170,220,0.05)' } },
       rightPriceScale: { borderColor: 'rgba(150,170,220,0.1)' },
       timeScale: { borderColor: 'rgba(150,170,220,0.1)' },
-      localization: { locale: 'ko-KR', priceFormatter: priceFmt },
       width: el.clientWidth, height: 300,
     })
-    const s = chart.addLineSeries({ color: '#8b6cff', lineWidth: 2 })
+    const s = chart.addLineSeries({ color: '#8b6cff', lineWidth: 2, priceFormat: PRICE_FORMAT })
     const base = Date.now() - closes.length * 86400000
     s.setData(closes.map((v, i) => ({ time: Math.floor((base + i * 86400000) / 1000), value: v })))
     chart.timeScale().fitContent()

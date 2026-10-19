@@ -40,12 +40,21 @@ try {
   powercfg -SETDCVALUEINDEX SCHEME_CURRENT SUB_SLEEP RTCWAKE 1 | Out-Null
   powercfg -SETACTIVE SCHEME_CURRENT | Out-Null
   Write-Host "wake timers enabled (AC/DC)"
-  # never sleep on AC: the PC was awake only 32% of the time (2026-10-19 QA). Daemons (bot, news, dashboard)
-  # froze while asleep, scans failed right after timer wakes, and the momentum scan paused mid-run.
-  # The display still turns off on its own timeout.
-  powercfg -change standby-timeout-ac 0 | Out-Null
-  Write-Host "AC sleep disabled (display timeout unchanged)"
 } catch { Write-Host "wake timer step skipped: $_" }
+
+# never sleep or hibernate on AC, in every power scheme: the PC was awake only 32% of the time (2026-10-19 QA).
+# Daemons (bot, news, dashboard) froze while asleep, scans failed right after timer wakes, and the momentum
+# scan paused mid-run. All schemes, so switching power plans does not bring sleep back. Display timeout unchanged.
+try {
+  $guidRe = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+  $schemes = @(powercfg /list | Select-String -Pattern $guidRe | ForEach-Object { $_.Matches[0].Value })
+  foreach ($g in $schemes) {
+    powercfg -setacvalueindex $g SUB_SLEEP STANDBYIDLE 0 | Out-Null
+    powercfg -setacvalueindex $g SUB_SLEEP HIBERNATEIDLE 0 | Out-Null
+  }
+  powercfg -setactive SCHEME_CURRENT | Out-Null
+  Write-Host "AC sleep and hibernate disabled in $($schemes.Count) power schemes (display timeout unchanged)"
+} catch { Write-Host "WARNING: AC sleep step FAILED, the PC may still sleep: $_" }
 
 # Windows Update active hours 15:00-09:00 (18h, the maximum): automatic restarts only happen 09:00-15:00,
 # not overnight. SmartActiveHoursState=0 keeps Windows from moving the window on its own.

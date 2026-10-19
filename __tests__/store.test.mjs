@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { rollingAppend, clampWeight, ewmTarget, writeJson, readJson, withLock, DATA_DIR, hitComponent, returnComponent, qualityTarget, newWeight, readWeights } from '../lib/store.mjs'
+import { keepRecent, rollingAppend, clampWeight, ewmTarget, writeJson, readJson, withLock, DATA_DIR, hitComponent, returnComponent, qualityTarget, newWeight, readWeights } from '../lib/store.mjs'
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -117,5 +117,19 @@ describe('readWeights', () => {
     expect(typeof readWeights).toBe('function')
     const w = await readWeights()
     expect(w && typeof w === 'object').toBe(true)
+  })
+})
+
+describe('keepRecent', () => {
+  it('keeps items newer than the window regardless of how many runs happened', () => {
+    const D = 86400_000, now = 20 * D
+    const scans = Array.from({ length: 200 }, (_, i) => ({ timestamp: new Date(now - (199 - i) * 3600_000).toISOString() })) // 시간당 1회, 200회
+    const kept = keepRecent(scans, 15 * D, now)
+    expect(kept).toHaveLength(200) // 200시간 < 15일 → 전부 유지(횟수 상한이 아니라 기간으로)
+    const old = [{ timestamp: new Date(now - 16 * D).toISOString() }, ...scans]
+    expect(keepRecent(old, 15 * D, now)).toHaveLength(200)
+  })
+  it('keeps items with unreadable timestamps out', () => {
+    expect(keepRecent([{ timestamp: 'nope' }, { timestamp: new Date(0).toISOString() }], 1000, 500)).toHaveLength(1)
   })
 })
