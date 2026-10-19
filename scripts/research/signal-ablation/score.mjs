@@ -6,7 +6,7 @@ const { applyCombos, fallingKnifePenalty, PATTERN_SCORE } = await import(R + 'si
 const { liquidityMultiplier } = await import(R + 'scan-universe.mjs')
 export const WEIGHTS = JSON.parse(readFileSync(new URL('../../../data/signal-weights.json', import.meta.url), 'utf8'))
 
-// opt: { drop:Set(키), weights, noVolCombo, noGcCombo, noTrap, noKnife, extra:(x)=>mult }
+// opt: { drop:Set(키), weights, noVolCombo, noGcCombo, noTrap, noKnife, extra:(x)=>mult, add:(x)=>점수(배수 감점 전 가산) }
 export function score(x, opt = {}) {
   const W = opt.weights ?? WEIGHTS, drop = opt.drop ?? new Set()
   const items = x.b.filter(([k]) => !drop.has(k))
@@ -25,6 +25,7 @@ export function score(x, opt = {}) {
   if (x.sw?.[0] === 'buy' && !drop.has('SMC 유동성 스윕')) s += x.sw[1]
   if (x.vb != null && !drop.has('SMC V-Bottom')) s += x.vb
   if (x.pu != null && !drop.has('SMC Pump Start')) s += x.pu
+  if (opt.add) s += opt.add(x) // 레짐·유동성·낙하칼 배수 전에 더한다 — 가산 점수도 감점을 똑같이 받게
   if (x.reg === 'bear' && !opt.noRegime) s *= 0.85
   s *= liquidityMultiplier(x.tv)
   if (!opt.noKnife) s *= fallingKnifePenalty(lab, x.s.map(([k]) => k)).mult
