@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { VERDICT, ruleRows, decide, power, fillGap, costFrom, vsRandom } from '../lib/verdict.mjs'
+import { VERDICT, ruleRows, decide, power, idealExit, fillGap, costFrom, vsRandom } from '../lib/verdict.mjs'
 
 const D = (iso) => Math.floor(Date.parse(iso) / 86400_000)
 const ep = (iso, ret, exitDay, extra = {}) => ({
@@ -84,23 +84,36 @@ describe('power', () => {
   })
 })
 
+// 스코어카드 에피소드는 '처음 등장한 스캔'에만 생겨서, 장부가 나중 스캔에서 산 거래와 짝이 안 맞는다(10-19 실측 0/22).
+// 그래서 장부 거래마다 같은 스캔가·같은 손절/익절 %로 스코어카드 채점(일봉)을 다시 계산해 비교한다.
+describe('idealExit', () => {
+  const scanAt = Date.parse('2026-10-16T00:00:20.000Z')
+  const d0 = Math.floor(scanAt / 86400_000)
+  const bar = (d, o) => ({ time: d * 86400, open: 100, high: 101, low: 99, close: 100, ...o })
+  const trade = { scanAt, scanPrice: 100, entryPrice: 101, stopLoss: 101 * 0.88, takeProfit: 101 * 1.12, holdMax: 7 }
+  const now = scanAt + 30 * 86400_000
+  it('스캔가 기준 같은 % 손절선을 다음 날 일봉이 건드리면 sl −12%', () => {
+    const r = idealExit(trade, [bar(d0), bar(d0 + 1, { low: 87 })], now)
+    expect(r.reason).toBe('sl')
+    expect(r.ret).toBeCloseTo(-0.12, 9)
+  })
+  it('아직 진행 중(open)이거나 스캔가가 없으면 null', () => {
+    expect(idealExit(trade, [bar(d0), bar(d0 + 1)], scanAt + 2 * 86400_000)).toBeNull()
+    expect(idealExit({ ...trade, scanPrice: null }, [bar(d0 + 1, { low: 87 })], now)).toBeNull()
+  })
+})
+
 describe('fillGap', () => {
-  const ts = '2026-10-16T00:00:20.000Z'
-  const eps = [{ market: 'KRW-A', entryTs: ts, exit: { reason: 'sl', ret: -0.12, exitDay: 2 } },
-    { market: 'KRW-B', entryTs: ts, exit: { reason: 'open', ret: null } }]
-  it('같은 market·같은 스캔만 짝짓고 gap = net − 에피소드 수익', () => {
-    const trades = [
-      { market: 'KRW-A', scanAt: Date.parse(ts), entryAt: Date.parse(ts) + 60_000, net: -0.135, fillModel: 2 },
-      { market: 'KRW-A', scanAt: Date.parse(ts) + 3 * 3600_000, entryAt: 0, net: 0.1, fillModel: 2 }, // 다른 스캔
-      { market: 'KRW-B', scanAt: Date.parse(ts), entryAt: 0, net: 0.1, fillModel: 2 }, // 에피소드 미청산
-    ]
-    const g = fillGap(trades, eps)
-    expect(g.n).toBe(1)
-    expect(g.mean).toBeCloseTo(-0.015, 9)
-    expect(g.byModel[2].n).toBe(1)
+  const T = (scanAt, net, fillModel = 2) => ({ scanAt, net, fillModel })
+  it('gap = 장부 순수익 − 일봉 채점 수익, 모델별로도', () => {
+    const g = fillGap([{ trade: T(86400_000 * 20000, -0.135), ideal: -0.12 }, { trade: T(86400_000 * 20001, 0.1, 1), ideal: 0.12 }])
+    expect(g.n).toBe(2)
+    expect(g.mean).toBeCloseTo(-0.0175, 9)
+    expect(g.byModel[2]).toMatchObject({ n: 1 })
+    expect(g.byModel[1].mean).toBeCloseTo(-0.02, 9)
   })
   it('짝이 없으면 n 0, mean null', () => {
-    expect(fillGap([], eps)).toMatchObject({ n: 0, mean: null })
+    expect(fillGap([])).toMatchObject({ n: 0, mean: null })
   })
 })
 
