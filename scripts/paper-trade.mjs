@@ -11,6 +11,7 @@ import { sendTelegram } from '../lib/notify.mjs'
 import {
   PAPER, newBook, vwapFill, exitRule, scanExit, stopFill, entryHourExit, selectEntries, openPosition, closePosition,
 } from '../lib/paper.mjs'
+import { randomPicks } from '../lib/paper-random.mjs'
 
 const FILE = 'paper-trades.json'
 const LOG = join(DATA_DIR, 'paper-trades-log.jsonl')
@@ -22,6 +23,8 @@ const log = (ev) => appendFileSync(LOG, JSON.stringify({ ...ev, logAt: new Date(
 const SOURCES = {
   main: { file: 'monitor-log.json', picksOf: (s) => s.buy },
   momentum: { file: 'momentum-log.json', picksOf: (s) => s.picks },
+  // 무작위 대조: 메인과 같은 스캔·같은 규칙, 픽만 무작위(lib/paper-random.mjs). universe 없는 예전 스캔은 빈 목록.
+  random: { file: 'monitor-log.json', picksOf: randomPicks },
 }
 
 async function loadState() {

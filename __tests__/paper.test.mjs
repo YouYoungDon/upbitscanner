@@ -216,3 +216,18 @@ describe("v2 리뷰 반영 (2026-10-15)", () => {
     expect(scanExit({ entryAt: 0, stopLoss: 90, takeProfit: NaN }, [c(1, 100, 101, 95)], true)).toBeNull()
   })
 })
+
+describe('PAPER 규칙 고정(11-05까지)', () => {
+  it('값이 바뀌면 paper-trade가 modelChanges를 남긴다 — 실험 중 바꾸지 않는다', () => {
+    expect(PAPER).toEqual({
+      START_CASH: 500_000, POSITION_KRW: 50_000, MAX_OPEN: 10, MAX_PER_SCAN: 3, FEE: 0.0005, STOP_SLIP: 0.002,
+      MAX_SCAN_AGE_MS: 3 * 3600_000, DEFAULT_RULE: { slPct: 12, tpPct: 12, holdMax: 7 }, FILL_MODEL: 2,
+    })
+  })
+  it('random 소스는 기본 규칙(12/12/7)', () => {
+    const r = exitRule({ market: 'KRW-A', price: null }, 'random', 100)
+    expect(r).toMatchObject({ holdMax: 7, rule: 'default' })
+    expect(r.stopLoss).toBeCloseTo(88, 9)
+    expect(r.takeProfit).toBeCloseTo(112, 9)
+  })
+})

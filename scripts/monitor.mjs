@@ -14,6 +14,7 @@ import { scorePersistence } from '../lib/persistence.mjs'
 import { btcRegime, regimeLabel } from '../lib/regime.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import { triggerPaper } from '../lib/paper-trigger.mjs'
+import { randomUniverse } from '../lib/paper-random.mjs'
 import { ensureKimchi, premiumBand, splitPremiumHot, premiumHotList } from '../lib/kimchi.mjs'
 import { selectPremiumAlerts, formatPremiumAlert } from '../lib/premium-alert.mjs'
 import { ensureFunding } from '../lib/funding.mjs'
@@ -205,6 +206,8 @@ async function main() {
   entry.kimchi = { btcPremium: kimchi.btcPremium, band: premiumBand(kimchi.btcPremium), usdtKrw: kimchi.usdtKrw, coverage: kimchi.coverage,
     hot: premiumHotList(kimchi, nameOf) } // 전 종목 국내 과열 목록(대시보드 카드)
   entry.premiumHot = premiumHot // 매수 조건은 맞았지만 국내 과열로 빠진 코인
+  // 무작위 대조 장부(paper-trade 'random')의 후보 — 메인 픽이 될 수 있었던 종목. 점수·알림과 무관한 기록 필드.
+  entry.universe = randomUniverse({ markets: Object.keys(candleMap), tradePrice, warnOf, kimchi })
   if (kimchi.reason) entry.kimchi.reason = kimchi.reason
   entry.funding = { medianRate: funding.medianRate, coverage: funding.coverage }
   if (funding.reason) entry.funding.reason = funding.reason
