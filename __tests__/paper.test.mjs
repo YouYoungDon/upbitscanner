@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   vwapFill, exitRule, scanExit, netReturn, selectEntries, newBook, openPosition, closePosition, PAPER,
-  tickFloor, tickCeil, stopFill, upbitTick, entryHourExit,
+  tickFloor, tickCeil, stopFill, upbitTick, entryHourExit, ensureBooks,
 } from '../lib/paper.mjs'
 
 const H = 3600_000
@@ -229,5 +229,18 @@ describe('PAPER 규칙 고정(11-05까지)', () => {
     expect(r).toMatchObject({ holdMax: 7, rule: 'default' })
     expect(r.stopLoss).toBeCloseTo(88, 9)
     expect(r.takeProfit).toBeCloseTo(112, 9)
+  })
+})
+
+describe('ensureBooks', () => {
+  it('없는 장부만 시작 시각과 함께 만든다(기존 장부는 그대로)', () => {
+    const main = { ...newBook(), cash: 123 }
+    const books = ensureBooks({ main }, ['main', 'momentum', 'random'], '2026-10-19T13:00:00.000Z')
+    expect(books.main).toBe(main)
+    expect(books.random).toMatchObject({ cash: PAPER.START_CASH, open: [], startedAt: '2026-10-19T13:00:00.000Z' })
+    expect(books.momentum.startedAt).toBe('2026-10-19T13:00:00.000Z')
+  })
+  it('장부 파일이 없을 때(books 없음)도 소스 전부를 만든다', () => {
+    expect(Object.keys(ensureBooks(undefined, ['main', 'momentum', 'random'], 'x'))).toEqual(['main', 'momentum', 'random'])
   })
 })

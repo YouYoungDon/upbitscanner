@@ -9,13 +9,13 @@ import { getOrderbook, getMinuteCandles, getTicker } from '../lib/upbit.mjs'
 import { readJson, writeJson, withLock, DATA_DIR } from '../lib/store.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import {
-  PAPER, newBook, vwapFill, exitRule, scanExit, stopFill, entryHourExit, selectEntries, openPosition, closePosition,
+  PAPER, ensureBooks, vwapFill, exitRule, scanExit, stopFill, entryHourExit, selectEntries, openPosition, closePosition,
 } from '../lib/paper.mjs'
 import { randomPicks } from '../lib/paper-random.mjs'
 
 const FILE = 'paper-trades.json'
 const LOG = join(DATA_DIR, 'paper-trades-log.jsonl')
-const MAX_EQUITY_POINTS = 24 * 120 // 시간당 1점, 약 120일
+const MAX_EQUITY_POINTS = 24 * 120 // 매시 1점 + 스캔 직후 실행분(시간당 약 1.6점) → 실제 보관은 약 75일. 판정(11-05)까지는 충분
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const log = (ev) => appendFileSync(LOG, JSON.stringify({ ...ev, logAt: new Date().toISOString() }) + '\n')
 
@@ -28,13 +28,14 @@ const SOURCES = {
 }
 
 async function loadState() {
-  const fresh = { version: 1, fillModel: PAPER.FILL_MODEL, startedAt: new Date().toISOString(), params: PAPER, books: { main: newBook(), momentum: newBook() }, equity: [] }
-  if (!existsSync(join(DATA_DIR, FILE))) return fresh
+  const nowIso = new Date().toISOString()
+  if (!existsSync(join(DATA_DIR, FILE))) {
+    return { version: 1, fillModel: PAPER.FILL_MODEL, startedAt: nowIso, params: PAPER, books: ensureBooks({}, Object.keys(SOURCES), nowIso), equity: [] }
+  }
   const st = await readJson(FILE, null)
   // 파일이 있는데 못 읽으면 덮어쓰지 않고 멈춘다(기록 유실 방지).
   if (!st || !st.books) throw new Error(`${FILE} 읽기 실패 — 덮어쓰지 않고 중단`)
-  // 실험 도중 생긴 장부(random, 10-19~)는 시작 시각을 남긴다 — 시장 대비를 자기 시작일부터 재야 한다(paper-summary).
-  for (const k of Object.keys(SOURCES)) st.books[k] ||= { ...newBook(), startedAt: new Date().toISOString() }
+  ensureBooks(st.books, Object.keys(SOURCES), nowIso)
   st.equity ||= []
   // 체결 모델이나 실험 설정이 바뀐 시각과 이전 설정을 남긴다 — 리포트가 변경 전/후를 나눠 본다
   // (실험 중간 규칙 변경이라 그대로 섞으면 안 된다). 포지션마다 fillModel도 따로 기록돼 있다.
@@ -121,10 +122,11 @@ async function checkExits(st, now) {
 
 async function enterNew(st, now) {
   const opened = []
+  const logs = {} // main·random이 같은 monitor-log(약 10MB)를 쓴다 — 한 번만 읽고, 두 장부가 같은 스냅샷을 본다
   for (const [src, cfg] of Object.entries(SOURCES)) {
     const book = st.books[src]
     book.lastScan ??= now - PAPER.MAX_SCAN_AGE_MS // 첫 실행: 최근 3시간 스캔만(과거 로그 전체를 stale로 세지 않게)
-    const logData = await readJson(cfg.file, { scans: [] })
+    const logData = (logs[cfg.file] ??= await readJson(cfg.file, { scans: [] }))
     const scans = (logData.scans || [])
       .map((s) => ({ at: new Date(s.timestamp).getTime(), picks: cfg.picksOf(s) || [] }))
       .filter((s) => Number.isFinite(s.at) && (book.lastScan == null || s.at > book.lastScan))
