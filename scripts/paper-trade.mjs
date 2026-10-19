@@ -33,7 +33,8 @@ async function loadState() {
   const st = await readJson(FILE, null)
   // 파일이 있는데 못 읽으면 덮어쓰지 않고 멈춘다(기록 유실 방지).
   if (!st || !st.books) throw new Error(`${FILE} 읽기 실패 — 덮어쓰지 않고 중단`)
-  for (const k of Object.keys(SOURCES)) st.books[k] ||= newBook()
+  // 실험 도중 생긴 장부(random, 10-19~)는 시작 시각을 남긴다 — 시장 대비를 자기 시작일부터 재야 한다(paper-summary).
+  for (const k of Object.keys(SOURCES)) st.books[k] ||= { ...newBook(), startedAt: new Date().toISOString() }
   st.equity ||= []
   // 체결 모델이나 실험 설정이 바뀐 시각과 이전 설정을 남긴다 — 리포트가 변경 전/후를 나눠 본다
   // (실험 중간 규칙 변경이라 그대로 섞으면 안 된다). 포지션마다 fillModel도 따로 기록돼 있다.

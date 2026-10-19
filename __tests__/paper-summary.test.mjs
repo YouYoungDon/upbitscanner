@@ -139,3 +139,21 @@ describe('buildPaperView — 시장 대비 시작점도 같게', () => {
     expect(v.books.main.vsMarket).toBeCloseTo(0, 9)
   })
 })
+
+describe('buildPaperView — 나중에 생긴 장부는 자기 시작일부터', () => {
+  it('compares a book added later (random, 10-19) with the market from its own startedAt, not the experiment start', () => {
+    const st = {
+      startedAt: new Date(0).toISOString(), params: { START_CASH: 500000 },
+      equity: [{ at: DAY, main: 500000 }, { at: 3 * DAY, main: 500000, random: 500000 }, { at: 4 * DAY, main: 500000, random: 510000 }],
+      books: {
+        main: { cash: 0, open: [], closed: [] },
+        random: { cash: 0, open: [], closed: [], startedAt: new Date(2 * DAY + 3600_000).toISOString() },
+      },
+    }
+    // 시장: 1일 +50%, 2일 +10%, 3일 0%. random은 2일에 시작 → 3일 마감까지 시장 0%, 장부 +2% → 시장 대비 +2%
+    const v = buildPaperView(st, { 1: 0.5, 2: 0.1, 3: 0 }, {}, 4 * DAY + 1)
+    expect(v.books.random.market).toBeCloseTo(0, 9)
+    expect(v.books.random.vsMarket).toBeCloseTo(0.02, 9)
+    expect(v.books.main.market).toBeCloseTo(0.65, 9) // 기존 장부는 실험 시작일 그대로
+  })
+})

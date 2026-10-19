@@ -94,7 +94,7 @@ for (const [src, book] of Object.entries(st.books)) {
     console.log(`  평가금 ${eq.at(-1).toLocaleString()}원 (${pct(eq.at(-1) / PAPER.START_CASH - 1)}) · 시간별 평가 MDD ${pct(maxDrawdown(rets).mdd)}`)
   }
   // 같은 기간 시장(동일가중) 누적 — 장부 전체를 시장과 비교
-  const d0 = utcDay(new Date(st.startedAt).getTime()), d1 = utcDay(Date.now()) - 1
+  const d0 = utcDay(new Date(book.startedAt ?? st.startedAt).getTime()), d1 = utcDay(Date.now()) - 1 // 나중에 생긴 장부는 자기 시작일부터
   const m = d1 > d0 ? baselineReturn(daily, d0, d1 - d0) : null
   if (m != null) console.log(`  같은 기간 시장(KRW 동일가중) ${pct(m)}`)
 }
