@@ -1,6 +1,6 @@
 {
   "started": "2026-06-17T11:38:30.091Z",
-  "totalScans": 836,
+  "totalScans": 837,
   "scans": [
     {
       "timestamp": "2026-10-15T12:02:38.724Z",
@@ -3511,6 +3511,75 @@
           ],
           "dominance": {
             "share": 0.451,
+            "mult": 1
+          },
+          "chase": "당일 +15.2%"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-19T12:02:33.698Z",
+      "picks": [
+        {
+          "market": "KRW-INJ",
+          "korean_name": "인젝티브",
+          "price": 11360,
+          "priceBasis": "live",
+          "score": 12.8,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "EMA20 상승기울기",
+            "200봉 신고가 근접",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.8"
+          ],
+          "dominance": {
+            "share": 0.007,
+            "mult": 1
+          },
+          "kimchi": {
+            "premium": -0.002328487752083941,
+            "rel": -0.0028326506563560727
+          }
+        }
+      ],
+      "chase": [
+        {
+          "market": "KRW-AXL",
+          "korean_name": "엑셀라",
+          "price": 77.1,
+          "priceBasis": "live",
+          "score": 12.6,
+          "signals": [
+            "EMA 완전정배열 (20>50>200)",
+            "연속양봉 3봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인",
+            "BB 스퀴즈 발산",
+            "⚠️유동성 ×0.9"
+          ],
+          "dominance": {
+            "share": 0.207,
+            "mult": 1
+          },
+          "chase": "윗꼬리 10.9%"
+        },
+        {
+          "market": "KRW-ELSA",
+          "korean_name": "헤이엘사",
+          "price": 85.4,
+          "priceBasis": "live",
+          "score": 12,
+          "signals": [
+            "EMA 정배열 (20>50)",
+            "연속양봉 5봉",
+            "MACD 3연속↑ + RSI 골디락스",
+            "OBV 추세확인"
+          ],
+          "dominance": {
+            "share": 0.452,
             "mult": 1
           },
           "chase": "당일 +15.2%"
