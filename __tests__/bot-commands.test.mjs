@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseCommand, resolveSymbol, formatCoin, formatStatus, formatStrategy, formatPositions, formatScorecard, formatHelp, formatNotFound } from '../lib/bot-commands.mjs'
+import { parseCommand, resolveSymbol, formatCoin, formatStatus, formatStrategy, formatPositions, formatScorecard, formatHelp, formatNotFound, formatPaper } from '../lib/bot-commands.mjs'
 
 describe('parseCommand', () => {
   it('정식 명령·별칭 정규화', () => {
@@ -206,5 +206,40 @@ describe('비용·시장 기준선 표시 (2026-10-08 퀀트 QA)', () => {
     const out = formatStrategy({ n: 3, sl: 1, tp: 1, time: 1, open: 0, noData: 0, winRate: 0.667, avgRet: 0.037, risk: { mdd: -0.03, sharpe: 0.26, n: 3, slots: 3 } })
     expect(out).toContain('슬롯 3')
     expect(out).toContain('시장 대비 우위 미확인')
+  })
+})
+
+describe('모의매매 명령', () => {
+  it('모의·모의매매·paper 를 paper 명령으로 읽는다', () => {
+    expect(parseCommand('모의')).toEqual({ cmd: 'paper', arg: '' })
+    expect(parseCommand('/모의매매')).toEqual({ cmd: 'paper', arg: '' })
+    expect(parseCommand('paper')).toEqual({ cmd: 'paper', arg: '' })
+  })
+  it('formatPaper: 장부별 평가금·수익률·시장 대비·보유·손절 근접·최근 청산', () => {
+    const view = {
+      lastRun: '2026-10-19T11:10:01Z',
+      books: {
+        main: { equity: 474290, ret: -0.0514, market: -0.04, open: [
+          { name: '헤데라', ret: -0.11, toStop: -0.01 }, { name: '솔라나', ret: 0.02, toStop: -0.13 } ],
+          summary: { n: 22, win: 0.36, pnl: -40000 }, closed: [{ name: '애니메코인', exitType: 'tp', net: 0.12, exitAt: 1792000000000 }] },
+        momentum: { equity: 494294, ret: -0.0114, market: -0.04, open: [], summary: { n: 0 }, closed: [] },
+      },
+    }
+    const t = formatPaper(view)
+    expect(t).toContain('메인')
+    expect(t).toContain('474,290')
+    expect(t).toContain('-5.14%')
+    expect(t).toContain('시장 대비 -1.14%p')
+    expect(t).toContain('헤데라') // 손절선 2% 안쪽 경고
+    expect(t).not.toMatch(/⚠️[^\n]*솔라나/)
+    expect(t).toContain('애니메코인')
+    expect(t).toContain('모멘텀')
+  })
+  it('formatPaper: 데이터 없으면 안내', () => {
+    expect(formatPaper(null)).toContain('없')
+    expect(formatPaper({ empty: true })).toContain('없')
+  })
+  it('도움말에 모의 명령이 있다', () => {
+    expect(formatHelp()).toContain('/모의')
   })
 })

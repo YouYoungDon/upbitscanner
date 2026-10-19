@@ -40,6 +40,11 @@ try {
   powercfg -SETDCVALUEINDEX SCHEME_CURRENT SUB_SLEEP RTCWAKE 1 | Out-Null
   powercfg -SETACTIVE SCHEME_CURRENT | Out-Null
   Write-Host "wake timers enabled (AC/DC)"
+  # never sleep on AC: the PC was awake only 32% of the time (2026-10-19 QA). Daemons (bot, news, dashboard)
+  # froze while asleep, scans failed right after timer wakes, and the momentum scan paused mid-run.
+  # The display still turns off on its own timeout.
+  powercfg -change standby-timeout-ac 0 | Out-Null
+  Write-Host "AC sleep disabled (display timeout unchanged)"
 } catch { Write-Host "wake timer step skipped: $_" }
 
 # Windows Update active hours 15:00-09:00 (18h, the maximum): automatic restarts only happen 09:00-15:00,

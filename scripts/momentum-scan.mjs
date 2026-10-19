@@ -11,7 +11,9 @@ import { ensureEvents, applyEventDefense } from '../lib/exchange-events.mjs'
 import { readPositions } from '../lib/positions.mjs'
 import { ensureKimchi, splitPremiumHot } from '../lib/kimchi.mjs'
 
-const MAX_SCANS = 30
+// 15일치(하루 8회) — 주간 분석이 14일 창으로 +3/+7일 적중률을 본다. 30회(3.7일)였을 땐 그 칸이 늘 비었다(2026-10-19 QA).
+// 모멘텀은 반등 스캔과 달리 무제한 아카이브(scan-archive.jsonl)가 없어 이 파일이 유일한 기록이다.
+const MAX_SCANS = 120
 
 async function main() {
   const { targets, nameOf, total, tradePrice, warnOf } = await getScanUniverse()

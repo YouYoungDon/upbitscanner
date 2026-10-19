@@ -1,4 +1,12 @@
 // lightweight-charts 래퍼. 전역 LightweightCharts 사용.
+// 가격 축: 1,000원 이상은 정수+쉼표, 1원 이상은 소수 둘째 자리까지, 1원 미만은 유효숫자 4자리
+// (기본 포맷은 1억대 BTC도 '110582000.00'처럼 소수 둘째 자리를 붙였다 — 2026-10-19 QA).
+const priceFmt = (v) => {
+  const a = Math.abs(v)
+  if (a >= 1000) return Math.round(v).toLocaleString('ko-KR')
+  if (a >= 1) return Number(v.toFixed(2)).toLocaleString('ko-KR')
+  return Number(v.toPrecision(4)).toString()
+}
 window.Charts = {
   candle(el, ohlcv, { volume = true } = {}) {
     el.innerHTML = ''
@@ -9,6 +17,7 @@ window.Charts = {
       crosshair: { vertLine: { color: 'rgba(139,108,255,0.45)' }, horzLine: { color: 'rgba(139,108,255,0.45)' } },
       rightPriceScale: { borderColor: 'rgba(150,170,220,0.1)' },
       timeScale: { borderColor: 'rgba(150,170,220,0.1)' },
+      localization: { locale: 'ko-KR', priceFormatter: priceFmt },
       width: el.clientWidth, height: 300,
     })
     const s = chart.addCandlestickSeries({ upColor: '#26e0a3', downColor: '#fb567f', wickUpColor: '#26e0a3', wickDownColor: '#fb567f', borderVisible: false })
@@ -34,6 +43,7 @@ window.Charts = {
       grid: { vertLines: { color: 'rgba(150,170,220,0.05)' }, horzLines: { color: 'rgba(150,170,220,0.05)' } },
       rightPriceScale: { borderColor: 'rgba(150,170,220,0.1)' },
       timeScale: { borderColor: 'rgba(150,170,220,0.1)' },
+      localization: { locale: 'ko-KR', priceFormatter: priceFmt },
       width: el.clientWidth, height: 300,
     })
     const s = chart.addLineSeries({ color: '#8b6cff', lineWidth: 2 })

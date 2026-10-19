@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildResults, buildInsights, buildVerify, comboDistribution, candleSummary, buildHistory, buildMomentum, buildScorecard } from '../server/api.mjs'
+import { buildResults, buildInsights, buildVerify, comboDistribution, candleSummary, buildHistory, buildMomentum, buildScorecard, buildScans, findScanByTimestamp } from '../server/api.mjs'
 
 const log = {
   totalScans: 5,
@@ -174,7 +174,6 @@ describe('buildHistory', () => {
   })
 })
 
-import { buildScans, findScanByTimestamp } from '../server/api.mjs'
 
 describe('buildScans', () => {
   const scans = [
@@ -263,7 +262,6 @@ describe('buildRecommendations 폴백', () => {
   })
 })
 
-import { buildScorecard } from '../server/api.mjs'
 
 describe('buildScorecard', () => {
   const ep = (over) => ({

@@ -290,4 +290,6 @@ details > summary:hover { color: hsl(var(--p)); }
 
 /* 신호 배지·라벨 툴팁 — 설명이 있다는 표시 */
 .sig-tip { cursor: help; }
+/* 신호 배지는 글자 중간에서 줄이 바뀌면 고정 높이 배지가 겹친다(2026-10-19 QA) — 배지 안은 한 줄, 배지끼리만 줄바꿈 */
+.badge.sig-tip { white-space: nowrap; margin: 1px 0; }
 td.sig-tip, span.sig-tip:not(.badge) { text-decoration: underline dotted; text-underline-offset: 3px; }

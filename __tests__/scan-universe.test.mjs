@@ -38,6 +38,19 @@ describe('getScanUniverse', () => {
     expect(calls).toBe(3) // 1회차 + 재시도 2회
     expect(r.targets).toEqual(['KRW-A', 'KRW-B', 'KRW-C'])
   })
+  it('절전 해제 직후처럼 네트워크가 약 40초 늦게 붙어도(5회 연속 실패) 기본값으로 버틴다', async () => {
+    let calls = 0
+    const waits = []
+    const r = await getScanUniverse({
+      getMarkets: async () => { calls++; return calls <= 5 ? null : markets },
+      getTicker: async (codes) => markets.map((m) => ({ market: m.market, acc_trade_price_24h: MIN_TRADE_PRICE_24H * 2 })).filter((t) => codes.includes(t.market)),
+      delay: 0,
+      sleepFn: async (ms) => { waits.push(ms) },
+    })
+    expect(calls).toBe(6)
+    expect(r.targets).toEqual(['KRW-A', 'KRW-B', 'KRW-C'])
+    expect(waits.slice(0, 5).reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(30000)
+  })
   it('유의종목 플래그를 warnOf에 매핑 (warning/caution만, 정상은 제외)', async () => {
     const warned = [
       { market: 'KRW-A', korean_name: '에이', warning: true },

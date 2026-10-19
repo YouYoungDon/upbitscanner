@@ -13,8 +13,9 @@ import { readPositions, evalPositions } from '../lib/positions.mjs'
 import { buildScorecard } from '../server/api.mjs'
 import {
   parseCommand, resolveSymbol,
-  formatCoin, formatStatus, formatStrategy, formatPositions, formatScorecard, formatHelp, formatNotFound,
+  formatCoin, formatStatus, formatStrategy, formatPositions, formatScorecard, formatHelp, formatNotFound, formatPaper,
 } from '../lib/bot-commands.mjs'
+import { buildPaperView } from '../lib/paper-summary.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -130,6 +131,16 @@ async function handleScorecard() {
   return formatScorecard({ ...sc.horizons, total: sc.total, pendingCount: sc.pendingCount, risk: sc.risk?.scorecard })
 }
 
+// 모의매매: 대시보드 API(실시간 현재가 포함) 우선, 꺼져 있으면 장부 파일로(현재가 없이 마지막 평가금 기준)
+async function handlePaper() {
+  const v = await localApi('/api/paper')
+  if (v) return formatPaper(v)
+  const st = await readJson('paper-trades.json', null)
+  if (!st) return formatPaper(null)
+  const daily = (await readJson('market-baseline.json', { daily: {} })).daily || {}
+  return formatPaper(buildPaperView(st, daily, {}))
+}
+
 function handleScan() {
   // 기존 스캔 스크립트를 그대로 실행 — monitor.mjs가 자체 리치 알림을 발송한다.
   const child = spawn(process.execPath, [join(__dirname, 'monitor.mjs')], {
@@ -146,6 +157,7 @@ async function dispatch(cmd, arg) {
     case 'strategy': return await handleStrategy()
     case 'positions': return await handlePositions()
     case 'scorecard': return await handleScorecard()
+    case 'paper': return await handlePaper()
     default: return formatHelp()
   }
 }
