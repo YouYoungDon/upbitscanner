@@ -61,8 +61,8 @@ describe('getScanUniverse', () => {
       nowFn: () => clock,
     })
     expect(r.targets).toEqual([])
-    expect(calls).toBeLessThanOrEqual(3)
-    expect(clock).toBeLessThanOrEqual(100_000)
+    expect(calls).toBe(2) // 31초 → 2초 대기 → 31초(=64초) → 다음 대기면 한도 초과라 중단
+    expect(clock).toBe(64_000)
   })
   it('유의종목 플래그를 warnOf에 매핑 (warning/caution만, 정상은 제외)', async () => {
     const warned = [

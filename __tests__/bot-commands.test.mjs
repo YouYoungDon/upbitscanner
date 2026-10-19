@@ -229,7 +229,7 @@ describe('모의매매 명령', () => {
     expect(t).toContain('메인')
     expect(t).toContain('474,290')
     expect(t).toContain('-5.14%')
-    expect(t).toContain('시장 대비 -1.14%p')
+    expect(t).toContain('시장 대비 -1.14%p(어제 마감)')
     expect(t).toContain('헤데라') // 손절선 2% 안쪽 경고
     expect(t).not.toMatch(/⚠️[^\n]*솔라나/)
     expect(t).toContain('애니메코인')

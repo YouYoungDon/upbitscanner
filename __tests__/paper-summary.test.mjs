@@ -126,3 +126,16 @@ describe('loadPaperView — 대시보드와 봇이 같이 쓰는 로더', () => 
     expect(await loadPaperView({ readJson: async (f, fb) => fb, getTicker: async () => [] })).toEqual({ empty: true })
   })
 })
+
+describe('buildPaperView — 시장 대비 시작점도 같게', () => {
+  it('measures the book from the first market close (day-0 close), not from startedAt', () => {
+    const st = {
+      startedAt: new Date(DAY / 2).toISOString(), params: { START_CASH: 500000 }, // 0일 장중 시작
+      equity: [{ at: DAY, main: 450000 }, { at: 3 * DAY, main: 495000 }], // 0일 마감에 이미 -10%
+      books: { main: { cash: 0, open: [], closed: [] } },
+    }
+    // 시장 1·2일 합 +10%. 장부는 0일 마감 450,000 → 3일 00:00 495,000 = +10% → 시장 대비 0
+    const v = buildPaperView(st, { 1: 0.1, 2: 0 }, {}, 3 * DAY + 1)
+    expect(v.books.main.vsMarket).toBeCloseTo(0, 9)
+  })
+})

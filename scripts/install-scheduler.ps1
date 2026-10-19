@@ -48,12 +48,15 @@ try {
 try {
   $guidRe = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
   $schemes = @(powercfg /list | Select-String -Pattern $guidRe | ForEach-Object { $_.Matches[0].Value })
+  # powercfg is a native exe: in PS 5.1 a failure does not throw, so check the exit code of every call
+  $failed = 0
   foreach ($g in $schemes) {
-    powercfg -setacvalueindex $g SUB_SLEEP STANDBYIDLE 0 | Out-Null
-    powercfg -setacvalueindex $g SUB_SLEEP HIBERNATEIDLE 0 | Out-Null
+    powercfg -setacvalueindex $g SUB_SLEEP STANDBYIDLE 0 | Out-Null; if ($LASTEXITCODE -ne 0) { $failed++ }
+    powercfg -setacvalueindex $g SUB_SLEEP HIBERNATEIDLE 0 | Out-Null; if ($LASTEXITCODE -ne 0) { $failed++ }
   }
-  powercfg -setactive SCHEME_CURRENT | Out-Null
-  Write-Host "AC sleep and hibernate disabled in $($schemes.Count) power schemes (display timeout unchanged)"
+  powercfg -setactive SCHEME_CURRENT | Out-Null; if ($LASTEXITCODE -ne 0) { $failed++ }
+  if ($schemes.Count -eq 0 -or $failed -gt 0) { Write-Host "WARNING: AC sleep step incomplete ($($schemes.Count) schemes, $failed failed calls), the PC may still sleep" }
+  else { Write-Host "AC sleep and hibernate disabled in $($schemes.Count) power schemes (display timeout unchanged)" }
 } catch { Write-Host "WARNING: AC sleep step FAILED, the PC may still sleep: $_" }
 
 # Windows Update active hours 15:00-09:00 (18h, the maximum): automatic restarts only happen 09:00-15:00,

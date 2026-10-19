@@ -46,3 +46,33 @@ describe('logBinanceFail', () => {
     expect(lines).toEqual(['T 바이낸스 공지 실패 catalog 161: status 202 text/html <html> <b>x</b>', 'T 바이낸스 공지 실패 catalog 157: TimeoutError: aborted'])
   })
 })
+
+import { resetBinanceFailLog, clearBinanceFail } from '../lib/news/sources/exchanges.mjs'
+
+describe('logBinanceFail — per catalog', () => {
+  it('logs each catalog once per outage even when all three fail with the same reason every cycle', () => {
+    resetBinanceFailLog()
+    const lines = []
+    const o = { log: (m) => lines.push(m), now: () => 'T' }
+    for (let cycle = 0; cycle < 3; cycle++) for (const c of [161, 157, 48]) logBinanceFail({ catalogId: c, error: 'TimeoutError: x' }, o)
+    expect(lines).toHaveLength(3)
+  })
+  it('logs again after a catalog recovered and failed anew', () => {
+    resetBinanceFailLog()
+    const lines = []
+    const o = { log: (m) => lines.push(m), now: () => 'T' }
+    logBinanceFail({ catalogId: 161, error: 'TimeoutError: x' }, o)
+    clearBinanceFail(161)
+    logBinanceFail({ catalogId: 161, error: 'TimeoutError: x' }, o)
+    expect(lines).toHaveLength(2)
+  })
+})
+
+describe('fetchBinanceAnnouncements onOk', () => {
+  it('reports which catalogs succeeded', async () => {
+    const ok = []
+    const fetchFn = async () => ({ ok: true, status: 200, headers: { get: () => 'application/json' }, text: async () => JSON.stringify({ data: { articles: [{ id: 1, title: 't' }] } }) })
+    await fetchBinanceAnnouncements({ catalogIds: [161, 157], fetchFn, onOk: (c) => ok.push(c) })
+    expect(ok).toEqual([161, 157])
+  })
+})
