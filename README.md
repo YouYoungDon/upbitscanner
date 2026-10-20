@@ -73,6 +73,13 @@ Get-ScheduledTask -TaskName 'Upbit*'
 - 설치 스크립트를 다시 돌리면 기존 상주 데몬 프로세스는 작업 해제로 죽지 않는다 → 직접 종료 후 `Start-ScheduledTask`(중복 방지).
 - 공백·지연이 보이면: ① 작업 로그 ② System 이벤트 로그(Kernel-Power 42 절전 / 1074 재시작) ③ `LastTaskResult` 순으로 본다.
 
+## Claude Code 도구 (`.claude/`)
+
+| 도구 | 쓰는 법 | 하는 일 |
+|------|--------|--------|
+| 스킬 `/daily-check [시간]` | "오늘 점검해" 또는 `/daily-check 72` | `node scripts/daily-check.mjs`(읽기 전용) 결과를 정상 기준과 대조해 이상만 보고 — 작업 9개, 절전·재시작, 스캔 슬롯 누락·소요, 뉴스 소스 중단, 모의매매 3장부 |
+| 에이전트 `upbit-reviewer` | "upbit-reviewer로 독립 리뷰해" 또는 `@agent-upbit-reviewer` | `/code-review` 다음 단계의 독립 리뷰(Opus, 읽기 전용). 고정 실험 규칙·통계 편향·장애 내성을 저장소 기준으로 본다 |
+
 ## 모의매매 (페이퍼 트레이딩, 2026-10-08~)
 
 돈을 쓰지 않고 스캐너 픽을 **실제 호가로 가상 체결**해 "기계적으로 따라 사면 얼마 남나"를 기록한다.
