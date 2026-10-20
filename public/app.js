@@ -67,6 +67,35 @@ function sortCoins(coins, key, dir) {
   })
 }
 
+// 표 정렬 버튼 순환(스코어카드 코인 표·모의매매 보유/종료 표 공용): 새 열 → 내림차순 → 오름차순 → 해제. sort를 바꿔 돌려준다.
+function nextSort(sort, key) {
+  if (sort.key !== key) Object.assign(sort, { key, dir: 'desc' })
+  else if (sort.dir === 'desc') sort.dir = 'asc'
+  else Object.assign(sort, { key: null, dir: null })
+  return sort
+}
+function sortArrow(sort, key) {
+  return sort.key !== key ? '⇅' : sort.dir === 'desc' ? '▼' : '▲'
+}
+// 정렬 가능한 열 머리. cls는 표마다 다른 접두어(버튼 `${cls}-sort`, 화살표 `${cls}-arrow`) — 한 화면에 표가 여럿이어도 섞이지 않게.
+function sortTh(cls, sort, key, label, hint) {
+  return `<th><button type="button" class="${cls}-sort inline-flex items-center gap-1 hover:text-primary" data-key="${key}" title="${hint ? hint + ' · ' : ''}눌러서 정렬 (내림차순 → 오름차순 → 해제)">${label} <span class="${cls}-arrow ${sort.key === key ? 'text-primary' : 'opacity-40'}">${sortArrow(sort, key)}</span></button></th>`
+}
+// 정렬 버튼 연결: 누르면 nextSort 후 redraw, redraw 뒤엔 화살표만 갱신(열 머리는 다시 그리지 않는다).
+function bindSort(root, cls, sort, redraw) {
+  const paint = () => {
+    for (const btn of root.querySelectorAll(`.${cls}-sort`)) {
+      const a = btn.querySelector(`.${cls}-arrow`)
+      a.textContent = sortArrow(sort, btn.dataset.key)
+      a.className = `${cls}-arrow ${sort.key === btn.dataset.key ? 'text-primary' : 'opacity-40'}`
+    }
+  }
+  for (const btn of root.querySelectorAll(`.${cls}-sort`)) {
+    btn.addEventListener('click', () => { nextSort(sort, btn.dataset.key); redraw(); paint() })
+  }
+  return paint
+}
+
 function kimchiBadge(x) {
   const k = x.kimchi
   if (!k || k.premium == null || !k.flag) return ''
@@ -550,11 +579,15 @@ const routes = {
       </div>`
     }
 
-    const openRows = (src, b) => b.open.map((p) => {
+    // 두 표는 행 데이터를 기본 순서로 만들어 두고, 정렬 버튼이 sortCoins로 다시 줄 세운다(해제 = 기본 순서).
+    // 보유 중 기본 순서: 손절선까지 남은 거리가 짧은 순(toStop은 음수라 큰 값이 가까움), 가격 없는 건 맨 뒤.
+    const openData = Object.entries(d.books).flatMap(([src, b]) => b.open.map((p) => ({ ...p, src, book: LABEL[src] || src })))
+      .sort((a, b) => (b.toStop ?? -Infinity) - (a.toStop ?? -Infinity))
+    const openRow = (p) => {
       const near = p.toStop != null && p.toStop > -0.02
       return `<tr${near ? ' class="bg-error/10"' : ''}>
         <td><a class="link link-hover" href="#/analyze?market=${encodeURIComponent(p.market)}"><b>${esc(p.name)}</b></a> <span class="text-xs opacity-50">${esc(p.market.replace('KRW-', ''))}</span></td>
-        <td class="text-xs">${esc(LABEL[src] || src)}</td>
+        <td class="text-xs">${esc(p.book)}</td>
         <td class="text-xs">${kst(p.entryAt)}</td>
         <td>${fmtPrice(p.entryPrice)}</td>
         <td>${fmtPrice(p.price)}</td>
@@ -563,25 +596,32 @@ const routes = {
         <td>${p.toTake == null ? '—' : `+${(p.toTake * 100).toFixed(1)}%`} <span class="text-xs opacity-50">(${fmtPrice(p.takeProfit)})</span></td>
         <td class="text-xs">${p.heldDays.toFixed(1)} / ${p.holdMax}일</td>
       </tr>`
-    })
-    const allOpen = Object.entries(d.books).flatMap(([src, b]) => b.open.map((p, i) => ({ p, html: openRows(src, b)[i] })))
-      .sort((a, b) => (b.p.toStop ?? -Infinity) - (a.p.toStop ?? -Infinity)).map((x) => x.html).join('')
+    }
+    const openSort = { key: null, dir: null }
+    const openHtml = () => sortCoins(openData, openSort.key, openSort.dir).map(openRow).join('') || '<tr><td colspan="9" class="opacity-60">보유 없음</td></tr>'
 
     const EXIT = { sl: '<span class="badge badge-sm badge-error">손절</span>', tp: '<span class="badge badge-sm badge-success">익절</span>', time: '<span class="badge badge-sm badge-info">기한</span>' }
-    const closedRows = Object.entries(d.books).flatMap(([src, b]) => b.closed.map((c) => ({ src, c })))
-      .sort((a, b) => b.c.exitAt - a.c.exitAt).map(({ src, c }) => {
-        // 청산 뒤 가격이 청산가보다 낮으면(손절 후 더 빠짐 / 익절 후 되밀림) 청산이 도움이 된 것
-        const helped = c.afterExit == null ? null : c.afterExit < 0
-        return `<tr>
+    const EXIT_KO = { sl: '손절', tp: '익절', time: '기한' }
+    // 종료 거래 기본 순서: 최근 청산 순
+    const closedData = Object.entries(d.books).flatMap(([src, b]) => b.closed.map((c) => ({ ...c, src, book: LABEL[src] || src, exitLabel: EXIT_KO[c.exitType] || c.exitType })))
+      .sort((a, b) => b.exitAt - a.exitAt)
+    const closedRow = (c) => {
+      // 청산 뒤 가격이 청산가보다 낮으면(손절 후 더 빠짐 / 익절 후 되밀림) 청산이 도움이 된 것
+      const helped = c.afterExit == null ? null : c.afterExit < 0
+      return `<tr>
         <td><b>${esc(c.name)}</b> <span class="text-xs opacity-50">${esc(c.market.replace('KRW-', ''))}</span></td>
-        <td class="text-xs">${esc(LABEL[src] || src)}</td>
+        <td class="text-xs">${esc(c.book)}</td>
         <td>${EXIT[c.exitType] || esc(c.exitType)}</td>
         <td class="text-xs">${kst(c.entryAt)} → ${kst(c.exitAt)}</td>
         <td>${pc(c.net)} <span class="text-xs opacity-60">${won(c.pnl)}</span></td>
         <td>${pc(c.holdNow)}</td>
         <td>${helped == null ? '<span class="opacity-40">—</span>' : helped ? '<span class="text-success">✔ 도움</span>' : '<span class="text-warning">✖ 아쉬움</span>'}</td>
       </tr>`
-      }).join('')
+    }
+    const closedSort = { key: null, dir: null }
+    const closedHtml = () => sortCoins(closedData, closedSort.key, closedSort.dir).map(closedRow).join('') || '<tr><td colspan="7" class="opacity-60">종료 거래 없음</td></tr>'
+    const oth = (key, label, hint) => sortTh('po', openSort, key, label, hint)
+    const cth = (key, label, hint) => sortTh('pc', closedSort, key, label, hint)
 
     view.innerHTML = `${head}
       <div class="text-xs opacity-70 mb-4">실제 업비트 호가로 가상 체결 · 장부별 ${fmt(P.START_CASH)}원, 건당 ${fmt(P.POSITION_KRW)}원, 수수료 ${(P.FEE ?? 0) * 100}%×2, 손절 슬리피지 ${(P.STOP_SLIP ?? 0) * 100}% ·
@@ -593,19 +633,21 @@ const routes = {
         <div id="paper-equity"></div>
       </div>
       <div class="card bg-base-200 p-4 mb-4">
-        <h3 class="font-bold mb-1">보유 중 <span class="text-sm font-normal opacity-60">— 손절선에 가까운 순, 2% 안쪽은 빨간색</span></h3>
+        <h3 class="font-bold mb-1">보유 중 <span class="text-sm font-normal opacity-60">— 기본은 손절선에 가까운 순, 2% 안쪽은 빨간색 · 열 이름을 누르면 정렬</span></h3>
         <div class="overflow-x-auto"><table class="table table-sm">
-          <thead><tr><th>코인</th><th>장부</th><th>진입</th><th>진입가</th><th>현재가</th><th>수익률</th><th>손절선까지</th><th>익절선까지</th><th>보유</th></tr></thead>
-          <tbody>${allOpen || '<tr><td colspan="9" class="opacity-60">보유 없음</td></tr>'}</tbody>
+          <thead><tr>${oth('name', '코인')}${oth('book', '장부')}${oth('entryAt', '진입')}${oth('entryPrice', '진입가')}${oth('price', '현재가')}${oth('ret', '수익률')}${oth('toStop', '손절선까지', '0에 가까울수록(내림차순 위쪽) 손절선이 가깝다')}${oth('toTake', '익절선까지')}${oth('heldDays', '보유')}</tr></thead>
+          <tbody id="paperOpenRows">${openHtml()}</tbody>
         </table></div>
       </div>
       <div class="card bg-base-200 p-4">
-        <h3 class="font-bold mb-1">종료 거래 <span class="text-sm font-normal opacity-60">— '계속 들고 있었다면'은 진입가 대비 지금 가격. 청산 뒤 가격이 청산가보다 낮으면 ✔ 도움</span></h3>
+        <h3 class="font-bold mb-1">종료 거래 <span class="text-sm font-normal opacity-60">— 기본은 최근 청산 순 · '계속 들고 있었다면'은 진입가 대비 지금 가격. 청산 뒤 가격이 청산가보다 낮으면 ✔ 도움</span></h3>
         <div class="overflow-x-auto"><table class="table table-sm">
-          <thead><tr><th>코인</th><th>장부</th><th>청산</th><th>진입 → 청산</th><th>수익</th><th>계속 들고 있었다면</th><th>청산 판단</th></tr></thead>
-          <tbody>${closedRows || '<tr><td colspan="7" class="opacity-60">종료 거래 없음</td></tr>'}</tbody>
+          <thead><tr>${cth('name', '코인')}${cth('book', '장부')}${cth('exitLabel', '청산')}${cth('exitAt', '진입 → 청산', '청산 시각 기준')}${cth('net', '수익')}${cth('holdNow', '계속 들고 있었다면')}${cth('afterExit', '청산 판단', '청산 뒤 가격 변화 기준 — 오름차순 위쪽이 청산이 가장 도움 된 거래')}</tr></thead>
+          <tbody id="paperClosedRows">${closedHtml()}</tbody>
         </table></div>
       </div>`
+    bindSort(view, 'po', openSort, () => { document.getElementById('paperOpenRows').innerHTML = openHtml() })
+    bindSort(view, 'pc', closedSort, () => { document.getElementById('paperClosedRows').innerHTML = closedHtml() })
     Charts.multiLine($('#paper-equity'), Object.keys(d.books).map((src) => ({
       name: LABEL[src] || src, color: COLOR[src] || '#c7d2e6',
       points: d.equity.map((e) => ({ at: e.at, value: e[src] })),
@@ -713,8 +755,7 @@ const routes = {
       </table></td></tr>`
     // 정렬 상태: 같은 머리글을 누를 때마다 내림차순 → 오름차순 → 해제(최근 진입순)
     const sort = { key: null, dir: null }
-    const arrow = (key) => sort.key !== key ? '⇅' : sort.dir === 'desc' ? '▼' : '▲'
-    const sortTh = (key, label, hint) => `<th><button type="button" class="sc-sort inline-flex items-center gap-1 hover:text-primary" data-key="${key}" title="${hint ? hint + ' · ' : ''}눌러서 정렬 (내림차순 → 오름차순 → 해제)">${label} <span class="sc-arrow ${sort.key === key ? 'text-primary' : 'opacity-40'}">${arrow(key)}</span></button></th>`
+    const th = (key, label, hint) => sortTh('sc', sort, key, label, hint)
     view.innerHTML = `${head}
       <div class="kpi-row mb-4">
         ${hTile('+1일 승률(비용후)', d.horizons.h1)}
@@ -731,7 +772,7 @@ const routes = {
       <label class="label cursor-pointer justify-start gap-2 mb-2 text-sm"><input type="checkbox" id="scNoLowLiq" class="checkbox checkbox-sm"> 저유동성 제외</label>
       <div class="overflow-x-auto">
         <table class="table table-sm">
-          <thead><tr>${sortTh('korean_name', '코인', '줄을 누르면 날짜별 픽이 펼쳐집니다')}${sortTh('picks', '픽')}${sortTh('lastEntry', '최근 진입')}${sortTh('avg1', '+1일 평균')}${sortTh('avg3', '+3일 평균')}${sortTh('avg7', '+7일 평균')}${sortTh('win3Net', '3일 승률(비용후)', '+3일 수익이 왕복 비용 0.3%를 넘은 비율')}${sortTh('exc3', '3일 시장대비', '+3일 픽 수익 − 같은 구간 KRW 전 종목 평균')}</tr></thead>
+          <thead><tr>${th('korean_name', '코인', '줄을 누르면 날짜별 픽이 펼쳐집니다')}${th('picks', '픽')}${th('lastEntry', '최근 진입')}${th('avg1', '+1일 평균')}${th('avg3', '+3일 평균')}${th('avg7', '+7일 평균')}${th('win3Net', '3일 승률(비용후)', '+3일 수익이 왕복 비용 0.3%를 넘은 비율')}${th('exc3', '3일 시장대비', '+3일 픽 수익 − 같은 구간 KRW 전 종목 평균')}</tr></thead>
           <tbody id="scRows">${coinRows(d.coins ?? [])}</tbody>
         </table>
       </div>
@@ -751,22 +792,9 @@ const routes = {
     const redraw = () => {
       const base = document.getElementById('scNoLowLiq').checked ? (d.coins ?? []).filter((c) => !c.lowLiquidity) : (d.coins ?? [])
       document.getElementById('scRows').innerHTML = coinRows(sortCoins(base, sort.key, sort.dir))
-      for (const btn of view.querySelectorAll('.sc-sort')) {
-        const a = btn.querySelector('.sc-arrow')
-        a.textContent = arrow(btn.dataset.key)
-        a.className = `sc-arrow ${sort.key === btn.dataset.key ? 'text-primary' : 'opacity-40'}`
-      }
     }
     document.getElementById('scNoLowLiq').addEventListener('change', redraw)
-    for (const btn of view.querySelectorAll('.sc-sort')) {
-      btn.addEventListener('click', () => {
-        const k = btn.dataset.key
-        if (sort.key !== k) Object.assign(sort, { key: k, dir: 'desc' })
-        else if (sort.dir === 'desc') sort.dir = 'asc'
-        else Object.assign(sort, { key: null, dir: null })
-        redraw()
-      })
-    }
+    bindSort(view, 'sc', sort, redraw)
     // 펼침/접힘 — tbody에 위임해서 저유동 필터로 다시 그려도 동작한다
     document.getElementById('scRows').addEventListener('click', (ev) => {
       if (ev.target.closest('a.sc-analyze')) return // 링크는 펼침 대신 이동
