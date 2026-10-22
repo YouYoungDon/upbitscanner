@@ -8,6 +8,7 @@ import { maxDrawdown } from '../../lib/perf-metrics.mjs'
 import { summarizeTrades } from '../../lib/paper-summary.mjs'
 import { baselineReturn } from '../../lib/market-baseline.mjs'
 import { PAPER } from '../../lib/paper.mjs'
+import { XL } from '../../lib/paper-books.mjs'
 import { VERDICT, ruleRows, decide, power, idealExit, fillGap, costFrom, vsRandom } from '../../lib/verdict.mjs'
 import { getDayCandles, candlesToOhlcv } from '../../lib/upbit.mjs'
 import { confirmedOhlcvAsOf } from '../../lib/ohlcv.mjs'
@@ -22,7 +23,7 @@ if (!st) { console.log('data/paper-trades.json 없음 — 모의매매가 아직
 const daily = (await readJson('market-baseline.json', { daily: {} })).daily || {}
 
 console.log(`모의매매 시작 ${st.startedAt} · 마지막 실행 ${st.lastRun}`)
-console.log(`규칙: 장부별 ${PAPER.START_CASH.toLocaleString()}원, 건당 ${PAPER.POSITION_KRW.toLocaleString()}원, 최대 ${PAPER.MAX_OPEN}건, 스캔당 ${PAPER.MAX_PER_SCAN}건, 수수료 ${PAPER.FEE * 100}%×2, 손절 슬리피지 ${PAPER.STOP_SLIP * 100}%`)
+console.log(`규칙: 장부별 ${PAPER.START_CASH.toLocaleString()}원, 건당 ${PAPER.POSITION_KRW.toLocaleString()}원, 최대 ${PAPER.MAX_OPEN}건, 스캔당 ${PAPER.MAX_PER_SCAN}건(1천만 XL 장부: ${XL.startCash.toLocaleString()}원·최대 ${XL.maxOpen}건·스캔당 ${XL.maxPerScan}건), 수수료 ${PAPER.FEE * 100}%×2, 손절 슬리피지 ${PAPER.STOP_SLIP * 100}%`)
 
 // ── 판정(스코어카드 기반, 설계 docs/superpowers/specs/2026-10-19-paper-verdict-design.md) ──
 // 장부는 자금 제약으로 표본이 작아 판정은 메인 픽 전부(스코어카드)로 한다. 장부는 비용 보정·무작위 대조에 쓴다.
@@ -70,6 +71,8 @@ else {
     ` · 스캔 후 ${VERDICT.HOLD_WAIT_DAYS}일 안 된 ${allMainClosed.length - mainClosed.length}건 제외`)
   const vr = vsRandom(st.books.main?.closed ?? [], st.books.random?.closed ?? [])
   console.log(`무작위 대조(보조 — 두 장부 모두 자금 제약): 같은 스캔 ${vr.scans}회 · 메인 − 무작위 ${pct(vr.mean)} (t ${tStr(vr)}, ${vr.days}일)`)
+  const vx = vsRandom(st.books.main_xl?.closed ?? [], st.books.random_xl?.closed ?? [])
+  console.log(`실체결 대조(1천만 XL — 자리 제약 없이 같은 스캔·같은 개수): 같은 스캔 ${vx.scans}회 · 메인 − 무작위 ${pct(vx.mean)} (t ${tStr(vx)}, ${vx.days}일)`)
   show('참고: 신호 정리 전 06-11~10-07, 판정에 안 씀', '2026-06-01T00:00:00Z', VERDICT.FROM)
   console.log('\n모멘텀은 스코어카드 대상이 아니라 아래 장부로만 본다(스캔당 픽 평균 약 1개 — 장부가 사실상 픽 전부, 표본 작음).')
 }
@@ -96,7 +99,7 @@ for (const [src, book] of Object.entries(st.books)) {
   const eq = st.equity.map((p) => p[src]).filter(Number.isFinite)
   if (eq.length > 1) {
     const rets = eq.slice(1).map((v, i) => v / eq[i] - 1)
-    console.log(`  평가금 ${eq.at(-1).toLocaleString()}원 (${pct(eq.at(-1) / PAPER.START_CASH - 1)}) · 시간별 평가 MDD ${pct(maxDrawdown(rets).mdd)}`)
+    console.log(`  평가금 ${eq.at(-1).toLocaleString()}원 (${pct(eq.at(-1) / (book.startCash ?? PAPER.START_CASH) - 1)}) · 시간별 평가 MDD ${pct(maxDrawdown(rets).mdd)}`)
   }
   // 같은 기간 시장(동일가중) 누적 — 장부 전체를 시장과 비교
   const d0 = utcDay(new Date(book.startedAt ?? st.startedAt).getTime()), d1 = utcDay(Date.now()) - 1 // 나중에 생긴 장부는 자기 시작일부터

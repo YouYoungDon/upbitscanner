@@ -157,3 +157,22 @@ describe('buildPaperView — 나중에 생긴 장부는 자기 시작일부터',
     expect(v.books.main.market).toBeCloseTo(0.65, 9) // 기존 장부는 실험 시작일 그대로
   })
 })
+
+describe('buildPaperView — 장부별 시작 자본·보유 상한(XL, 10-22~)', () => {
+  it('startCash가 있는 장부는 그 금액 기준 수익률, maxOpen은 장부 정의에서', () => {
+    const st = {
+      startedAt: new Date(0).toISOString(), params: { START_CASH: 500000, MAX_OPEN: 10 },
+      equity: [{ at: DAY, main: 500000, main_xl: 10_000_000 }, { at: 2 * DAY, main: 450000, main_xl: 10_500_000 }],
+      books: {
+        main: { cash: 0, open: [], closed: [] },
+        main_xl: { cash: 0, open: [], closed: [], startCash: 10_000_000, startedAt: new Date(DAY / 2).toISOString() },
+      },
+    }
+    const v = buildPaperView(st, {}, {}, 2 * DAY + 1)
+    expect(v.books.main.ret).toBeCloseTo(-0.1, 9)
+    expect(v.books.main_xl.ret).toBeCloseTo(0.05, 9)
+    expect(v.books.main_xl.startCash).toBe(10_000_000)
+    expect(v.books.main.maxOpen).toBe(10)
+    expect(v.books.main_xl.maxOpen).toBe(200)
+  })
+})

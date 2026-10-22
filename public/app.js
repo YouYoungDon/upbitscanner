@@ -557,16 +557,19 @@ const routes = {
     const won = (v) => `${v >= 0 ? '+' : ''}${fmt(Math.round(v))}원`
     const kst = (ms) => new Date(ms).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
     const tTxt = (t) => t == null ? 't —' : `t ${t.toFixed(2)}`
-    const LABEL = { main: '메인 (반등)', momentum: '모멘텀', random: '무작위 대조' }
-    const COLOR = { main: '#8b6cff', momentum: '#26e0a3', random: '#9aa4b8' }
+    const LABEL = { main: '메인 (반등)', momentum: '모멘텀', random: '무작위 대조', main_xl: '메인 1천만', momentum_xl: '모멘텀 1천만', random_xl: '무작위 1천만' }
+    const COLOR = { main: '#8b6cff', momentum: '#26e0a3', random: '#9aa4b8', main_xl: '#c4b1ff', momentum_xl: '#8ff0cf', random_xl: '#d3d9e4' }
     const P = d.params || {}
+    // 시작 자본이 다른 장부(1천만 XL)는 평가금 곡선을 따로 그린다 — 한 축에 그리면 50만 원 장부가 바닥에 붙는다
+    const xlKeys = Object.keys(d.books).filter((k) => (d.books[k].startCash ?? P.START_CASH) !== P.START_CASH)
+    const baseKeys = Object.keys(d.books).filter((k) => !xlKeys.includes(k))
 
     const card = (src, b) => {
       const s = b.summary || { n: 0 }
       return `<div class="card bg-base-200 p-4">
         <div class="flex items-baseline justify-between gap-2">
           <h3 class="font-bold text-lg" style="color:${COLOR[src] || 'inherit'}">${esc(LABEL[src] || src)}</h3>
-          <span class="text-xs opacity-60">현금 ${fmt(Math.round(b.cash))}원 · 보유 ${b.open.length}/${P.MAX_OPEN ?? '-'}건</span>
+          <span class="text-xs opacity-60">현금 ${fmt(Math.round(b.cash))}원 · 보유 ${b.open.length}/${b.maxOpen ?? P.MAX_OPEN ?? '-'}건</span>
         </div>
         <div class="text-3xl font-bold mt-1">${fmt(Math.round(b.equity))}원 <span class="text-xl">${pc(b.ret, 2)}</span></div>
         <div class="text-sm mt-1"><span title="시장 기준선은 일 단위라 어제 마감(09:00)까지만 있다 — 장부도 그 시점 평가금으로 비교">같은 기간 시장 ${pc(b.market, 2)} · 시장 대비 ${pc(b.vsMarket, 2)} <span class="opacity-60">(어제 마감 기준)</span></span> · MDD ${pc(b.mdd, 1)}</div>
@@ -598,7 +601,10 @@ const routes = {
       </tr>`
     }
     const openSort = { key: null, dir: null }
-    const openHtml = () => sortCoins(openData, openSort.key, openSort.dir).map(openRow).join('') || '<tr><td colspan="9" class="opacity-60">보유 없음</td></tr>'
+    // 장부 필터(전체/장부 하나) — XL 장부가 생기며 보유 중이 수백 줄이 됐다(10-22). 두 표에 함께 적용하고 정렬과 같이 동작한다.
+    const bookFilter = { key: '' }
+    const byBook = (rows) => (bookFilter.key ? rows.filter((r) => r.src === bookFilter.key) : rows)
+    const openHtml = () => sortCoins(byBook(openData), openSort.key, openSort.dir).map(openRow).join('') || '<tr><td colspan="9" class="opacity-60">보유 없음</td></tr>'
 
     const EXIT = { sl: '<span class="badge badge-sm badge-error">손절</span>', tp: '<span class="badge badge-sm badge-success">익절</span>', time: '<span class="badge badge-sm badge-info">기한</span>' }
     const EXIT_KO = { sl: '손절', tp: '익절', time: '기한' }
@@ -619,12 +625,12 @@ const routes = {
       </tr>`
     }
     const closedSort = { key: null, dir: null }
-    const closedHtml = () => sortCoins(closedData, closedSort.key, closedSort.dir).map(closedRow).join('') || '<tr><td colspan="7" class="opacity-60">종료 거래 없음</td></tr>'
+    const closedHtml = () => sortCoins(byBook(closedData), closedSort.key, closedSort.dir).map(closedRow).join('') || '<tr><td colspan="7" class="opacity-60">종료 거래 없음</td></tr>'
     const oth = (key, label, hint) => sortTh('po', openSort, key, label, hint)
     const cth = (key, label, hint) => sortTh('pc', closedSort, key, label, hint)
 
     view.innerHTML = `${head}
-      <div class="text-xs opacity-70 mb-4">실제 업비트 호가로 가상 체결 · 장부별 ${fmt(P.START_CASH)}원, 건당 ${fmt(P.POSITION_KRW)}원, 수수료 ${(P.FEE ?? 0) * 100}%×2, 손절 슬리피지 ${(P.STOP_SLIP ?? 0) * 100}% ·
+      <div class="text-xs opacity-70 mb-4">실제 업비트 호가로 가상 체결 · 장부별 ${fmt(P.START_CASH)}원(1천만 장부는 ${fmt(10000000)}원·최대 200건), 건당 ${fmt(P.POSITION_KRW)}원, 수수료 ${(P.FEE ?? 0) * 100}%×2, 손절 슬리피지 ${(P.STOP_SLIP ?? 0) * 100}% ·
         시작 ${kst(new Date(d.startedAt).getTime())} · 마지막 실행 ${kst(new Date(d.lastRun).getTime())}. 판정은 11-05 점검 때 진입일 t로 합니다(표본이 적을 땐 방향만 참고).
         ${(d.modelChanges || []).map((m) => `<br>⚙️ ${kst(m.at)} 체결 모델 v${m.fillModel}${m.fillModel === 2 ? ' 적용 — 스캔 직후 매수 · 호가 단위 반영 · 손절은 1분봉 체결가' : ' · 실험 설정 변경'}. 다른 모델로 산 거래와 섞어 비교하지 마세요(터미널 리포트가 모델별로 나눠 보여 줍니다).`).join('')}</div>
       <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">${Object.entries(d.books).map(([src, b]) => card(src, b)).join('')}</div>
@@ -632,6 +638,11 @@ const routes = {
         <h3 class="font-bold mb-2">평가금 추이</h3>
         <div id="paper-equity"></div>
       </div>
+      ${xlKeys.length ? `<div class="card bg-base-200 p-4 mb-4">
+        <h3 class="font-bold mb-2">1천만 장부 평가금 추이 <span class="text-sm font-normal opacity-60">— 축 크기가 달라 따로 그린다</span></h3>
+        <div id="paper-equity-xl"></div>
+      </div>` : ''}
+      <label class="flex items-center gap-2 mb-2 text-sm">장부 <select id="paperBook" class="select select-sm select-bordered"><option value="">전체</option>${Object.keys(d.books).map((k) => `<option value="${k}">${esc(LABEL[k] || k)}</option>`).join('')}</select> <span class="opacity-60">보유 중·종료 거래 표에 함께 적용</span></label>
       <div class="card bg-base-200 p-4 mb-4">
         <h3 class="font-bold mb-1">보유 중 <span class="text-sm font-normal opacity-60">— 기본은 손절선에 가까운 순, 2% 안쪽은 빨간색 · 열 이름을 누르면 정렬</span></h3>
         <div class="overflow-x-auto"><table class="table table-sm">
@@ -646,12 +657,19 @@ const routes = {
           <tbody id="paperClosedRows">${closedHtml()}</tbody>
         </table></div>
       </div>`
+    document.getElementById('paperBook').addEventListener('change', (e) => {
+      bookFilter.key = e.target.value
+      document.getElementById('paperOpenRows').innerHTML = openHtml()
+      document.getElementById('paperClosedRows').innerHTML = closedHtml()
+    })
     bindSort(view, 'po', openSort, () => { document.getElementById('paperOpenRows').innerHTML = openHtml() })
     bindSort(view, 'pc', closedSort, () => { document.getElementById('paperClosedRows').innerHTML = closedHtml() })
-    Charts.multiLine($('#paper-equity'), Object.keys(d.books).map((src) => ({
+    const series = (keys) => keys.map((src) => ({
       name: LABEL[src] || src, color: COLOR[src] || '#c7d2e6',
       points: d.equity.map((e) => ({ at: e.at, value: e[src] })),
-    })))
+    }))
+    Charts.multiLine($('#paper-equity'), series(baseKeys))
+    if (xlKeys.length) Charts.multiLine($('#paper-equity-xl'), series(xlKeys))
   },
 
   async scorecard() {

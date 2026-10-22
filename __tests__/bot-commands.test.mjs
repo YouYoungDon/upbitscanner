@@ -215,6 +215,10 @@ describe('모의매매 명령', () => {
     expect(parseCommand('/모의매매')).toEqual({ cmd: 'paper', arg: '' })
     expect(parseCommand('paper')).toEqual({ cmd: 'paper', arg: '' })
   })
+  it('formatPaper: XL 장부 이름표', () => {
+    const t = formatPaper({ books: { main_xl: { equity: 10_000_000, ret: 0, open: [], summary: { n: 0 }, closed: [] } } })
+    expect(t).toContain('메인 1천만')
+  })
   it('formatPaper: random 장부는 "무작위 대조"', () => {
     const t = formatPaper({ books: { random: { equity: 500000, ret: 0, open: [], summary: { n: 0 }, closed: [] } } })
     expect(t).toContain('무작위 대조')

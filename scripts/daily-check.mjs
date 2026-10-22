@@ -72,7 +72,7 @@ section('모의매매', () => {
   const act = paperActivity(lines.map((l) => { try { return JSON.parse(l) } catch { return null } }), since)
   for (const [src, b] of Object.entries(st.books)) {
     const a = act[src] || { open: 0, close: 0, noCash: 0, noFill: 0, stale: 0 }
-    const start = st.params?.START_CASH ?? 500000
+    const start = b.startCash ?? st.params?.START_CASH ?? 500000
     console.log(`- ${src}: 평가 ${(eq[src] ?? 0).toLocaleString('ko-KR')}원 (${(((eq[src] ?? start) / start - 1) * 100).toFixed(2)}%) · 보유 ${b.open.length} · 현금 ${Math.round(b.cash).toLocaleString('ko-KR')}원 · ` +
       `지난 ${HOURS}시간 진입 ${a.open} · 청산 ${a.close} · 현금 부족 ${a.noCash}${a.noFill ? ` · 체결 실패 ${a.noFill}` : ''}${a.stale ? ` · 묵은 스캔 ${a.stale}` : ''}`)
   }
