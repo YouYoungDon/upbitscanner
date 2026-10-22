@@ -13,7 +13,7 @@ allowed-tools: Bash(node scripts/daily-check.mjs*) Bash(node */scripts/daily-che
 node "${CLAUDE_PROJECT_DIR}/scripts/daily-check.mjs"
 ```
 
-$ARGUMENTS가 숫자면(예: `72`) 그 시간 범위로 `node scripts/daily-check.mjs <시간>`을 한 번 더 실행해 그 결과로 판단한다.
+호출 인자: [$ARGUMENTS] — 비어 있으면 위 24시간 결과로 판단한다. 숫자면(예: `72`) 그 시간 범위로 `node scripts/daily-check.mjs <시간>`을 한 번 더 실행해 그 결과로 판단한다.
 
 ## 해석 기준
 
@@ -24,7 +24,7 @@ $ARGUMENTS가 숫자면(예: `72`) 그 시간 범위로 `node scripts/daily-chec
 | 작업 스케줄러 | 9개, 결과 0. 상주 데몬 3개(봇·뉴스·대시보드)는 Running이고 결과 2147946720(이미 실행 중)도 정상 | `data/task-logs/<작업명>.log` 끝부분 |
 | 절전·재시작 | 없음(10-19 20:39부터 AC 절전 끔). 1074 재시작은 업데이트 사용 시간 밖(09~15시)이면 정상 | System 이벤트 로그, `powercfg /q` |
 | 스캔 슬롯 | 반등·모멘텀 모두 8/8, 소요 1~2분. 5분 넘으면 네트워크 지연 의심(10-19 절전 장애 때 8분) | 같은 시각 절전 이벤트, `UpbitMonitor.log`의 "스캔 대상 없음" |
-| universe | 마지막 반등 스캔에 100~150종목 | 없으면 무작위 대조 장부가 못 산다 |
+| universe | 마지막 반등 스캔에 대략 100~200종목(시장 거래대금에 따라 오르내림, 10-19~22 실측 129~151) | 없으면 무작위 대조 장부가 못 산다 |
 | 뉴스 데몬 | 소스 중단 없음, 마지막 사이클 10분 이내 | `UpbitNewsWatch.log`의 실패 사유 |
 | 모의매매 | 마지막 실행 75분 이내, 모델 변경 기록 1건 그대로(11-05까지 규칙 고정) | `UpbitPaper.log` |
 
