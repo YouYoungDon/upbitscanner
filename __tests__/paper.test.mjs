@@ -244,3 +244,13 @@ describe('ensureBooks', () => {
     expect(Object.keys(ensureBooks(undefined, ['main', 'momentum', 'random'], 'x'))).toEqual(['main', 'momentum', 'random'])
   })
 })
+
+describe('ensureBooks — 장부별 시작 자본', () => {
+  it('새 장부는 지정한 자본으로 만들고 startCash를 남긴다, 기존 장부는 그대로', () => {
+    const main = { ...newBook(), cash: 123 }
+    const books = ensureBooks({ main }, ['main', 'main_xl'], 'x', (k) => (k === 'main_xl' ? 10_000_000 : undefined))
+    expect(books.main).toBe(main)
+    expect(books.main.startCash).toBeUndefined()
+    expect(books.main_xl).toMatchObject({ cash: 10_000_000, startCash: 10_000_000, startedAt: 'x' })
+  })
+})
