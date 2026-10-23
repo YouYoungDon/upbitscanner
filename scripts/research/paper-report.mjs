@@ -69,10 +69,10 @@ else {
   const models = Object.entries(gap.byModel).map(([m, b]) => `v${m} ${b.n}건 ${pct(b.mean)}`).join(' / ')
   console.log(`\n실체결 차이(장부 순수익 − 같은 스캔가 일봉 채점 수익): 짝 ${gap.n}건 · 평균 ${pct(gap.mean)} (t ${tStr(gap)}, ${gap.days}일)${models ? ` · ${models}` : ''}` +
     ` · 스캔 후 ${VERDICT.HOLD_WAIT_DAYS}일 안 된 ${allMainClosed.length - mainClosed.length}건 제외`)
-  const vr = vsRandom(st.books.main?.closed ?? [], st.books.random?.closed ?? [])
-  console.log(`무작위 대조(보조 — 두 장부 모두 자금 제약): 같은 스캔 ${vr.scans}회 · 메인 − 무작위 ${pct(vr.mean)} (t ${tStr(vr)}, ${vr.days}일)`)
-  const vx = vsRandom(st.books.main_xl?.closed ?? [], st.books.random_xl?.closed ?? [])
-  console.log(`실체결 대조(1천만 XL — 자리 제약 없이 같은 스캔·같은 개수): 같은 스캔 ${vx.scans}회 · 메인 − 무작위 ${pct(vx.mean)} (t ${tStr(vx)}, ${vx.days}일)`)
+  const vr = vsRandom(st.books.main?.closed ?? [], st.books.random?.closed ?? [], { open: [...(st.books.main?.open ?? []), ...(st.books.random?.open ?? [])] })
+  console.log(`무작위 대조(보조 — 두 장부 모두 자금 제약): 결과가 다 나온 같은 스캔 ${vr.scans}회 · 메인 − 무작위 ${pct(vr.mean)} (t ${tStr(vr)}, ${vr.days}일)`)
+  const vx = vsRandom(st.books.main_xl?.closed ?? [], st.books.random_xl?.closed ?? [], { open: [...(st.books.main_xl?.open ?? []), ...(st.books.random_xl?.open ?? [])] })
+  console.log(`실체결 대조(1천만 XL — 자리 제약 없이 같은 스캔·같은 개수): 결과가 다 나온 같은 스캔 ${vx.scans}회 · 메인 − 무작위 ${pct(vx.mean)} (t ${tStr(vx)}, ${vx.days}일)`)
   show('참고: 신호 정리 전 06-11~10-07, 판정에 안 씀', '2026-06-01T00:00:00Z', VERDICT.FROM)
   console.log('\n모멘텀은 스코어카드 대상이 아니라 아래 장부로만 본다(스캔당 픽 평균 약 1개 — 장부가 사실상 픽 전부, 표본 작음).')
 }

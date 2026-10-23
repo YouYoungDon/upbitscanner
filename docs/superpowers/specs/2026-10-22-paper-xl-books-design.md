@@ -27,7 +27,7 @@ BOOKS = [
   { key: 'momentum_xl', file: 'momentum-log.json', picks: (s) => s.picks,    rule: 'momentum', phase: 2, ...XL },
   { key: 'random_xl',   file: 'monitor-log.json',  picks: randomPicks,       rule: 'random',   phase: 2, ...XL, matchCount: 'main_xl' },
 ]
-XL = { startCash: 10_000_000, maxOpen: 200, maxPerScan: 200 }
+XL = { startCash: 10_000_000, maxOpen: 199, maxPerScan: 199 }
 ```
 - 기존 3장부는 `startCash/maxOpen/maxPerScan`이 없어 `PAPER` 값을 쓴다(동작 동일).
 - `rule`은 `exitRule(pick, rule, fill)`에 넘기는 값 — `main_xl`은 메인과 같이 픽의 `exit`(12/12/7)를 쓴다.
@@ -67,3 +67,14 @@ XL = { startCash: 10_000_000, maxOpen: 200, maxPerScan: 200 }
 ## 6. 범위 밖
 
 - 기존 장부 설정 변경, 판정 규칙 변경, 건당 금액을 키운 "큰돈 체결 비용" 장부.
+
+## 7. 리뷰 반영 (10-23)
+
+- `/code-review`: 봇 손절 근접 장부당 5개, XL 청산 확인 시간 한도 2분, 평가금은 상장 목록으로 거르고 시세 없으면 `lastPrice`,
+  호가 20종목씩, 종료 표 300줄, 대시보드 안내문을 데이터에서.
+- 독립 리뷰(`upbit-reviewer`):
+  - XL 대조(`vsRandom`)는 **두 장부 보유가 남은 스캔을 뺀다** — 일찍 끝나는 건 익절·손절 터치뿐이라 극단값만 섞였다. 기존 main−random 줄도 같다.
+  - 시간 한도가 있으면 장부를 섞어 **진입이 오래된 포지션부터** 본다(장부 순서대로면 늘 `random_xl`만 미뤄짐). **기한이 된 포지션은 한도와 무관**하게 본다 — 기한 청산은 그때 호가로 체결해 늦으면 결과가 달라진다.
+  - 1분봉은 **성공만 캐시**한다. 시간봉은 실패도 캐시하는데, 이건 같은 실행에서 같은 시장의 다른 장부 포지션까지 "다음 회차 재확인"으로 미룬다(예전엔 포지션마다 다시 조회) — 결과를 바꾸지 않고 미루기만 한다.
+  - XL 최대 199건: 200건 × 5만 원 × (1+0.05%) = 10,005,000원 > 1,000만 원이라 200건째는 늘 현금 부족이었다.
+- 첫 XL 진입분(10-22 12:38, 12:01·12:02 스캔)은 스캔 뒤 약 37분에 샀다(그 뒤로는 4~8초) — 모멘텀 XL 성과·지연 비용을 볼 때 이 묶음을 구분한다.

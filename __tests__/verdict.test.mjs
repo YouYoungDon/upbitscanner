@@ -150,3 +150,12 @@ describe('vsRandom', () => {
     expect(r.mean).toBeCloseTo(0.1, 9) // 메인 평균 0.05 − 무작위 −0.05
   })
 })
+
+describe('vsRandom — 결과가 다 나온 스캔만(10-23 독립 리뷰)', () => {
+  const S = Date.parse('2026-10-22T12:01:00Z')
+  it('어느 장부든 그 스캔 보유가 남아 있으면 그 스캔은 뺀다(일찍 끝난 극단값만 섞이는 우측 절단 편향)', () => {
+    const main = [{ scanAt: S, net: -0.124 }], rnd = [{ scanAt: S, net: 0.1299 }]
+    expect(vsRandom(main, rnd, { open: [{ scanAt: S }] }).scans).toBe(0)
+    expect(vsRandom(main, rnd, { open: [] }).scans).toBe(1)
+  })
+})

@@ -173,6 +173,6 @@ describe('buildPaperView — 장부별 시작 자본·보유 상한(XL, 10-22~)'
     expect(v.books.main_xl.ret).toBeCloseTo(0.05, 9)
     expect(v.books.main_xl.startCash).toBe(10_000_000)
     expect(v.books.main.maxOpen).toBe(10)
-    expect(v.books.main_xl.maxOpen).toBe(200)
+    expect(v.books.main_xl.maxOpen).toBe(199)
   })
 })

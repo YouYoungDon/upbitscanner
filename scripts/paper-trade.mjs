@@ -78,7 +78,7 @@ async function minuteBars(market, hourStart) {
   const raw = await getMinuteCandles(market, 1, 60, new Date(hourStart + 3600_000).toISOString())
   await sleep(120)
   const bars = Array.isArray(raw) ? toBars(raw).filter((m) => m.t >= hourStart && m.t < hourStart + 3600_000) : null
-  cache.minute.set(key, bars)
+  if (bars) cache.minute.set(key, bars) // 성공만 캐시 — 실패를 캐시하면 같은 시장·시간의 다른 포지션 봉 안 손절이 1분봉 체결가 없이(손절가로) 확정된다
   return bars
 }
 
@@ -106,38 +106,42 @@ async function checkEntryHour(pos, now) {
   return null
 }
 
-// budgetMs: 이 단계의 청산 확인 시간 한도(XL만). 넘으면 남은 포지션은 다음 회차에 본다 — scanExit는 지난 봉 기록에서
-// 첫 터치를 찾으므로 늦게 확인해도 청산 결과는 같고, 실행이 길어져 스캔 직후 실행이 잠금 대기(5분)를 넘기는 일을 막는다.
+// budgetMs: 이 단계의 청산 확인 시간 한도(XL만). 넘으면 남은 포지션은 다음 회차에 본다 — 실행이 길어져 스캔 직후 실행이
+// 잠금 대기(5분)를 넘기는 일을 막는다. 손절·익절·진입 시간 1분봉은 지난 봉 기록에서 첫 터치를 찾아 늦게 봐도 결과가 같지만,
+// 기한 청산은 그때 호가로 체결해 늦으면 달라진다 — 그래서 기한이 된 포지션은 한도와 무관하게 본다.
+// 한도가 있으면 장부를 섞어 진입이 오래된 포지션부터 본다(장부 순서대로 보면 늘 마지막 장부 random_xl만 미뤄져 대조가 기운다).
+// 한도가 없는 1단계(기존 장부)는 예전과 같은 순서(장부 → 포지션)다.
 async function checkExits(st, now, keys, budgetMs = Infinity) {
   const closed = []
   const t0 = Date.now()
   let deferred = 0
-  for (const src of keys) {
+  const items = keys.flatMap((src) => st.books[src].open.map((pos) => [src, pos]))
+  if (Number.isFinite(budgetMs)) items.sort((a, b) => a[1].entryAt - b[1].entryAt)
+  for (const [src, pos] of items) {
     const book = st.books[src]
-    for (const pos of [...book.open]) {
-      if (Date.now() - t0 > budgetMs) { deferred++; continue }
-      const candles = await hourCandles(pos.market, pos.entryAt)
-      if (!candles) { console.log(`  ${src} ${pos.market} 1시간봉 조회 실패 — 다음 회차에 재확인`); continue }
-      // 체결 모델은 포지션을 산 때의 것을 따른다(v1 포지션에 v2 규칙을 섞지 않는다)
-      const v2 = (pos.fillModel ?? 1) >= 2
-      let exit = v2 ? await checkEntryHour(pos, now) : null
-      if (exit?.pending) { console.log(`  ${src} ${pos.market} 진입 시간 1분봉 조회 실패 — 다음 회차에 재확인`); continue }
-      if (!exit) exit = scanExit(pos, candles, v2)
-      if (exit?.intraBar) exit = await refineStop(pos, exit)
-      if (!exit && now >= pos.entryAt + pos.holdMax * 86400_000) {
-        const ob = (await getOrderbook([pos.market]))?.[pos.market]
-        const f = ob ? vwapFill(ob.bids, { qty: pos.qty }) : null
-        const last = candles.at(-1)?.close
-        if (f?.filled) exit = { type: 'time', price: f.price, at: now }
-        else if (last) exit = { type: 'time', price: last * (1 - PAPER.STOP_SLIP), at: now, thinBook: true }
-      }
-      if (!exit) continue
-      const c = closePosition(book, pos, exit)
-      if (exit.thinBook) c.thinBook = true
-      if (exit.minuteFill != null) c.minuteFill = exit.minuteFill
-      closed.push(c)
-      log({ ev: 'close', ...c })
+    const due = now >= pos.entryAt + pos.holdMax * 86400_000
+    if (!due && Date.now() - t0 > budgetMs) { deferred++; continue }
+    const candles = await hourCandles(pos.market, pos.entryAt)
+    if (!candles) { console.log(`  ${src} ${pos.market} 1시간봉 조회 실패 — 다음 회차에 재확인`); continue }
+    // 체결 모델은 포지션을 산 때의 것을 따른다(v1 포지션에 v2 규칙을 섞지 않는다)
+    const v2 = (pos.fillModel ?? 1) >= 2
+    let exit = v2 ? await checkEntryHour(pos, now) : null
+    if (exit?.pending) { console.log(`  ${src} ${pos.market} 진입 시간 1분봉 조회 실패 — 다음 회차에 재확인`); continue }
+    if (!exit) exit = scanExit(pos, candles, v2)
+    if (exit?.intraBar) exit = await refineStop(pos, exit)
+    if (!exit && now >= pos.entryAt + pos.holdMax * 86400_000) {
+      const ob = (await getOrderbook([pos.market]))?.[pos.market]
+      const f = ob ? vwapFill(ob.bids, { qty: pos.qty }) : null
+      const last = candles.at(-1)?.close
+      if (f?.filled) exit = { type: 'time', price: f.price, at: now }
+      else if (last) exit = { type: 'time', price: last * (1 - PAPER.STOP_SLIP), at: now, thinBook: true }
     }
+    if (!exit) continue
+    const c = closePosition(book, pos, exit)
+    if (exit.thinBook) c.thinBook = true
+    if (exit.minuteFill != null) c.minuteFill = exit.minuteFill
+    closed.push(c)
+    log({ ev: 'close', ...c })
   }
   if (deferred) console.log(`  청산 확인 시간 한도 — ${deferred}건은 다음 회차에 확인`)
   return closed

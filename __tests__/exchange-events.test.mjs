@@ -189,6 +189,19 @@ describe('ensureEvents', () => {
     const r = await ensureEvents(['KRW-ZIL'], { now: now + 6 * 3600_000, deps })
     expect(r.newEvents).toHaveLength(0)
   })
+  // 10-23 독립 리뷰 후 실측: 뉴스 데몬(alerting:false)은 업비트 공지를 1페이지만 받아 고정 공지가 목록에 없다.
+  // 데몬이 1분마다 그 기록을 지우면 monitor(2페이지)가 3시간마다 다시 "새 공지"로 알린다 — 청소는 알림 주체만 한다.
+  it('알림 주체가 아닌 호출(뉴스 데몬·모멘텀)은 seenIds를 지우지 않는다', async () => {
+    const pinned = [{ id: 'upbit:6394', title: '질리카(ZIL) 입출금 일시 중단 안내 (출금 서비스 재개 안내)', ts: '2026-07-20T19:00:47+09:00' }]
+    const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => pinned) })
+    const now = Date.parse('2026-10-23T00:00:00Z')
+    await ensureEvents(['KRW-ZIL'], { now, deps }) // monitor가 기록
+    deps.fetchUpbitAnnouncements = vi.fn(async () => [{ id: 'upbit:7000', title: '다른 공지', ts: '2026-10-23T08:00:00+09:00' }]) // 1페이지만 — 고정 공지 없음
+    await ensureEvents(['KRW-ZIL'], { now: now + 60_000, deps, alerting: false })
+    deps.fetchUpbitAnnouncements = vi.fn(async () => pinned)
+    const r = await ensureEvents(['KRW-ZIL'], { now: now + 3 * 3600_000, deps })
+    expect(r.newEvents).toHaveLength(0)
+  })
   it('목록에서 사라졌고 90일 넘은 기록은 지운다(무한 증가 방지 유지)', async () => {
     const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => []) })
     deps.writeJson('event-log.json', { seenIds: { 'upbit:1': '2026-01-01T00:00:00Z', 'upbit:2': '2026-10-20T00:00:00Z' }, active: {} })

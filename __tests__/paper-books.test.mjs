@@ -6,8 +6,9 @@ describe('BOOKS — 장부 정의', () => {
   it('기존 3장부가 1단계, XL 3장부가 2단계(기존 장부를 먼저 처리)', () => {
     expect(BOOKS.map((b) => `${b.key}:${b.phase}`)).toEqual(['main:1', 'momentum:1', 'random:1', 'main_xl:2', 'momentum_xl:2', 'random_xl:2'])
   })
-  it('XL은 1,000만 원·최대 200건·스캔당 200건, 건당 금액은 PAPER 그대로', () => {
-    expect(XL).toEqual({ startCash: 10_000_000, maxOpen: 200, maxPerScan: 200 })
+  it('XL은 1,000만 원·최대 199건·스캔당 199건, 건당 금액은 PAPER 그대로', () => {
+    // 199건: 200건 × 5만 원 × (1+수수료) = 10,005,000원 > 1,000만 원이라 200건째는 늘 현금 부족이었다(10-23 독립 리뷰)
+    expect(XL).toEqual({ startCash: 10_000_000, maxOpen: 199, maxPerScan: 199 })
     expect(bookByKey('main_xl')).toMatchObject(XL)
     expect(bookByKey('main_xl').rule).toBe('main') // 메인과 같은 청산 규칙(픽의 exit)
   })

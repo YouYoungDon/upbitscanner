@@ -1,7 +1,7 @@
 # 모의매매 XL 장부 — 구현 계획
 
 **Spec:** `docs/superpowers/specs/2026-10-22-paper-xl-books-design.md`
-**전역 제약:** `PAPER`·체결/청산 함수 불변. 기존 3장부는 1단계에서 먼저 처리. XL = 1,000만 원·최대 200건·스캔당 200건·건당 5만 원.
+**전역 제약:** `PAPER`·체결/청산 함수 불변. 기존 3장부는 1단계에서 먼저 처리. XL = 1,000만 원·최대 199건·스캔당 200건·건당 5만 원.
 
 ### Task 1: `lib/paper-books.mjs` + `ensureBooks` 장부별 시작 자본
 - 테스트(`__tests__/paper-books.test.mjs`): BOOKS 키 순서·phase, XL 한도, 기존 장부 한도 필드 없음, `limitsOf(book)` 기본값 = PAPER,
