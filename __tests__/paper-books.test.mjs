@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { BOOKS, XL, limitsOf, matchCount, bookByKey } from '../lib/paper-books.mjs'
+import { BOOKS, XL, limitsOf, matchCount, bookByKey, equityPoint } from '../lib/paper-books.mjs'
 import { PAPER } from '../lib/paper.mjs'
 
 describe('BOOKS — 장부 정의', () => {
@@ -27,5 +27,18 @@ describe('matchCount — random_xl은 같은 스캔에서 main_xl이 산 만큼�
   })
   it('짝 장부가 없으면 0', () => {
     expect(matchCount({ books: {} }, 'main_xl', S)).toBe(0)
+  })
+})
+
+describe('equityPoint — 평가금(시세 실패·상폐 종목)', () => {
+  const mk = () => ({ main: { cash: 100, open: [{ market: 'KRW-A', qty: 2, entryPrice: 10, lastPrice: 12 }, { market: 'KRW-B', qty: 1, entryPrice: 50 }] } })
+  it('현재가가 있으면 현재가, 없으면 마지막으로 받은 가격, 그것도 없으면 진입가', () => {
+    expect(equityPoint(mk(), { 'KRW-A': 15 }, 1).main).toBe(100 + 30 + 50)
+    expect(equityPoint(mk(), {}, 1).main).toBe(100 + 24 + 50)
+  })
+  it('받은 현재가를 포지션의 lastPrice로 남긴다', () => {
+    const books = mk()
+    equityPoint(books, { 'KRW-B': 55 }, 1)
+    expect(books.main.open[1].lastPrice).toBe(55)
   })
 })

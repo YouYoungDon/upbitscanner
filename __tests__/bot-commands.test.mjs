@@ -255,3 +255,14 @@ describe('모의매매 명령', () => {
     expect(formatHelp()).toContain('/모의')
   })
 })
+
+describe('formatPaper — 텔레그램 4096자 제한(XL 장부 10-22~)', () => {
+  it('손절선 2% 안쪽은 장부당 5개까지만, 나머지는 "외 N건"', () => {
+    const open = Array.from({ length: 40 }, (_, i) => ({ name: `코인${i}`, ret: -0.1, toStop: -0.01 }))
+    const books = Object.fromEntries(['main', 'momentum', 'random', 'main_xl', 'momentum_xl', 'random_xl'].map((k) => [k, { equity: 1, ret: 0, open, summary: { n: 0 }, closed: [] }]))
+    const t = formatPaper({ books })
+    expect(t).toContain('외 35건')
+    expect(t).not.toContain('코인5,')
+    expect(t.length).toBeLessThan(4096)
+  })
+})

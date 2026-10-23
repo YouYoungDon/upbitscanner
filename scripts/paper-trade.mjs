@@ -6,13 +6,13 @@
 import '../lib/env.mjs'
 import { existsSync, appendFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { getOrderbook, getMinuteCandles, getTicker } from '../lib/upbit.mjs'
+import { getOrderbook, getMinuteCandles, getTicker, getMarkets } from '../lib/upbit.mjs'
 import { readJson, writeJson, withLock, DATA_DIR } from '../lib/store.mjs'
 import { sendTelegram } from '../lib/notify.mjs'
 import {
   PAPER, ensureBooks, vwapFill, exitRule, scanExit, stopFill, entryHourExit, selectEntries, openPosition, closePosition,
 } from '../lib/paper.mjs'
-import { BOOKS, limitsOf, matchCount } from '../lib/paper-books.mjs'
+import { BOOKS, bookByKey, limitsOf, matchCount, equityPoint } from '../lib/paper-books.mjs'
 
 const FILE = 'paper-trades.json'
 const LOG = join(DATA_DIR, 'paper-trades-log.jsonl')
@@ -21,7 +21,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const log = (ev) => appendFileSync(LOG, JSON.stringify({ ...ev, logAt: new Date().toISOString() }) + '\n')
 
 const KEYS = BOOKS.map((b) => b.key)
-const startCashOf = (k) => BOOKS.find((b) => b.key === k)?.startCash // 기존 장부는 undefined → PAPER.START_CASH
+const XL_EXIT_BUDGET_MS = 2 * 60_000 // 2단계(XL) 청산 확인 시간 한도
+const startCashOf = (k) => bookByKey(k)?.startCash // 기존 장부는 undefined → PAPER.START_CASH
 
 async function loadState() {
   const nowIso = new Date().toISOString()
@@ -105,11 +106,16 @@ async function checkEntryHour(pos, now) {
   return null
 }
 
-async function checkExits(st, now, keys) {
+// budgetMs: 이 단계의 청산 확인 시간 한도(XL만). 넘으면 남은 포지션은 다음 회차에 본다 — scanExit는 지난 봉 기록에서
+// 첫 터치를 찾으므로 늦게 확인해도 청산 결과는 같고, 실행이 길어져 스캔 직후 실행이 잠금 대기(5분)를 넘기는 일을 막는다.
+async function checkExits(st, now, keys, budgetMs = Infinity) {
   const closed = []
+  const t0 = Date.now()
+  let deferred = 0
   for (const src of keys) {
     const book = st.books[src]
     for (const pos of [...book.open]) {
+      if (Date.now() - t0 > budgetMs) { deferred++; continue }
       const candles = await hourCandles(pos.market, pos.entryAt)
       if (!candles) { console.log(`  ${src} ${pos.market} 1시간봉 조회 실패 — 다음 회차에 재확인`); continue }
       // 체결 모델은 포지션을 산 때의 것을 따른다(v1 포지션에 v2 규칙을 섞지 않는다)
@@ -133,6 +139,7 @@ async function checkExits(st, now, keys) {
       log({ ev: 'close', ...c })
     }
   }
+  if (deferred) console.log(`  청산 확인 시간 한도 — ${deferred}건은 다음 회차에 확인`)
   return closed
 }
 
@@ -158,7 +165,9 @@ async function enterNew(st, now, defs, logs) {
       const maxPerScan = cfg.matchCount ? Math.min(lim.maxPerScan, matchCount(st, cfg.matchCount, scan.at)) : lim.maxPerScan
       const want = selectEntries(book, scan.picks, { maxPerScan, maxOpen: lim.maxOpen })
       if (!want.length) continue
-      const books = await getOrderbook(want.map((p) => p.market))
+      // 호가는 20종목씩 — XL이 한 스캔에 수십 종목을 사도 요청 하나의 실패가 스캔 전체를 체결 실패로 만들지 않게(기존 장부는 3종목이라 동일)
+      const books = {}
+      for (let i = 0; i < want.length; i += 20) Object.assign(books, (await getOrderbook(want.slice(i, i + 20).map((p) => p.market))) || {})
       const fillAt = Date.now() // 진입 시각은 호가를 받은 순간 — 청산 확인이 오래 걸려도 진입 전 분이 진입 뒤로 세지지 않게
       for (const pick of want) {
         const ob = books?.[pick.market]
@@ -175,13 +184,13 @@ async function enterNew(st, now, defs, logs) {
 }
 
 async function markEquity(st, now) {
-  const markets = [...new Set(Object.values(st.books).flatMap((b) => b.open.map((p) => p.market)))]
+  // 상폐 종목이 하나라도 섞이면 업비트 ticker 요청 전체가 실패한다 — 상장 목록으로 거르고 100개씩 나눠 부른다.
+  // 목록 조회가 실패(빈 배열)하면 거르지 않는다. 시세가 빠진 포지션은 equityPoint가 마지막으로 받은 가격을 쓴다.
+  const listed = new Set(((await getMarkets()) || []).map((m) => m.market))
+  const markets = [...new Set(Object.values(st.books).flatMap((b) => b.open.map((p) => p.market)))].filter((m) => !listed.size || listed.has(m))
   const px = {}
-  if (markets.length) for (const t of (await getTicker(markets)) || []) px[t.market] = t.trade_price
-  const point = { at: now }
-  for (const [src, b] of Object.entries(st.books)) {
-    point[src] = Math.round(b.cash + b.open.reduce((s, p) => s + p.qty * (px[p.market] ?? p.entryPrice), 0))
-  }
+  for (let i = 0; i < markets.length; i += 100) for (const t of (await getTicker(markets.slice(i, i + 100))) || []) px[t.market] = t.trade_price
+  const point = equityPoint(st.books, px, now)
   st.equity = [...st.equity, point].slice(-MAX_EQUITY_POINTS)
   return point
 }
@@ -208,7 +217,7 @@ async function run() {
   const closed = [], opened = []
   for (const phase of [1, 2]) {
     const defs = BOOKS.filter((b) => b.phase === phase)
-    closed.push(...await checkExits(st, now, defs.map((b) => b.key)))
+    closed.push(...await checkExits(st, now, defs.map((b) => b.key), phase === 2 ? XL_EXIT_BUDGET_MS : Infinity))
     opened.push(...await enterNew(st, now, defs, logs))
   }
   const eq = await markEquity(st, now)
