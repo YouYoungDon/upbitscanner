@@ -651,7 +651,7 @@ const routes = {
         <h3 class="font-bold mb-2">1천만 장부 평가금 추이 <span class="text-sm font-normal opacity-60">— 축 크기가 달라 따로 그린다</span></h3>
         <div id="paper-equity-xl"></div>
       </div>` : ''}
-      <label class="flex items-center gap-2 mb-2 text-sm">장부 <select id="paperBook" class="select select-sm select-bordered"><option value="">전체</option>${Object.keys(d.books).map((k) => `<option value="${k}">${esc(LABEL[k] || k)}</option>`).join('')}</select> <span class="opacity-60">보유 중·종료 거래 표에 함께 적용</span></label>
+      <label class="flex items-center gap-2 mb-2 text-sm">장부 <select id="paperBook" class="select select-sm select-bordered bg-white text-black"><option class="text-black" value="">전체</option>${Object.keys(d.books).map((k) => `<option class="text-black" value="${k}">${esc(LABEL[k] || k)}</option>`).join('')}</select> <span class="opacity-60">보유 중·종료 거래 표에 함께 적용</span></label>
       <div class="card bg-base-200 p-4 mb-4">
         <h3 class="font-bold mb-1">보유 중 <span class="text-sm font-normal opacity-60">— 기본은 손절선에 가까운 순, 2% 안쪽은 빨간색 · 열 이름을 누르면 정렬</span></h3>
         <div class="overflow-x-auto"><table class="table table-sm">
