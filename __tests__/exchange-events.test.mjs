@@ -165,6 +165,38 @@ describe('ensureEvents', () => {
     expect(r2.byMarket['KRW-SOPH'].mult).toBe(0.7) // 활성은 유지
   })
 
+  // 10-18~23 질리카 알림 40회 반복: 업비트가 07-20 공지를 목록 맨 위에 고정해 매 스캔 다시 받는데, seenIds에 공지 시각을
+  // 남기고 90일 넘은 것을 같은 실행에서 바로 지워(07-20 + 90일 = 10-18) 다음 스캔에 또 "새 공지"가 됐다.
+  it('90일 지난 공지라도 목록에 계속 걸려 있으면(고정 공지) 다시 알리지 않는다', async () => {
+    const pinned = [{ id: 'upbit:6394', title: '질리카(ZIL) 입출금 일시 중단 안내 (출금 서비스 재개 안내)', ts: '2026-07-20T19:00:47+09:00' }]
+    const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => pinned) })
+    const now = Date.parse('2026-10-23T00:00:00Z') // 공지 후 95일
+    const r1 = await ensureEvents(['KRW-ZIL'], { now, deps })
+    const r2 = await ensureEvents(['KRW-ZIL'], { now: now + 3 * 3600_000, deps })
+    const r3 = await ensureEvents(['KRW-ZIL'], { now: now + 6 * 3600_000, deps })
+    expect(r1.newEvents).toHaveLength(1) // 처음 본 건 한 번 알린다
+    expect(r2.newEvents).toHaveLength(0)
+    expect(r3.newEvents).toHaveLength(0)
+  })
+  it('그 거래소 조회가 실패한 회차엔 오래된 기록을 지우지 않는다(실패로 목록이 비어도 재알림 없음)', async () => {
+    const pinned = [{ id: 'upbit:6394', title: '질리카(ZIL) 입출금 일시 중단 안내 (출금 서비스 재개 안내)', ts: '2026-07-20T19:00:47+09:00' }]
+    const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => pinned) })
+    const now = Date.parse('2026-10-23T00:00:00Z')
+    await ensureEvents(['KRW-ZIL'], { now, deps })
+    deps.fetchUpbitAnnouncements = vi.fn(async () => null) // 업비트 조회 실패
+    await ensureEvents(['KRW-ZIL'], { now: now + 3 * 3600_000, deps })
+    deps.fetchUpbitAnnouncements = vi.fn(async () => pinned) // 회복 — 같은 고정 공지
+    const r = await ensureEvents(['KRW-ZIL'], { now: now + 6 * 3600_000, deps })
+    expect(r.newEvents).toHaveLength(0)
+  })
+  it('목록에서 사라졌고 90일 넘은 기록은 지운다(무한 증가 방지 유지)', async () => {
+    const deps = mkDeps({ fetchUpbitAnnouncements: vi.fn(async () => []) })
+    deps.writeJson('event-log.json', { seenIds: { 'upbit:1': '2026-01-01T00:00:00Z', 'upbit:2': '2026-10-20T00:00:00Z' }, active: {} })
+    await ensureEvents(['KRW-ZIL'], { now: Date.parse('2026-10-23T00:00:00Z'), deps })
+    const st = await deps.readJson('event-log.json', {})
+    expect(Object.keys(st.seenIds)).toEqual(['upbit:2'])
+  })
+
   it('resume가 활성 이벤트 상쇄', async () => {
     const deps = mkDeps()
     await ensureEvents(markets, { now: 1_000_000_000_000, deps })
