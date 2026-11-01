@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { scanSlots, newsEvents, taskFlags, paperActivity } from '../lib/daily-check.mjs'
+import { scanSlots, newsEvents, taskFlags, paperActivity, monitorTimestamps } from '../lib/daily-check.mjs'
 
 const H = 3600_000
 const T = (iso) => Date.parse(iso)
@@ -68,5 +68,21 @@ describe('paperActivity — 원장 이벤트 집계', () => {
       random: { open: 2, close: 0, noCash: 0, noFill: 0, stale: 0 },
       main: { open: 0, close: 1, noCash: 1, noFill: 0, stale: 0 },
     })
+  })
+})
+
+describe('monitorTimestamps', () => {
+  const T = (h) => new Date(Date.UTC(2026, 9, 1, h)).toISOString()
+  const log = [{ timestamp: T(10) }, { timestamp: T(13) }]
+  it('로그가 점검 범위를 덮으면 아카이브를 읽지 않는다', () => {
+    let called = 0
+    expect(monitorTimestamps(log, () => { called++; return [] }, Date.parse(T(9) ) + 3600_000)).toEqual([T(10), T(13)])
+    expect(called).toBe(0)
+  })
+  it('범위가 로그보다 길면 아카이브와 합쳐 중복을 없앤다', () => {
+    expect(monitorTimestamps(log, () => [T(7), T(10)], Date.parse(T(6)))).toEqual([T(7), T(10), T(13)])
+  })
+  it('로그가 비면 아카이브로 동작한다', () => {
+    expect(monitorTimestamps([], () => [T(7)], Date.parse(T(6)))).toEqual([T(7)])
   })
 })

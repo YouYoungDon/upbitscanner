@@ -9,7 +9,8 @@ import { summarizeTrades } from '../../lib/paper-summary.mjs'
 import { baselineReturn } from '../../lib/market-baseline.mjs'
 import { PAPER } from '../../lib/paper.mjs'
 import { XL } from '../../lib/paper-books.mjs'
-import { VERDICT, ruleRows, decide, power, idealExit, fillGap, costFrom, vsRandom } from '../../lib/verdict.mjs'
+import { VERDICT, ruleRows, decide, power, idealExit, fillGap, costFrom, vsRandom, SCORE_HYPOTHESIS, scoreRankDiff } from '../../lib/verdict.mjs'
+import { WEIGHTS_FREEZE } from '../../lib/weekly.mjs'
 import { getDayCandles, candlesToOhlcv } from '../../lib/upbit.mjs'
 import { confirmedOhlcvAsOf } from '../../lib/ohlcv.mjs'
 
@@ -53,12 +54,13 @@ else {
   // 비용은 현재 체결 모델로 산 거래만으로 잰다 — v1은 손절 체결이 낙관적이라 바꾼 모델이다(lib/paper.mjs 주석).
   const gapNow = gap.byModel[PAPER.FILL_MODEL] ?? { n: 0, mean: null }
   const { cost, source } = costFrom(gapNow)
-  const show = (label, from, to) => {
+  const show = (label, from, to, { withPower = true } = {}) => {
     const { rows, dropped, running } = ruleRows(sc.episodes, daily, { from, to, cost })
     const r = decide(rows), p = power(rows)
     console.log(`\n[${label}] ${r.n}건 · 진입일 ${r.days}일 · 평균 ${pct(r.mean)} (t ${tStr(r)})` +
       `${running ? ` · 결과가 다 안 나온 진입일의 ${running}건 제외` : ''}${dropped ? ` · 기준선 없어 제외 ${dropped}건` : ''}`)
     console.log(`  전반 ${pct(r.halves.first)} / 후반 ${pct(r.halves.second)} · 점수 하위 ${pct(r.terciles.low)} / 중간 ${pct(r.terciles.mid)} / 상위 ${pct(r.terciles.high)}`)
+    if (!withPower) return r
     const enough = p.need != null && p.days >= p.need
     console.log(`  검정력: |t|=2에 필요한 진입일 ${p.need ?? '-'}일(지금 ${p.days}일) · 판정 가능 예상 ${enough ? '지금 충분' : dayStr(p.etaDay)}`)
     return r
@@ -66,6 +68,14 @@ else {
   console.log(`비용 ${pct(cost)} (${source === 'measured' ? `실체결 차이 측정값, v${PAPER.FILL_MODEL} 짝 ${gapNow.n}건` : `기본 왕복 0.3% — v${PAPER.FILL_MODEL} 짝 ${gapNow.n}건 < ${VERDICT.MIN_PAIRS}건`})`)
   const r = show(`판정 표본 ${VERDICT.FROM.slice(0, 10)}~`, VERDICT.FROM, null)
   console.log(`  ▶ ${VERDICT_KO[r.verdict]} · ${r.reasons.join(' · ')}`)
+  // 판정 자체는 위 전체 표본으로 낸다 — 아래는 가중치 동결 전후를 나눠 보는 참고
+  show('참고: 가중치 동결 전', VERDICT.FROM, WEIGHTS_FREEZE.SPLIT_DAY, { withPower: false })
+  show('참고: 가중치 동결 후', WEIGHTS_FREEZE.SPLIT_DAY, WEIGHTS_FREEZE.UNTIL, { withPower: false })
+  const hyp = ruleRows(sc.episodes, daily, { from: SCORE_HYPOTHESIS.FROM, to: SCORE_HYPOTHESIS.TO, cost })
+  const srd = scoreRankDiff(hyp.rows, { openDays: [...hyp.openDays, ...hyp.droppedDays] })
+  const SRD_KO = { reversed: '⛔ 상위가 더 나쁨 — 점수 체계 재검토', works: '✅ 상위가 더 좋음', unresolved: '⏸ 미결' }
+  console.log(`[사전 등록 가설 ${SCORE_HYPOTHESIS.FROM.slice(0, 10)}~] 점수 상위 − 하위 ${srd.mean == null ? '-' : pct(srd.mean)} (t ${srd.t == null ? '-' : srd.t.toFixed(2)} / 일반 t ${srd.tPlain == null ? '-' : srd.tPlain.toFixed(2)}, 진입일 ${srd.days}/${SCORE_HYPOTHESIS.MIN_DAYS}일) ▶ ${SRD_KO[srd.verdict]}`)
+  console.log(`  진행 중 진입일 ${hyp.openDays.length}일(${hyp.running}건)${srd.pending ? ' — 앞 20일 안에 남아 있어 결론 보류' : ''} · 기준선 없음 ${hyp.dropped}건 · 뺀 날: 3건 미만 ${srd.thin}일, 점수 동일 ${srd.tied}일`)
   const models = Object.entries(gap.byModel).map(([m, b]) => `v${m} ${b.n}건 ${pct(b.mean)}`).join(' / ')
   console.log(`\n실체결 차이(장부 순수익 − 같은 스캔가 일봉 채점 수익): 짝 ${gap.n}건 · 평균 ${pct(gap.mean)} (t ${tStr(gap)}, ${gap.days}일)${models ? ` · ${models}` : ''}` +
     ` · 스캔 후 ${VERDICT.HOLD_WAIT_DAYS}일 안 된 ${allMainClosed.length - mainClosed.length}건 제외`)

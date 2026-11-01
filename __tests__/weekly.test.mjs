@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns, judgeAtHorizon, sideSummary, timedHitRates, statsWithReturns } from '../lib/weekly.mjs'
+import { judgeHit, aggregateHitRates, updateWeights, buildWeeklyReport, aggregateReturns, judgeAtHorizon, sideSummary, timedHitRates, statsWithReturns, weightsFrozen, freezeNotice } from '../lib/weekly.mjs'
 
 describe('statsWithReturns — 적중률+평균수익 병합 (표시·학습 공용)', () => {
   it('aggregateHitRates에 avgReturn 병합', () => {
@@ -201,5 +201,23 @@ describe('buildWeeklyReport', () => {
     expect(hitCoins.map((c) => c.market)).toEqual(['KRW-C', 'KRW-A', 'KRW-B'])
     expect(hitCoins[0]).toEqual({ market: 'KRW-C', korean_name: '씨', hits: 8, total: 8 })
     expect(missCoins).toEqual([])
+  })
+})
+
+describe('weightsFrozen', () => {
+  it('판정 예상일(11-28)까지 가중치 학습을 멈춘다', () => {
+    expect(weightsFrozen(Date.parse('2026-11-01T13:00:00Z'))).toBe(true)
+    expect(weightsFrozen(Date.parse('2026-11-28T23:59:00Z'))).toBe(true)
+  })
+  it('기한부터 학습한다', () => {
+    expect(weightsFrozen(Date.parse('2026-11-29T00:00:00Z'))).toBe(false)
+  })
+})
+
+describe('freezeNotice', () => {
+  it('기한 14일 전부터 기한 전까지만 알린다', () => {
+    expect(freezeNotice(Date.parse('2026-11-10T00:00:00Z'))).toBeNull()
+    expect(freezeNotice(Date.parse('2026-11-22T13:00:00Z'))).toContain('7일')
+    expect(freezeNotice(Date.parse('2026-11-29T00:00:00Z'))).toBeNull()
   })
 })

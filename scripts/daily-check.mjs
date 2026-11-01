@@ -5,7 +5,9 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { DATA_DIR } from '../lib/store.mjs'
-import { scanSlots, newsEvents, taskFlags, paperActivity } from '../lib/daily-check.mjs'
+import { scanSlots, newsEvents, taskFlags, paperActivity, monitorTimestamps } from '../lib/daily-check.mjs'
+import { archiveTimestamps } from '../lib/archive.mjs'
+import { freezeNotice } from '../lib/weekly.mjs'
 
 const HOURS = Number(process.argv[2]) || 24
 const now = Date.now()
@@ -19,6 +21,7 @@ const section = (title, fn) => {
 }
 
 console.log(`# 일일 점검 — ${kst(now)} KST 기준 지난 ${HOURS}시간`)
+if (freezeNotice(now)) console.log(`\n⚠️ ${freezeNotice(now)}`)
 
 section('작업 스케줄러', () => {
   const raw = ps("Get-ScheduledTask -TaskName 'Upbit*' | ForEach-Object { $i = $_ | Get-ScheduledTaskInfo; [pscustomobject]@{name=$_.TaskName; state=[string]$_.State; lastRun=$i.LastRunTime.ToUniversalTime().ToString('o'); result=$i.LastTaskResult} } | ConvertTo-Json -Compress")
@@ -40,15 +43,14 @@ section('절전·재시작', () => {
 })
 
 section('스캔 슬롯 (3시간마다)', () => {
-  const show = (label, file, slotMinute) => {
-    const ts = (readJson(file).scans || []).map((s) => s.timestamp)
+  const show = (label, ts, slotMinute) => {
     const r = scanSlots(ts, { nowMs: now, slotMinute, hours: HOURS })
     const dur = r.durations.length ? `소요 최대 ${r.maxMin.toFixed(1)}분 · 평균 ${(r.durations.reduce((a, b) => a + b, 0) / r.durations.length).toFixed(1)}분` : '소요 -'
     const miss = r.missing.length ? ` · ❌ 빠진 슬롯 ${r.missing.map((m) => kst(Date.parse(m))).join(', ')}` : ''
     console.log(`- ${r.missing.length ? '❌' : '✅'} ${label}: ${r.expected - r.missing.length}/${r.expected} · ${dur}${miss}`)
   }
-  show('반등(monitor, xx:00)', 'monitor-log.json', 0)
-  show('모멘텀(xx:02)', 'momentum-log.json', 2)
+  show('반등(monitor, xx:00)', monitorTimestamps(readJson('monitor-log.json').scans || [], archiveTimestamps, since), 0)
+  show('모멘텀(xx:02)', (readJson('momentum-log.json').scans || []).map((s) => s.timestamp), 2)
   const last = (readJson('monitor-log.json').scans || []).at(-1)
   console.log(`- 마지막 반등 스캔 ${last ? kst(Date.parse(last.timestamp)) : '-'} · 매수 ${last?.buy?.length ?? '-'} · 무작위 대조 후보(universe) ${Array.isArray(last?.universe) ? `${last.universe.length}종목` : '❌ 없음'}`)
 })

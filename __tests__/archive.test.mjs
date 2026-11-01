@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { rmSync, existsSync, writeFileSync } from 'node:fs'
-import { appendScan, readArchive, summarizeScans, coinHistory, scansInLastDays } from '../lib/archive.mjs'
+import { mkdtempSync as mkdtempSyncTs, writeFileSync as writeFileSyncTs, rmSync as rmSyncTs } from 'node:fs'
+import { tmpdir as tmpdirTs } from 'node:os'
+import { join as joinTs } from 'node:path'
+import { archiveTimestamps, appendScan, readArchive, summarizeScans, coinHistory, scansInLastDays } from '../lib/archive.mjs'
 
 let file
 beforeEach(() => { file = join(tmpdir(), `arch-${Date.now()}-${Math.random().toString(36).slice(2)}.jsonl`) })
@@ -75,5 +78,18 @@ describe('scansInLastDays', () => {
   })
   it('빈 배열은 빈 배열', () => {
     expect(scansInLastDays([], 7, now)).toEqual([])
+  })
+})
+
+describe('archiveTimestamps', () => {
+  it('앞머리 시각을 읽고, 순서가 다르면 파싱으로 대체하며, 깨진 줄은 건너뛴다', () => {
+    const dir = mkdtempSyncTs(joinTs(tmpdirTs(), 'archive-ts-'))
+    const f = joinTs(dir, 'a.jsonl')
+    writeFileSyncTs(f, '{"timestamp":"a","buy":[]}\n{"buy":[],"timestamp":"b"}\n{깨진 줄\n\n{"buy":[]}\n')
+    expect(archiveTimestamps(f)).toEqual(['a', 'b'])
+    rmSyncTs(dir, { recursive: true })
+  })
+  it('파일이 없으면 빈 배열', () => {
+    expect(archiveTimestamps(joinTs(tmpdirTs(), 'no-such-archive.jsonl'))).toEqual([])
   })
 })

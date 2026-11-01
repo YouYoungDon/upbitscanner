@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { VERDICT, ruleRows, decide, power, idealExit, fillGap, costFrom, vsRandom } from '../lib/verdict.mjs'
+import { clusteredT, hacT } from '../lib/perf-metrics.mjs'
+import { VERDICT, ruleRows, decide, power, idealExit, fillGap, costFrom, vsRandom, SCORE_HYPOTHESIS, scoreRankDiff } from '../lib/verdict.mjs'
 
 const D = (iso) => Math.floor(Date.parse(iso) / 86400_000)
 const ep = (iso, ret, exitDay, extra = {}) => ({
@@ -157,5 +158,76 @@ describe('vsRandom — 결과가 다 나온 스캔만(10-23 독립 리뷰)', () 
     const main = [{ scanAt: S, net: -0.124 }], rnd = [{ scanAt: S, net: 0.1299 }]
     expect(vsRandom(main, rnd, { open: [{ scanAt: S }] }).scans).toBe(0)
     expect(vsRandom(main, rnd, { open: [] }).scans).toBe(1)
+  })
+})
+
+describe('scoreRankDiff (사전 등록 가설: 점수 상위가 더 나쁜가)', () => {
+  // 하루 6건: 점수 1,2 / 3,4 / 5,6. top = 5,6 · bottom = 1,2
+  const day = (d, lo, hi) => [1, 2, 3, 4, 5, 6].map((score) => ({ day: d, score, v: score <= 2 ? lo : score >= 5 ? hi : 0 }))
+  const days = (n, f) => Array.from({ length: n }, (_, i) => day(100 + i, ...f(i))).flat()
+
+  it('등록 조건: 10-31부터, 진입일 20일', () => {
+    expect(SCORE_HYPOTHESIS).toMatchObject({ FROM: '2026-10-31T00:00:00Z', TO: '2026-11-29T00:00:00Z', MIN_DAYS: 20, T: 2, MIN_EFFECT: 0.005, HAC_LAG: 7 })
+  })
+  it('상위가 충분히 나쁘면 reversed', () => {
+    const r = scoreRankDiff(days(20, (i) => [0.02, -0.02 + (i % 2) * 0.01]))
+    expect(r.verdict).toBe('reversed')
+    expect(r.mean).toBeCloseTo(-0.035, 6)
+    expect(r.days).toBe(20)
+  })
+  it('상위가 충분히 좋으면 works', () => {
+    expect(scoreRankDiff(days(20, (i) => [-0.02, 0.02 + (i % 2) * 0.01])).verdict).toBe('works')
+  })
+  it('진입일이 20일 미만이면 차이가 커도 unresolved', () => {
+    expect(scoreRankDiff(days(19, (i) => [0.02, -0.02 + (i % 2) * 0.01])).verdict).toBe('unresolved')
+  })
+  it('t가 커도 효과가 0.5%p 미만이면 unresolved', () => {
+    expect(scoreRankDiff(days(20, (i) => [0.001, -0.001 + (i % 2) * 0.0001])).verdict).toBe('unresolved')
+  })
+  it('점수가 모두 같은 날·3건 미만인 날은 빼고 센다', () => {
+    const tied = [1, 2, 3].map((n) => ({ day: 1, score: 5, v: n }))
+    const thin = [{ day: 2, score: 1, v: 0 }, { day: 2, score: 9, v: 1 }]
+    expect(scoreRankDiff([...tied, ...thin])).toMatchObject({ days: 0, tied: 1, thin: 1 })
+  })
+  it('앞 20일로 표본을 고정한다 — 뒤에 쌓인 날이 결론을 바꾸지 않는다', () => {
+    const weak = days(20, (i) => [0, i % 2 ? 0.05 : -0.05])
+    const later = Array.from({ length: 30 }, (_, i) => day(200 + i, 0.05, -0.05 + (i % 2) * 0.01)).flat()
+    const a = scoreRankDiff(weak), b = scoreRankDiff([...weak, ...later])
+    expect(b.days).toBe(20)
+    expect(b.mean).toBeCloseTo(a.mean, 12)
+    expect(b.verdict).toBe('unresolved')
+  })
+  it('앞 20일 안에 진행 중인 날이 있으면 결론을 보류한다', () => {
+    const rows = days(20, (i) => [0.02, -0.02 + (i % 2) * 0.01])
+    expect(scoreRankDiff(rows, { openDays: [105] })).toMatchObject({ pending: true, verdict: 'unresolved' })
+    expect(scoreRankDiff(rows, { openDays: [125] })).toMatchObject({ pending: false, verdict: 'reversed' })
+  })
+  it('뉴이-웨스트 t만 넘고 일반 t가 못 넘으면 결론을 내지 않는다', () => {
+    const r = scoreRankDiff(days(20, (i) => [0, i % 2 ? 0.03 : -0.05]))
+    expect(Math.abs(r.t)).toBeGreaterThanOrEqual(2)
+    expect(Math.abs(r.tPlain)).toBeLessThan(2)
+    expect(r.verdict).toBe('unresolved')
+  })
+  it('ruleRows의 진행 중·기준선 없는 날을 받아 앞 20일이면 보류한다', () => {
+    const iso = (i) => new Date(Date.UTC(2026, 9, 1 + i)).toISOString()
+    const daily = flat('2026-10-01T00:00:00Z', 40)
+    const eps = Array.from({ length: 21 }, (_, i) => [1, 2, 3].map((score) => ep(iso(i), score === 3 ? -0.05 + (i % 2) * 0.01 : 0.02, 1, { score }))).flat()
+    const open = [...eps, ep(iso(3), 0, 0, { exit: { reason: 'open' } })]
+    const a = ruleRows(open, daily, { cost: 0, from: iso(0) })
+    expect(a.openDays).toEqual([D(iso(3))])
+    expect(scoreRankDiff(a.rows, { openDays: a.openDays })).toMatchObject({ pending: true, verdict: 'unresolved' })
+    const later = ep('2026-11-20T00:00:00Z', 0, 1)
+    expect(ruleRows([later], daily, { cost: 0, from: iso(0) }).droppedDays).toEqual([D('2026-11-20T00:00:00Z')])
+    const b = ruleRows(eps, daily, { cost: 0, from: iso(0) })
+    expect(scoreRankDiff(b.rows, { openDays: b.openDays })).toMatchObject({ pending: false, verdict: 'reversed', days: 20 })
+  })
+  it('이웃한 날이 같이 움직이면 t를 낮춘다(뉴이-웨스트)', () => {
+    const vals = Array.from({ length: 20 }, (_, i) => (i < 14 ? -0.03 : 0.01) + (i % 2 ? 0.002 : -0.002))
+    const iid = clusteredT(vals.map((v, day) => ({ day, v }))).t
+    expect(Math.abs(hacT(vals, 7))).toBeLessThan(Math.abs(iid))
+  })
+  it('동점은 같은 쪽으로 묶는다(하위 경계와 같은 점수는 하위)', () => {
+    const rows = [{ score: 5, v: 1 }, { score: 5, v: 1 }, { score: 5, v: 1 }, { score: 6, v: 0 }, { score: 7, v: 0 }, { score: 8, v: -1 }].map((x) => ({ ...x, day: 1 }))
+    expect(scoreRankDiff(rows).mean).toBeCloseTo(-1.5, 9) // top {7,8} 평균 −0.5 − bottom {5,5,5} 평균 1
   })
 })

@@ -209,6 +209,8 @@ newWeight = clamp(oldWeight * 0.8 + target * 0.2, 0.5, 2.0)
 MIN_SAMPLES = 8   # 등장 8회 미만이면 조정하지 않는다
 ```
 
+**동결 중(11-28까지):** 판정 동안 점수 체계를 고정하려고 갱신을 멈췄다. 리포트는 계속 나온다. 마지막 갱신은 10-25. 설계: `docs/superpowers/specs/2026-10-30-score-reversal-design.md`.
+
 ## 대시보드
 
 `npm run dashboard` 또는 상주 작업 `UpbitDashboard` → `http://127.0.0.1:8787` (localhost 전용, 인증 없음).

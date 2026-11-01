@@ -1,8 +1,10 @@
+import '../lib/env.mjs' // .env 로드(스케줄러 환경 캐시 미스 대비) — Telegram 알림 토큰 확보
 import { getTicker, getDayCandles, candlesToOhlcv } from '../lib/upbit.mjs'
 import { readJson, writeJson, rollingAppend, withLock, readWeights } from '../lib/store.mjs'
-import { updateWeights, buildWeeklyReport, judgeAtHorizon, sideSummary, timedHitRates, statsWithReturns, MIN_SAMPLES } from '../lib/weekly.mjs'
+import { updateWeights, buildWeeklyReport, judgeAtHorizon, sideSummary, timedHitRates, statsWithReturns, MIN_SAMPLES, weightsFrozen, freezeNotice, WEIGHTS_FREEZE } from '../lib/weekly.mjs'
 import { confirmedOhlcvAsOf } from '../lib/ohlcv.mjs'
 import { readArchive, scansInLastDays } from '../lib/archive.mjs'
+import { sendTelegram } from '../lib/notify.mjs'
 
 const force = process.argv.includes('--force')
 const MAX_WEEKS = 12
@@ -18,6 +20,13 @@ if (!force && kstDay !== 0) {
   process.exit(0)
 }
 
+// 동결 해제 안내 — 스캔이 없어 일찍 끝나는 장애 때도 나가도록 맨 앞에서
+const notice = freezeNotice()
+if (notice) {
+  console.log(`⚠️ ${notice}`)
+  if (!(await sendTelegram(`⚠️ ${notice}`))) console.warn('⚠️ 텔레그램 전송 실패')
+}
+
 // learnedUntil 워터마크 조회 (meta 우선, 외부 절차가 meta를 덮어썼으면 주간 엔트리에서 자가 복구)
 async function readLearnedUntil() {
   const meta = await readJson('signal-weights.meta.json', {})
@@ -31,8 +40,10 @@ async function readLearnedUntil() {
 // 조회 창: 기본 14일, learnedUntil이 더 과거면 캐치업 확장(상한 60일)
 const peekLearnedUntil = await readLearnedUntil()
 const daysSinceLearn = peekLearnedUntil ? Math.ceil((Date.now() - Date.parse(peekLearnedUntil)) / DAY_MS) : LOOKBACK_DAYS
-const lookback = Math.min(MAX_CATCHUP_DAYS, Math.max(LOOKBACK_DAYS, daysSinceLearn + 1))
-if (daysSinceLearn + 1 > MAX_CATCHUP_DAYS) console.warn(`⚠️ learnedUntil 공백 ${daysSinceLearn}일 > 상한 ${MAX_CATCHUP_DAYS}일 — 초과 구간은 학습에서 제외됩니다`)
+const frozen = weightsFrozen()
+// 동결 중엔 학습을 안 하니 캐치업 조회도 하지 않는다
+const lookback = frozen ? LOOKBACK_DAYS : Math.min(MAX_CATCHUP_DAYS, Math.max(LOOKBACK_DAYS, daysSinceLearn + 1))
+if (!frozen && daysSinceLearn + 1 > MAX_CATCHUP_DAYS) console.warn(`⚠️ learnedUntil 공백 ${daysSinceLearn}일 > 상한 ${MAX_CATCHUP_DAYS}일 — 초과 구간은 학습에서 제외됩니다`)
 else if (lookback > LOOKBACK_DAYS) console.log(`캐치업: 조회 창 ${lookback}일로 확장 (learnedUntil ${peekLearnedUntil})`)
 
 const scans = scansInLastDays(readArchive(), lookback)
@@ -85,7 +96,14 @@ await withLock('signal-weights', async () => {
   oldWeights = await readWeights()
   const coverage = judgeable.length ? learnRecords.length / judgeable.length : 1
   learnedUntilNew = learnedUntil
-  if (coverage < MIN_LEARN_COVERAGE) {
+  if (frozen) {
+    // 판정까지 점수 체계 고정 — 워터마크를 두어 해제 뒤 이 구간을 캐치업한다. --force도 예외 아님.
+    learnRecords = []
+    learnStats = {}
+    learnSkipped = true
+    newWeights = oldWeights
+    console.log(`가중치 동결 중(~${WEIGHTS_FREEZE.UNTIL.slice(0, 10)}) — 갱신·learnedUntil 전진 안 함`)
+  } else if (coverage < MIN_LEARN_COVERAGE) {
     // 대량 fetch 실패 등으로 판정 커버리지가 낮으면 이번 학습을 통째로 보류 — 다음 실행이 같은 창을 재시도
     learnSkipped = true
     newWeights = oldWeights
@@ -146,7 +164,7 @@ if (!weekRecords.length) {
     report,
     momentum,
     horizonMode: 'confirmed-1d',
-    learned: { records: learnRecords.length, learnedUntil: learnedUntilNew || null, skipped: learnSkipped },
+    learned: { records: learnRecords.length, learnedUntil: learnedUntilNew || null, skipped: learnSkipped, ...(frozen ? { frozen: true } : {}) },
   }
   // 락 안에서 fresh 재읽기 → 증가 → 쓰기. 수동 실행이 정시 실행과 겹쳐도 갱신유실 없음.
   await withLock('weekly-analysis', async () => {
@@ -158,5 +176,6 @@ if (!weekRecords.length) {
 
 const pct = (r) => (r.predictions ? `${Math.round(r.hitRate * 100)}% (${r.hits}/${r.predictions})` : '- (0건)')
 console.log(`주간 분석 완료 [+1일 확정종가] — 매수 ${pct(sideStats.buy)} · 매도 ${pct(sideStats.sell)}`)
-console.log(`가중치 갱신: 학습 레코드 ${learnRecords.length}건${learnSkipped ? ' (보류)' : ''}, 갱신 신호 ${Object.keys(learnStats).filter((k) => learnStats[k].count >= MIN_SAMPLES).length}개, learnedUntil → ${learnedUntilNew || '(없음)'}`)
+if (frozen) console.log('가중치 갱신: 동결 — 변경 없음')
+else console.log(`가중치 갱신: 학습 레코드 ${learnRecords.length}건${learnSkipped ? ' (보류)' : ''}, 갱신 신호 ${Object.keys(learnStats).filter((k) => learnStats[k].count >= MIN_SAMPLES).length}개, learnedUntil → ${learnedUntilNew || '(없음)'}`)
 console.log('적중 매수신호 TOP:', report.topBuySignals.slice(0, 3).map((s) => `${s.key} ${Math.round(s.hitRate * 100)}%(${s.hits}/${s.count})`).join(', ') || '없음')
